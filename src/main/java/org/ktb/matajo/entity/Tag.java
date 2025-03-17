@@ -18,6 +18,7 @@ public class Tag {
     private Long id;
 
     //태그 이름
+    @NonNull //필요하면 삭제
     @Column(nullable = false, length = 20, unique = true)
     private String tagName;
 
