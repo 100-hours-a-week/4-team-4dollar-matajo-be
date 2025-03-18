@@ -9,7 +9,7 @@ import org.ktb.matajo.entity.common.BaseEntity;
 @AllArgsConstructor
 @Builder
 @Getter
-public class Address extends BaseEntity {
+public class Address{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)

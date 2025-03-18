@@ -22,10 +22,11 @@ public class CommonResponse<T>{
                 .build();
     }
 
-    public static <T> CommonResponse<T> error(String message){
+    public static <T> CommonResponse<T> error(String message, T data){
         return CommonResponse.<T>builder()
                 .success(false)
                 .message(message)
+                .data(data)
                 .build();
     }
 
