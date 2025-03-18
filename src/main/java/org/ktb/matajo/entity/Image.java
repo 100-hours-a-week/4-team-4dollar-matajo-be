@@ -12,7 +12,7 @@ import org.ktb.matajo.entity.common.BaseEntity;
 @Table(indexes = {
         @Index(name = "idx_image_post_id", columnList = "post_id")
 })
-public class Image extends BaseEntity {
+public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)

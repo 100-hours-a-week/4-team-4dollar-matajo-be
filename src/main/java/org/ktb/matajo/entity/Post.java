@@ -77,23 +77,23 @@ public class Post extends BaseEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     private List<ChatRoom> chatRoomList = new ArrayList<>();
 
-//    // 게시글 정보 업데이트
-//    public void update(String title, String content, int preferPrice,
-//                       float discountRate, boolean hiddenStatus) {
-//        this.title = title;
-//        this.content = content;
-//        this.preferPrice = preferPrice;
-//        this.discountRate = discountRate;
-//        this.hiddenStatus = hiddenStatus;
-//    }
-//
-//    // 게시글 삭제 표시 (소프트 삭제)
-//    public void delete() {
-//        this.deletedAt = LocalDateTime.now();
-//    }
-//
-//    // 게시글이 삭제되었는지 확인
-//    public boolean isDeleted() {
-//        return this.deletedAt != null;
-//    }
+    // 게시글 정보 업데이트
+    public void update(String title, String content, int preferPrice,
+                       float discountRate, boolean hiddenStatus) {
+        this.title = title;
+        this.content = content;
+        this.preferPrice = preferPrice;
+        this.discountRate = discountRate;
+        this.hiddenStatus = hiddenStatus;
+    }
+
+    // 게시글 삭제 표시 (소프트 삭제)
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    // 게시글이 삭제되었는지 확인
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
 }
