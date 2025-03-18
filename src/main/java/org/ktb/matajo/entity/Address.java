@@ -51,13 +51,13 @@ public class Address extends BaseEntity {
     @Column(length = 100)
     private String bname1;  // 법정리의 읍/면 이름 ("동"지역일 경우에는 공백, "리"지역일 경우에는 "읍" 또는 "면" 정보가 들어갑니다.)
 
-    @Column(length = 100)
+    @Column(name = "bname1_english", length = 100)
     private String bname1English;  // 법정리의 읍/면 이름의 영문 ("동"지역일 경우에는 공백, "리"지역일 경우에는 "읍" 또는 "면" 정보가 들어갑니다.)
 
     @Column(length = 100)
     private String bname2;  // 법정동/법정리 이름
 
-    @Column(length = 100)
+    @Column(name = "bname2_english", length = 100)
     private String bname2English;  // 법정동/법정리 이름의 영문
 
     @Column(length = 50)
