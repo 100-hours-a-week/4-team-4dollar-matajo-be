@@ -25,7 +25,7 @@ public class UserController {
         boolean isUpdated = userService.updateNickname(request.getNickname());
 
         if (!isUpdated) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(CommonResponse.error("duplicate_nickname", null));
         }
 
