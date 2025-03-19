@@ -7,6 +7,8 @@ import org.ktb.matajo.dto.chat.ChatRoomCreateRequestDto;
 import org.ktb.matajo.dto.chat.ChatRoomCreateResponseDto;
 import org.ktb.matajo.dto.chat.ChatRoomResponseDto;
 import org.ktb.matajo.entity.*;
+import org.ktb.matajo.global.error.code.ErrorCode;
+import org.ktb.matajo.global.error.exception.BusinessException;
 import org.ktb.matajo.repository.ChatRoomRepository;
 import org.ktb.matajo.repository.ChatUserRepository;
 import org.ktb.matajo.repository.PostRepository;
@@ -48,9 +50,21 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         }
 
         // 채팅방이 있는지 확인하기(의뢰인ID 및 게시글ID)
-        Optional<ChatRoom> existingChatRoom = chatRoomRepository.findExistingChatRoom(userId, chatRoomCreateRequestDto.getPostId());
+        Optional<ChatRoom> existingChatRoom = chatRoomRepository.findByPostIdAndUserId(chatRoomCreateRequestDto.getPostId(), userId);
 
         if (existingChatRoom.isPresent()) {
+            ChatRoom chatRoom = existingChatRoom.get();
+            log.info("기존 채팅방 발견: roomId={}, postId={}, userId={}",
+                    chatRoom.getId(), post.getId(), userId);
+
+            // 채팅방에 참여한 의뢰인 정보 조회
+            Optional<ChatUser> clientChatUser = chatUserRepository.findByChatRoomAndUserId(chatRoom, userId);
+
+            if (clientChatUser.isPresent() && !clientChatUser.get().isActiveStatus()) {
+                log.info("의뢰인 채팅방 재참여 처리: roomId={}, userId={}", chatRoom.getId(), userId);
+                clientChatUser.get().rejoin();
+            }
+
             return ChatRoomCreateResponseDto.builder()
                     .id(existingChatRoom.get().getId())
                     .build();
@@ -179,5 +193,33 @@ public class ChatRoomServiceImpl implements ChatRoomService {
             // 그 이외는 yyyy.MM.dd로 표시
             return messageTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
         }
+    }
+
+    @Override
+    @Transactional
+    public void leaveChatRoom(Long userId, Long roomId) {
+        // 채팅방 조회
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE));
+
+        // 보관인 확인
+        Long keeperId = chatRoom.getPost().getUser().getId();
+
+        // 보관인이 나가려고 하면 예외 발생
+        if (userId.equals(keeperId)) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
+
+        // 채팅방의 사용자 참여 정보 조회
+        ChatUser chatUser = chatUserRepository.findByChatRoomAndUserId(chatRoom, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE));
+
+        if(!chatUser.isActiveStatus()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        // 채팅방 나가기
+        chatUser.leave();
+        log.info("사용자 채팅방 나가기 처리: roomId={}, userId={}", roomId, userId);
     }
 }
