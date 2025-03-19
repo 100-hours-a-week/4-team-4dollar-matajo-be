@@ -16,6 +16,7 @@ public class UserController {
 
     private final UserService userService;
 
+    // ✅ 닉네임 변경 API (PATCH)
     @PatchMapping("/nickname")
     public ResponseEntity<CommonResponse<String>> updateNickname(
             @Valid @RequestBody UserRequestDto request) {
@@ -29,5 +30,12 @@ public class UserController {
 
         return ResponseEntity.ok(
                 CommonResponse.success("change_nickname_success", request.getNickname()));
+    }
+
+    // ✅ 닉네임 중복 확인 API (GET)
+    @GetMapping("/nickname-check")
+    public ResponseEntity<CommonResponse<Boolean>> checkNickname(@RequestParam String nickname) {
+        boolean isAvailable = userService.isNicknameAvailable(nickname);
+        return ResponseEntity.ok(CommonResponse.success("닉네임 사용 가능 여부 조회 성공", isAvailable));
     }
 }
