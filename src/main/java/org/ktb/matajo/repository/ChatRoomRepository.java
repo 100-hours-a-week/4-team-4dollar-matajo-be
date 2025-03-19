@@ -1,5 +1,6 @@
 package org.ktb.matajo.repository;
 
+import io.lettuce.core.dynamic.annotation.Param;
 import org.ktb.matajo.entity.ChatRoom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -9,14 +10,6 @@ import java.util.Optional;
 
 @Repository
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
-
-    // 기존에 채팅방이 있는지 확인
-    @Query("SELECT cr FROM ChatRoom cr " +
-            "JOIN cr.chatUserList cu " +
-            "WHERE cu.user.id = :userId " +
-            "AND cr.post.id = :postId " +
-            "AND cu.activeStatus = true"
-    )
-    Optional<ChatRoom> findExistingChatRoom(Long userId, Long postId);
-
+    // 게시글 ID, 사용자 ID 기준으로 기존 채팅방 조회 - activeStatus 상관없이
+    Optional<ChatRoom> findByPostIdAndUserId(Long postId, Long userId);
 }
