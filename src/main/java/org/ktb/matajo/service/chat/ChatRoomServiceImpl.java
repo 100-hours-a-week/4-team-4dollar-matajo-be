@@ -16,13 +16,12 @@ import org.ktb.matajo.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.ktb.matajo.util.TimeFormatter.formatChatRoomTime;
 
 @Service
 @Slf4j
@@ -143,7 +142,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
             if (lastChatMessage != null) {
                 lastMessage = lastChatMessage.getContent();
-                lastMessageTime = formatMessageTime(lastChatMessage.getCreatedAt());
+                lastMessageTime = formatChatRoomTime(lastChatMessage.getCreatedAt());
             }
         }
 
@@ -166,33 +165,6 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         return myChatUsers.stream()
                 .map(chatUser -> convertToChatRoomResponseDto(chatUser.getChatRoom(), userId))
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * 메시지 시간 포맷팅
-     * 당일: HH:mm
-     * 하루전: 어제
-     * 그 이전: yyyy.MM.dd
-     */
-    private String formatMessageTime(LocalDateTime messageTime) {
-        if (messageTime == null) {
-            return "";
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDate today = now.toLocalDate();
-        LocalDate messageDate = messageTime.toLocalDate();
-
-        if (messageDate.equals(today)) {
-            // 오늘 보낸 메시지는 HH:mm으로 표시
-            return messageTime.format(DateTimeFormatter.ofPattern("HH:mm"));
-        } else if (messageDate.equals(today.minusDays(1))) {
-            // 어제 보낸 메시지는 "어제"로 표시
-            return "어제";
-        } else {
-            // 그 이외는 yyyy.MM.dd로 표시
-            return messageTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
-        }
     }
 
     @Override
