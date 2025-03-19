@@ -12,4 +12,7 @@ public interface ChatRoomService {
 
     // 채팅방 목록 조회
     List<ChatRoomResponseDto> getMyChatRooms(Long userId);
+
+    // 채팅방 나가기
+    void leaveChatRoom(Long userId, Long roomId);
 }
