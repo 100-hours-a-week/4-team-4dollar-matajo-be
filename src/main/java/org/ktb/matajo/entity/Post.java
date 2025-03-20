@@ -66,15 +66,15 @@ public class Post extends BaseEntity {
     private LocalDateTime deletedAt;
 
     @Builder.Default
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostTag> postTagList = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> imageList = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatRoom> chatRoomList = new ArrayList<>();
 
     // 게시글 정보 업데이트
@@ -87,6 +87,14 @@ public class Post extends BaseEntity {
         this.hiddenStatus = hiddenStatus;
     }
 
+    public void updateAddress(Address address){
+        this.address=address;
+    }
+
+    public void updateTag(Address address){
+        this.address=address;
+    }
+
     // 게시글 삭제 표시 (소프트 삭제)
     public void delete() {
         this.deletedAt = LocalDateTime.now();
@@ -95,5 +103,10 @@ public class Post extends BaseEntity {
     // 게시글이 삭제되었는지 확인
     public boolean isDeleted() {
         return this.deletedAt != null;
+    }
+
+    // 공개 비공개 상태 변경
+    public void toggleHiddenStatus() {
+        this.hiddenStatus = !this.hiddenStatus;
     }
 }
