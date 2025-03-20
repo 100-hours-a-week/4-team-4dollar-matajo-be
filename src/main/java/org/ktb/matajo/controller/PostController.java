@@ -76,20 +76,31 @@ public class PostController {
     }
 
     @PatchMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<CommonResponse<PostCreateRequestDto>> updatePost(
+    public ResponseEntity<CommonResponse<PostCreateResponseDto>> updatePost(
             @PathVariable Long postId,
             @Valid @RequestPart("postData") PostCreateRequestDto postData,
             @RequestPart(value = "mainImage") MultipartFile mainImage,
             @RequestPart(value = "detailImages", required = false) List<MultipartFile> detailImages){
 
-        log.info("게시글 수정 요청: ID={}, 제목={}, 주소={}",
+        log.info("게시글 수정 요청: ID={}, 제목={}, 주소={}",                                                              
                 postId,
                 postData.getPostTitle(),
-                postData.getPostAddressData());
-
-        PostCreateResponseDto responseDto = PostService.updatePost(postId,postData,mainImage,detailImages);
+                postData.getPostAddressData());                                                               
+                              
+        PostCreateResponseDto responseDto = postService.updatePost(postId,postData,mainImage,detailImages);
 
         return ResponseEntity.ok(CommonResponse.success("update_post_success",responseDto));
+    }
+
+    @PatchMapping("/{postId}/visibility")
+    public ResponseEntity<CommonResponse<Void>> togglePostVisibility(
+            @PathVariable Long postId) {
+        
+        log.info("게시글 공개 상태 변경 요청: postId={}", postId);
+        
+        postService.togglePostVisibility(postId);
+        
+        return ResponseEntity.ok(CommonResponse.success("toggle_post_visibility_success", null));
     }
 
     @DeleteMapping("/{postId}")
