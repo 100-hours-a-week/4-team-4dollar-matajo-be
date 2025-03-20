@@ -149,4 +149,25 @@ public class AddressService {
 
         return savedAddress;
     }
+
+    /**
+     * 기존 주소 정보 업데이트
+     */
+    @Transactional
+    public Address updateAddress(Address address, AddressDto addressDto) {
+        // 유효성 검증
+        if (addressDto == null || addressDto.getAddress() == null || addressDto.getAddress().isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_POST_ADDRESS);
+        }
+        
+        log.info("주소 정보 업데이트: ID={}, 기존 주소={}, 새 주소={}", 
+                address.getId(), address.getAddress(), addressDto.getAddress());
+        
+        // 주소 정보 직접 업데이트
+        address.update(addressDto);
+        
+        log.info("주소 정보 업데이트 완료: ID={}", address.getId());
+        
+        return address;
+    }
 }
