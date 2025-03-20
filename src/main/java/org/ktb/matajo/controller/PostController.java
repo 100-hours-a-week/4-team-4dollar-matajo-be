@@ -1,10 +1,12 @@
 package org.ktb.matajo.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.post.PostCreateRequestDto;
 import org.ktb.matajo.dto.post.PostCreateResponseDto;
 import org.ktb.matajo.dto.post.PostListResponseDto;
+import org.ktb.matajo.dto.post.PostDetailResponseDto;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.post.PostService;
 import org.springframework.http.HttpStatus;
@@ -46,7 +48,7 @@ public class PostController {
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<PostCreateResponseDto>> createPost(
-            @RequestPart("postData") PostCreateRequestDto postData,
+            @Valid @RequestPart("postData") PostCreateRequestDto postData,
             @RequestPart("mainImage") MultipartFile mainImage,
             @RequestPart(value = "detailImages", required = false) List<MultipartFile> detailImages) {
 
@@ -60,5 +62,44 @@ public class PostController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(CommonResponse.success("write_post_success", responseDto));
+    }
+
+    @GetMapping("/{postId}")
+    public ResponseEntity<CommonResponse<PostDetailResponseDto>> getPostDetail(
+            @PathVariable Long postId) {
+        
+        log.info("게시글 상세 조회 요청: postId={}", postId);
+        
+        PostDetailResponseDto postDetail = postService.getPostDetail(postId);
+        
+        return ResponseEntity.ok(CommonResponse.success("get_post_detail_success", postDetail));
+    }
+
+    @PatchMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CommonResponse<PostCreateRequestDto>> updatePost(
+            @PathVariable Long postId,
+            @Valid @RequestPart("postData") PostCreateRequestDto postData,
+            @RequestPart(value = "mainImage") MultipartFile mainImage,
+            @RequestPart(value = "detailImages", required = false) List<MultipartFile> detailImages){
+
+        log.info("게시글 수정 요청: ID={}, 제목={}, 주소={}",
+                postId,
+                postData.getPostTitle(),
+                postData.getPostAddressData());
+
+        PostCreateResponseDto responseDto = PostService.updatePost(postId,postData,mainImage,detailImages);
+
+        return ResponseEntity.ok(CommonResponse.success("update_post_success",responseDto));
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<CommonResponse<Void>> deletePost(
+            @PathVariable Long postId) {
+        
+        log.info("게시글 삭제 요청: postId={}", postId);
+        
+        postService.deletePost(postId);
+        
+        return ResponseEntity.ok(CommonResponse.success("delete_post_success", null));
     }
 }

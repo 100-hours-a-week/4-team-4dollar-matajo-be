@@ -15,21 +15,16 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PostListResponseDto {
-    @NotNull
+
     private Long postId; //게시글 id
 
-    @NotNull
     private String postTitle; //게시글 제목 (한줄정리)
 
-    @NotNull
     private String postMainImage; // 메인이미지
 
-    @NotNull
     private String postAddress;
 
-    @NotNull
     private int preferPrice;
 
-    @NotNull
     private List<String> postTags;
 }

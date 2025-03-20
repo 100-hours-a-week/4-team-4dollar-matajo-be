@@ -14,12 +14,20 @@ import java.util.List;
 @Builder
 public class PostDetailResponseDto {
     private Long postId;
+
     private List<String> postImages;
+
     private String postTitle;
+
     private List<String> postTags;
+
     private int preferPrice;
+
     private String postContent;
+
     private String postAddress;
+
     private String nickname;
+
     private boolean hiddenStatus;
 }

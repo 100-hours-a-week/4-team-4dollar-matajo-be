@@ -2,9 +2,7 @@ package org.ktb.matajo.service.post;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ktb.matajo.dto.post.PostCreateRequestDto;
-import org.ktb.matajo.dto.post.PostCreateResponseDto;
-import org.ktb.matajo.dto.post.PostListResponseDto;
+import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.entity.*;
 import org.ktb.matajo.global.error.code.ErrorCode;
 import org.ktb.matajo.global.error.exception.BusinessException;
@@ -17,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -111,7 +110,7 @@ public class PostService {
         // 주소 정보 처리
         Address address;
         try {
-            address = addressService.saveOrGetAddress(requestDto.getPostAddressData());
+            address = addressService.createAddressForPost(requestDto.getPostAddressData());
         } catch (Exception e) {
             log.error("주소 정보 처리 중 오류 발생: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.INVALID_POST_ADDRESS);
@@ -163,9 +162,8 @@ public class PostService {
             throw new BusinessException(ErrorCode.INVALID_POST_ADDRESS);
         }
 
-        // 희망 가격 검증
-        // TODO : 0원도 가능한가?
-        if (postData.getPreferPrice() < 0) {
+        // 희망 가격 검증 + 0원 불가능
+        if (postData.getPreferPrice() <= 0) {
             throw new BusinessException(ErrorCode.INVALID_PREFER_PRICE);
         }
 
@@ -254,4 +252,323 @@ public class PostService {
             throw new BusinessException(ErrorCode.FAILED_TO_WRITE_POST);
         }
     }
+
+    /**
+     * 게시글 상세 조회 메소드
+     * @param postId 조회할 게시글 ID
+     * @return 게시글 상세 정보 DTO
+     */
+    @Transactional(readOnly = true)
+    public PostDetailResponseDto getPostDetail(Long postId) {
+        // 게시글 조회
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> {
+                    log.error("게시글을 찾을 수 없습니다: postId={}", postId);
+                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                });
+
+        // 삭제된 게시글인지 확인
+        if (post.isDeleted()) {
+            log.error("이미 삭제된 게시글입니다: postId={}", postId);
+            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+        }
+
+        // 이미지 URL 목록 추출 - 썸네일 이미지를 첫 번째 위치에 배치
+        List<String> imageUrls = new ArrayList<>();
+
+        // 먼저 썸네일 이미지 추가
+        post.getImageList().stream()
+                .filter(Image::isThumbnailStatus)
+                .findFirst()
+                .ifPresent(image -> imageUrls.add(image.getImageUrl()));
+
+        // 나머지 이미지 추가 (썸네일 제외)
+        post.getImageList().stream()
+                .filter(image -> !image.isThumbnailStatus())
+                .map(Image::getImageUrl)
+                .forEach(imageUrls::add);
+
+        // 태그 목록 추출
+        List<String> tags = post.getPostTagList().stream()
+                .map(PostTag::getTag)
+                .map(Tag::getTagName)
+                .collect(Collectors.toList());
+
+        // DTO 생성 및 반환
+        try {
+            // DTO 생성 및 반환
+            return PostDetailResponseDto.builder()
+                    .postId(post.getId())
+                    .postImages(imageUrls)
+                    .postTitle(post.getTitle())
+                    .postTags(tags)
+                    .preferPrice(post.getPreferPrice())
+                    .postContent(post.getContent())
+                    .postAddress(post.getAddress() != null ? post.getAddress().getAddress() : null)
+                    .nickname(post.getUser() != null ? post.getUser().getNickname() : "알 수 없음")
+                    .hiddenStatus(post.isHiddenStatus())
+                    .build();
+        } catch (Exception e) {
+            log.error("게시글 상세 정보 DTO 생성 중 오류 발생: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.FAILED_TO_GET_POST_DETAIL);
+        }
+    }
+
+
+
+    /**
+     * 게시글 수정 메서드
+     * @param postId 수정할 게시글 ID
+     * @param requestDto 수정 정보 DTO
+     * @param mainImage 새 메인 이미지 (선택적)
+     * @param detailImages 새 상세 이미지들 (선택적)
+     * @return 수정된 게시글 ID 응답 DTO
+     */
+    @Transactional
+    public PostCreateResponseDto updatePost(Long postId,PostCreateRequestDto requestDto,
+                                            MultipartFile mainImage,List<MultipartFile> detailImages){
+
+        //게시글 id 검증
+        if (postId == null) {
+            log.error("게시글 ID가 null입니다");
+            throw new BusinessException(ErrorCode.INVALID_POST_ID);
+        }
+
+        //게시글 조회
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> {
+                    log.error("게시글을 찾을 수 없습니다: postId={}", postId);
+                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                });
+
+        //삭제된 게시글인지 확인
+        if (post.isDeleted()) {
+            log.error("이미 삭제된 게시글입니다: postId={}", postId);
+            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+        }
+
+        // 현재 인증된 사용자 정보 가져오기
+        // User currentUser = userService.getCurrentUser();
+
+        // 테스트용 하드코딩된 사용자 정보 가져오기
+        User testUser = userRepository.findByKakaoId(987654321L)
+                .orElseThrow(() -> {
+                    log.error("테스트용 사용자를 찾을 수 없습니다");
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND);});
+
+        //게시글 작성자- 현재 사용자 비교
+        // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
+        if (!post.getUser().getId().equals(testUser.getId())) {
+            log.error("게시글 수정 권한이 없습니다: postId={}, userId={}", postId, testUser.getId());
+            throw new BusinessException(ErrorCode.NO_PERMISSION_TO_UPDATE);
+        }
+
+        //요청 데이터 유효성 검사
+        validatePostRequest(requestDto,mainImage);
+
+
+        try{
+
+            // 주소 업데이트
+            Address address = updatePostAddress(post, requestDto.getPostAddressData());
+
+            // 태그 업데이트
+            Tag tag = updatePostTags(post, requestDto.getPostTags());
+
+            // 이미지 업데이트
+            if (mainImage != null && !mainImage.isEmpty()) {
+                updateMainImage(post, mainImage);
+            }
+
+            if (detailImages != null && !detailImages.isEmpty()) {
+                updateDetailImages(post, detailImages);
+            }
+
+            //업데이트
+            post.update(
+                    requestDto.getPostTitle(),
+                    requestDto.getPostContent(),
+                    address,
+                    requestDto.getPreferPrice(),
+                    requestDto.getDiscountRate(),
+                    requestDto.isHiddenStatus()
+            );
+
+            log.info("게시글 수정 완료: postId={}", postId);
+
+            return PostCreateResponseDto.builder()
+                    .postId(post.getId())
+                    .build();
+
+        } catch (BusinessException e){
+            log.error("게시글 수정 중 비즈니스 예외 발생: {}", e.getMessage(), e);
+            throw e;
+        } catch(Exception e){
+            log.error("게시글 수정 중 오류 발생: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.FAILED_TO_UPDATE_POST);
+
+        }
+    }
+
+    /**
+     * 게시글 주소 업데이트
+     */
+    private Address updatePostAddress(Post post, AddressDto addressDto) {
+        try {
+            // AddressService를 통해 주소 객체 생성 또는 조회
+            Address address = addressService.saveOrGetAddress(addressDto);
+
+            // Post 엔티티의 update 메서드를 사용해 주소 업데이트
+            //post.updateAddress(address);
+
+            log.info("게시글 주소 업데이트 완료: postId={}, 새 주소={}",
+                    post.getId(), address.getAddress());
+
+        } catch (Exception e) {
+            log.error("게시글 주소 업데이트 중 오류 발생: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.FAILED_TO_UPDATE_POST);
+        }
+
+    }
+
+    /**
+     * 게시글 태그 업데이트
+     */
+    private Tag updatePostTags(Post post, List<String> newTagNames) {
+        // 기존 태그 연결 정보 모두 제거
+        post.getPostTagList().clear();
+
+        // 새로운 태그 연결 정보 추가
+        for (String tagName : newTagNames) {
+            Tag tag = tagRepository.findByTagName(tagName)
+                    .orElseThrow(() -> {
+                        log.error("존재하지 않는 태그: {}", tagName);
+                        return new BusinessException(ErrorCode.INVALID_TAG_NAME);
+                    });
+
+            PostTag postTag = PostTag.builder()
+                    .post(post)
+                    .tag(tag)
+                    .build();
+
+            post.getPostTagList().add(postTag);
+        }
+
+        log.debug("게시글 태그 업데이트 완료: postId={}, tags={}", post.getId(), newTagNames);
+    }
+
+    /**
+     * 메인 이미지 업데이트
+     */
+    private void updateMainImage(Post post, MultipartFile newMainImage) {
+        // 기존 메인 이미지 찾기
+        post.getImageList().stream()
+                .filter(Image::isThumbnailStatus)
+                .findFirst()
+                .ifPresent(oldMainImage -> {
+                    // S3에서 기존 이미지 삭제
+                    s3Service.deleteImage(oldMainImage.getImageUrl());
+
+                    // 이미지 리스트에서 제거
+                    post.getImageList().remove(oldMainImage);
+                });
+
+        // 새 메인 이미지 업로드 및 추가
+        String newImageUrl = s3Service.uploadImage(newMainImage);
+
+        Image thumbnailImage = Image.builder()
+                .post(post)
+                .imageUrl(newImageUrl)
+                .thumbnailStatus(true)
+                .build();
+
+        post.getImageList().add(thumbnailImage);
+        log.debug("메인 이미지 업데이트 완료: postId={}", post.getId());
+    }
+
+    /**
+     * 상세 이미지 업데이트
+     */
+    private void updateDetailImages(Post post, List<MultipartFile> newDetailImages) {
+        // 기존 상세 이미지 모두 삭제
+        post.getImageList().stream()
+                .filter(image -> !image.isThumbnailStatus())
+                .forEach(oldImage -> {
+                    // S3에서 이미지 삭제
+                    s3Service.deleteImage(oldImage.getImageUrl());
+
+                    // 리스트에서 제거
+                    post.getImageList().remove(oldImage);
+                });
+
+        // 새 상세 이미지 업로드 및 추가
+        List<String> newImageUrls = s3Service.uploadImages(newDetailImages);
+
+        for (String imageUrl : newImageUrls) {
+            Image detailImage = Image.builder()
+                    .post(post)
+                    .imageUrl(imageUrl)
+                    .thumbnailStatus(false)
+                    .build();
+
+            post.getImageList().add(detailImage);
+        }
+
+        log.debug("상세 이미지 업데이트 완료: postId={}", post.getId());
+    }
+
+    /**
+     * 게시글 삭제 메소드 (소프트 딜리트)
+     * @param postId 삭제할 게시글 ID
+     */
+    @Transactional
+    public void deletePost(Long postId) {
+
+        // postId null 체크 추가
+        if (postId == null) {
+            log.error("게시글 ID가 null입니다");
+            throw new BusinessException(ErrorCode.INVALID_POST_ID);
+        }
+
+        // 게시글 조회
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> {
+                    log.error("게시글을 찾을 수 없습니다: postId={}", postId);
+                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                });
+
+        // 이미 삭제된 게시글인지 확인
+        if (post.isDeleted()) {
+            log.error("이미 삭제된 게시글입니다: postId={}", postId);
+            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+        }
+
+        // 현재 인증된 사용자 정보 가져오기
+        // User currentUser = userService.getCurrentUser();
+
+        // 테스트용 하드코딩된 사용자 정보 가져오기 (추후 인증 기능 구현 후 변경 필요)
+        User testUser = userRepository.findByKakaoId(987654321L)
+                .orElseThrow(() -> {
+                    log.error("테스트용 사용자를 찾을 수 없습니다");
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND);
+                });
+
+        // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
+        if (!post.getUser().getId().equals(testUser.getId())) {
+            log.error("게시글 삭제 권한이 없습니다: postId={}, userId={}", postId, testUser.getId());
+            throw new BusinessException(ErrorCode.NO_PERMISSION_TO_DELETE);
+        }
+
+        try {
+            // 소프트 딜리트 수행
+            post.delete();
+            log.info("게시글 삭제 완료(소프트 딜리트): postId={}", postId);
+        } catch (Exception e) {
+            log.error("게시글 삭제 중 오류 발생: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.FAILED_TO_DELETE_POST);
+        }
+
+        log.info("게시글 삭제 완료(소프트 딜리트): postId={}", postId);
+    }
 }
+

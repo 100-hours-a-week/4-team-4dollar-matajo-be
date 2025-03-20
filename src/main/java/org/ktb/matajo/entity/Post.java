@@ -78,13 +78,18 @@ public class Post extends BaseEntity {
     private List<ChatRoom> chatRoomList = new ArrayList<>();
 
     // 게시글 정보 업데이트
-    public void update(String title, String content, int preferPrice,
+    public void update(String title, String content, Address address, int preferPrice,
                        float discountRate, boolean hiddenStatus) {
         this.title = title;
         this.content = content;
+        this.address= address;
         this.preferPrice = preferPrice;
         this.discountRate = discountRate;
         this.hiddenStatus = hiddenStatus;
+    }
+
+    public void updateAddress(Address address){
+        this.address=address;
     }
 
     // 게시글 삭제 표시 (소프트 삭제)

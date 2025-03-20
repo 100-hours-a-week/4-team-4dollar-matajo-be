@@ -1,5 +1,6 @@
 package org.ktb.matajo.dto.post;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,10 +19,10 @@ public class PostCreateRequestDto {
 
     private AddressDto postAddressData;  // 다음 주소 API 응답 데이터
 
-    @NotNull
+    @NotBlank
     private String postTitle;
 
-    @NotNull
+    @NotBlank
     private String postContent;
 
     @NotNull
