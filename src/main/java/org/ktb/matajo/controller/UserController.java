@@ -26,7 +26,7 @@ public class UserController {
 
         if (!isUpdated) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(CommonResponse.error("duplicate_nickname", null));
+                    .body(CommonResponse.error("nickname_already_exists", null));
         }
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -34,14 +34,16 @@ public class UserController {
     }
 
     // ✅ 닉네임 중복 확인 API (GET)
-    @GetMapping("/nickname-check")
+    @GetMapping("/nickname")
     public ResponseEntity<CommonResponse<Boolean>> checkNickname(@RequestParam String nickname) {
         if (nickname == null || nickname.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(CommonResponse.error("invalid_nickname", null));
         }
 
+        // ✅ `isNicknameAvailable()` 사용
         boolean isAvailable = userService.isNicknameAvailable(nickname);
+
         return ResponseEntity.status(HttpStatus.OK)
                 .body(CommonResponse.success("check_nickname_success", isAvailable));
     }
