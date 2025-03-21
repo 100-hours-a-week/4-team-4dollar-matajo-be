@@ -50,7 +50,7 @@ public class Post extends BaseEntity {
     private int preferPrice;
 
     // 공개 여부
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean hiddenStatus;
 
     // 소수점 값 제한
