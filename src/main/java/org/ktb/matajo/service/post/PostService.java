@@ -9,6 +9,7 @@ import org.ktb.matajo.global.error.exception.BusinessException;
 import org.ktb.matajo.repository.PostRepository;
 import org.ktb.matajo.repository.TagRepository;
 import org.ktb.matajo.repository.UserRepository;
+import org.ktb.matajo.service.s3.S3Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -217,7 +218,7 @@ public class PostService {
         try {
             // 메인 이미지 처리 (썸네일로 설정)
             if (mainImage != null && !mainImage.isEmpty()) {
-                String mainImageUrl = s3Service.uploadImage(mainImage);
+                String mainImageUrl = s3Service.uploadImage(mainImage, "post");
 
                 Image thumbnailImage = Image.builder()
                         .post(post)
@@ -511,7 +512,7 @@ public class PostService {
                 }
                 
                 // 새 메인 이미지 업로드
-                String newImageUrl = s3Service.uploadImage(newMainImage);
+                String newImageUrl = s3Service.uploadImage(newMainImage, "post");
                 
                 Image thumbnailImage = Image.builder()
                         .post(post)

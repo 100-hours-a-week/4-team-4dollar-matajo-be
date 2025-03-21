@@ -1,4 +1,4 @@
-package org.ktb.matajo.service.post;
+package org.ktb.matajo.service.s3;
 
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
@@ -10,7 +10,7 @@ public interface S3Service {
      * @param file MultipartFile 형식의 이미지 파일
      * @return 업로드된 이미지의 S3 URL
      */
-    String uploadImage(MultipartFile file);
+    String uploadImage(MultipartFile file, String category);
 
     /**
      * 다수의 MultipartFile 이미지를 S3에 업로드하고 URL 목록 반환
