@@ -97,8 +97,8 @@ public class PostService {
         // 현재 인증된 사용자 정보 가져오기
 //        User currentUser = userService.getCurrentUser();
 
-        // 테스트용 하드코딩된 사용자 정보 가져오기 (kakaoId가 987654321인 사용자)
-        User testUser = userRepository.findByKakaoId(987654321L)
+        // 테스트용 하드코딩된 사용자 정보 가져오기 (kakaoId가 12345678901인 사용자)
+        User testUser = userRepository.findById(1L)
                 .orElseThrow(() -> {
                     log.error("테스트용 사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
@@ -352,7 +352,7 @@ public class PostService {
         // User currentUser = userService.getCurrentUser();
 
         // 테스트용 하드코딩된 사용자 정보 가져오기
-        User testUser = userRepository.findByKakaoId(987654321L)
+        User testUser = userRepository.findById(1L)
                 .orElseThrow(() -> {
                     log.error("테스트용 사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);});
@@ -596,7 +596,7 @@ public class PostService {
         // User currentUser = userService.getCurrentUser();
 
         // 테스트용 하드코딩된 사용자 정보 가져오기 (추후 인증 기능 구현 후 변경 필요)
-        User testUser = userRepository.findByKakaoId(987654321L)
+        User testUser = userRepository.findById(1L)
                 .orElseThrow(() -> {
                     log.error("테스트용 사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
@@ -646,7 +646,7 @@ public class PostService {
         }
 
         // 테스트용 하드코딩된 사용자 정보 가져오기
-        User testUser = userRepository.findByKakaoId(987654321L)
+        User testUser = userRepository.findById(1L)
                 .orElseThrow(() -> {
                     log.error("테스트용 사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
