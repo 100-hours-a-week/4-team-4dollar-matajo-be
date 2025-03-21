@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.chat.ChatRoomCreateRequestDto;
 import org.ktb.matajo.dto.chat.ChatRoomCreateResponseDto;
+import org.ktb.matajo.dto.chat.ChatRoomDetailResponseDto;
 import org.ktb.matajo.dto.chat.ChatRoomResponseDto;
 import org.ktb.matajo.entity.*;
 import org.ktb.matajo.global.error.code.ErrorCode;
@@ -167,6 +168,58 @@ public class ChatRoomServiceImpl implements ChatRoomService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 채팅방 상세 정보 조회
+     */
+    @Override
+    public ChatRoomDetailResponseDto getChatRoomDetail(Long userId, Long roomId) {
+        // 채팅방 조회
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE));
+
+        // 사용자가 채팅방 참여자인지 확인
+        boolean isMember = chatUserRepository.existsByUserIdAndChatRoomIdAndActiveStatusIsTrue(userId, roomId);
+        if (!isMember) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
+
+        // 게시글 정보
+        Post post = chatRoom.getPost();
+
+        // 썸네일 이미지 URL 가져오기
+        String postMainImage = post.getImageList().stream()
+                .filter(Image::isThumbnailStatus)
+                .findFirst()
+                .map(Image::getImageUrl)
+                .orElse("");
+
+        // 주소 정보 (null 체크 추가)
+        String postAddress = "";
+        if (post.getAddress() != null) {
+            postAddress = post.getAddress().getBname();
+        }
+
+        // 보관인 정보 (게시글 작성자)
+        User keeper = post.getUser();
+
+        // 의뢰인 정보 (채팅방 생성자)
+        User client = chatRoom.getUser();
+
+        // 채팅방 상세 정보 DTO 생성
+        return ChatRoomDetailResponseDto.builder()
+                .roomId(chatRoom.getId())
+                .postId(post.getId())
+                .postTitle(post.getTitle())
+                .postMainImage(postMainImage)
+                .postAddress(postAddress)
+                .preferPrice(post.getPreferPrice())
+                .keeperId(keeper.getId())
+                .keeperNickname(keeper.getNickname())
+                .clientId(client.getId())
+                .clientNickname(client.getNickname())
+                .build();
+    }
+
     @Override
     @Transactional
     public void leaveChatRoom(Long userId, Long roomId) {
@@ -194,4 +247,5 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         chatUser.leave();
         log.info("사용자 채팅방 나가기 처리: roomId={}, userId={}", roomId, userId);
     }
+
 }
