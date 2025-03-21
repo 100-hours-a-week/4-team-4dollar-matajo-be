@@ -37,6 +37,7 @@ public class UserServiceImpl implements UserService {
             User newUser = User.builder()
                     .kakaoId(userInfo.getKakaoId())
                     .nickname(uniqueNickname)
+                    .username(userInfo.getNickname())
                     .phoneNumber(userInfo.getPhoneNumber())
                     .role(UserType.USER)
                     .keeperAgreement(false)
