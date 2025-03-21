@@ -21,7 +21,7 @@ public class Image {
     @Column(nullable = false)
     private String imageUrl;  // S3 파일 경로
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean thumbnailStatus;  // 썸네일 여부 (0: X, 1: O)
 
     // 게시글과 연관된 이미지

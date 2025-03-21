@@ -35,7 +35,7 @@ public class User extends BaseEntity {
     @Convert(converter = UserTypeConverter.class)
     private UserType role; // 1(USER), 2(KEEPER)
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean keeperAgreement;
 
     @Column

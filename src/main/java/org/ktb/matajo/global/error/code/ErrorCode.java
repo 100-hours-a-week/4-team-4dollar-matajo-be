@@ -31,16 +31,19 @@ public enum ErrorCode {
     // 404 NOT FOUND
     NOT_FOUND_POST(HttpStatus.NOT_FOUND, "not_found_post", "게시글을 찾을 수 없습니다"),
     NOT_FOUND_POSTS_PAGE(HttpStatus.NOT_FOUND, "not_found_posts_page", "해당 페이지에 게시글이 없습니다"),
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "user_not_found", "사용자를 찾을 수 없습니다"),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "not_found_user", "사용자를 찾을 수 없습니다"),
+    INVALID_TAG_NAME(HttpStatus.NOT_FOUND,"not_found_tag_name", "존재하지 않는 태그입니다."),
 
     // 405 METHOD NOT ALLOWED - 누락된 에러 코드 추가
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "지원하지 않는 HTTP 메소드입니다"),
 
     // 500 INTERNAL SERVER ERROR
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "internal_server_error", "서버 내부 오류가 발생했습니다"),
+    FAILED_TO_UPLOAD_IMAGE(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_upload_image", "이미지 업로드에 실패했습니다"),
     FAILED_TO_WRITE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_write_post", "게시글 작성에 실패했습니다"),
     FAILED_TO_DELETE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_delete_post", "게시글 삭제에 실패했습니다"),
-    FAILED_TO_GET_POST_DETAIL(HttpStatus.INTERNAL_SERVER_ERROR,  "failed_to_get_post_detail", "게시글 상세 조회에 실패했습니다");
+    FAILED_TO_GET_POST_DETAIL(HttpStatus.INTERNAL_SERVER_ERROR,  "failed_to_get_post_detail", "게시글 상세 조회에 실패했습니다"),
+    FAILED_TO_UPDATE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_update_post", "게시글 수정에 실패했습니다");
 
     private final HttpStatus status;
     private final String errorMessage;
