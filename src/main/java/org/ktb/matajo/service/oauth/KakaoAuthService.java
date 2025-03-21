@@ -1,4 +1,4 @@
-package org.ktb.matajo.service;
+package org.ktb.matajo.service.oauth;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;

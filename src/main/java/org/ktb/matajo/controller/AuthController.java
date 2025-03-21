@@ -2,7 +2,7 @@ package org.ktb.matajo.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
-import org.ktb.matajo.service.KakaoAuthService;
+import org.ktb.matajo.service.oauth.KakaoAuthService;
 import org.ktb.matajo.service.user.KakaoUserService;
 import org.ktb.matajo.service.user.UserService;
 import org.springframework.http.ResponseEntity;
