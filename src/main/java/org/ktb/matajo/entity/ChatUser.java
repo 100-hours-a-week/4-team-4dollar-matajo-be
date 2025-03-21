@@ -34,7 +34,7 @@ public class ChatUser {
             foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT), nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean activeStatus;
 
     @CreationTimestamp
@@ -42,4 +42,16 @@ public class ChatUser {
     private LocalDateTime joinedAt;
 
     private LocalDateTime leftAt;
+
+    // 채팅방 나가기
+    public void leave() {
+        this.activeStatus = false;
+        this.leftAt = LocalDateTime.now();
+    }
+
+    // 채팅방 다시 들어오기
+    public void rejoin() {
+        this.activeStatus = true;
+        this.leftAt = null;
+    }
 }

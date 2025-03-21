@@ -1,4 +1,4 @@
-package org.ktb.matajo.service.post;
+package org.ktb.matajo.service.s3;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
@@ -32,7 +32,7 @@ public class S3ServiceImpl implements S3Service {
      */
 
     @Override
-    public String uploadImage(MultipartFile file) {
+    public String uploadImage(MultipartFile file, String category) {
         // 파일 유효성 검증
         if (file == null || file.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_POST_IMAGES);
@@ -42,7 +42,7 @@ public class S3ServiceImpl implements S3Service {
             // 원본 파일명 추출 및 고유한 파일명 생성
             String originalFilename = file.getOriginalFilename();
             String extension = getExtensionFromFilename(originalFilename);
-            String fileName = "posts/" + UUID.randomUUID() + extension;
+            String fileName = category + "/" + UUID.randomUUID() + extension;
 
             // 메타데이터 설정
             ObjectMetadata metadata = new ObjectMetadata();
@@ -85,7 +85,7 @@ public class S3ServiceImpl implements S3Service {
         List<String> imageUrls = new ArrayList<>();
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
-                String imageUrl = uploadImage(file);
+                String imageUrl = uploadImage(file, "post");
                 imageUrls.add(imageUrl);
             }
         }
