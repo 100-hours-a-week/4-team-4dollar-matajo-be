@@ -16,4 +16,6 @@ public interface ChatUserRepository extends JpaRepository<ChatUser, Long> {
     // 해당 채팅방의 사용자 참여 정보 조회
     Optional<ChatUser> findByChatRoomAndUserId(ChatRoom chatRoom, Long userId);
 
+    // 특정 사용자가 특정 채팅방에 활성 상태로 참여 중인지 확인
+    boolean existsByUserIdAndChatRoomIdAndActiveStatusIsTrue(Long userId, Long roomId);
 }
