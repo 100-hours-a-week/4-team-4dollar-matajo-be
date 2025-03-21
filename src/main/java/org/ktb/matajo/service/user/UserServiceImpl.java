@@ -45,15 +45,16 @@ public class UserServiceImpl implements UserService {
         });
 
         // 액세스 토큰 및 리프레시 토큰 생성
-        String accessToken = jwtUtil.createAccessToken(user.getKakaoId(), user.getRole().toString(), user.getNickname(), user.getDeletedAt());
-        String refreshToken = jwtUtil.createRefreshToken(user.getKakaoId());
+        String accessToken = jwtUtil.createAccessToken(user.getId(), user.getRole().toString(), user.getNickname(), user.getDeletedAt());
+        String refreshToken = jwtUtil.createRefreshToken(user.getId());
 
         // 리프레시 토큰을 DB에 저장 (이전 토큰이 있으면 업데이트)
-        refreshTokenRepository.findByKakaoId(user.getKakaoId())
+        refreshTokenRepository.findByUserId(user.getId())
                 .ifPresentOrElse(
                         existingToken -> existingToken.updateToken(refreshToken),
-                        () -> refreshTokenRepository.save(new RefreshToken(user.getKakaoId(), refreshToken))
+                        () -> refreshTokenRepository.save(new RefreshToken(user.getId(), refreshToken))
                 );
+
 
         return Map.of(
                 "accessToken", accessToken,

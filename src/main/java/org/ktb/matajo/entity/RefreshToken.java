@@ -15,7 +15,7 @@ import org.ktb.matajo.entity.common.BaseEntity;
 @AllArgsConstructor
 public class RefreshToken extends BaseEntity {
     @Id
-    private Long kakaoId;
+    private Long userId;
 
     @Column(nullable = false, unique = true)
     private String token;

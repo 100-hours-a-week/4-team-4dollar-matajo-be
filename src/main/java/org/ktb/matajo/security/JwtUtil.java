@@ -24,9 +24,9 @@ public class JwtUtil {
     }
 
     // 액세스 토큰 생성
-    public String createAccessToken(Long kakaoId, String role, String nickname, LocalDateTime deletedAt) {
+    public String createAccessToken(Long userId, String role, String nickname, LocalDateTime deletedAt) {
         return Jwts.builder()
-                .claim("kakaoId", kakaoId)
+                .claim("userId", userId)
                 .claim("role", role)  // 사용자 역할 추가
                 .claim("nickname", nickname)  // 닉네임 추가
                 .claim("deletedAt", deletedAt != null ? deletedAt.toString() : null)  // 탈퇴 여부 포함
@@ -37,9 +37,9 @@ public class JwtUtil {
     }
 
     // 리프레시 토큰 생성
-    public String createRefreshToken(Long kakaoId) {
+    public String createRefreshToken(Long userId) {
         return Jwts.builder()
-                .subject(String.valueOf(kakaoId))
+                .subject(String.valueOf(userId))
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
                 .signWith(key, SignatureAlgorithm.HS256)
