@@ -17,8 +17,6 @@ public class ChatMessageResponseDto {
     private String content;       // 메시지 내용
     private MessageType messageType;  // 메시지 타입
     private boolean readStatus;   // 읽음 상태
-
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime createdAt;  // 생성 시간
     private String senderNickname;    // 발신자 닉네임
 }
