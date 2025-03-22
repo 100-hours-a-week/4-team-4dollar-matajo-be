@@ -87,8 +87,8 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         // 캐시에 없거나 첫 페이지가 아니면 DB에서 조회
         log.info("DB에서 메시지 조회: roomId={}, page={}, size={}", roomId, page, size);
 
-        // 최신 메시지부터 조회 (내림차순)
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        // 메시지 조회
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "createdAt"));
         List<ChatMessage> messages = chatMessageRepository.findByChatRoomId(roomId, pageRequest);
 
         List<ChatMessageResponseDto> messageDtos = messages.stream()
