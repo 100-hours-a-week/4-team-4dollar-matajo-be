@@ -2,12 +2,22 @@ package org.ktb.matajo.repository;
 
 import org.ktb.matajo.entity.Address;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface AddressRepository extends JpaRepository<Address, Long> {
-    // 동일한 주소가 있는지 확인하기 위한 메소드
-    Optional<Address> findByZonecodeAndAddress(String zonecode, String address);
+
+    // 위치 정보 ID로 주소 조회
+    @Query("SELECT a FROM Address a WHERE a.locationInfo.id = :locationInfoId")
+    List<Address> findByLocationInfoId(@Param("locationInfoId") Long locationInfoId);
+
+    // 위치 정보 ID 목록으로 주소 ID 조회
+    @Query("SELECT a.id FROM Address a WHERE a.locationInfo.id IN :locationInfoIds")
+    List<Long> findAddressIdsByLocationInfoIds(@Param("locationInfoIds") List<Long> locationInfoIds);
+
 }
