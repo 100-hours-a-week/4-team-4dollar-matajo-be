@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class TradeRequestDto {
+public class TradeInfoRequestDto {
 
     @NotNull
     private Long roomId;
