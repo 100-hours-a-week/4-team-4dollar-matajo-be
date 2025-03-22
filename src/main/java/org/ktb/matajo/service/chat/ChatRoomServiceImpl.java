@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.ktb.matajo.util.TimeFormatter.formatChatRoomTime;
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -143,7 +141,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
             if (lastChatMessage != null) {
                 lastMessage = lastChatMessage.getContent();
-                lastMessageTime = formatChatRoomTime(lastChatMessage.getCreatedAt());
+                lastMessageTime = lastChatMessage.getCreatedAt().toString();
             }
         }
 
