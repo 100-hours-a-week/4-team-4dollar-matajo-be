@@ -133,6 +133,10 @@ public class Address{
     @Column(length = 50)
     private String roadnameEnglish;  // 도로명의 영문 값
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_info_id")
+    private LocationInfo locationInfo;
+
     /**
      * 주소 정보 업데이트
      */
@@ -176,5 +180,10 @@ public class Address{
         this.roadnameCode = addressDto.getRoadnameCode();
         this.roadname = addressDto.getRoadname();
         this.roadnameEnglish = addressDto.getRoadnameEnglish();
+    }
+
+    // LocationInfo 업데이트 메서드
+    public void updateLocationInfo(LocationInfo locationInfo) {
+        this.locationInfo = locationInfo;
     }
 }
