@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -666,6 +667,40 @@ public class PostService {
             log.error("게시글 공개 상태 변경 중 오류 발생: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.FAILED_TO_UPDATE_POST);
         }
+    }
+
+    /**
+     * 위치 ID 기반 게시글 목록 조회 메소드
+     * @param locationInfoId 조회할 위치 정보 ID
+     * @return 게시글 목록 응답 DTO
+     */
+    @Transactional(readOnly = true)
+    public List<LocationResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId) {
+        if (locationInfoId == null) {
+            log.error("위치 정보 ID가 null입니다");
+            throw new BusinessException(ErrorCode.INVALID_LOCATION_ID);
+        }
+
+        log.info("위치 ID 기반 게시글 ID 조회 시작: locationInfoId={}", locationInfoId);
+
+        // 위치 ID로 게시글 직접 조회 (단일 쿼리 최적화)
+        List<Post> posts = postRepository.findActivePostsByLocationInfoId(locationInfoId);
+
+        if (posts.isEmpty()) {
+            log.info("해당 위치에 게시글이 없습니다: locationInfoId={}", locationInfoId);
+            return Collections.emptyList();
+        }
+
+        log.info("위치 ID 기반 게시글 조회 완료: locationInfoId={}, 조회된 게시글 수={}",
+                locationInfoId, posts.size());
+
+        // 게시글 ID와 주소 ID만 추출하여 DTO로 변환
+        return posts.stream()
+                .map(post -> LocationResponseDto.builder()
+                        .postId(post.getId())
+                        .address(post.getAddress().getAddress())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
 
