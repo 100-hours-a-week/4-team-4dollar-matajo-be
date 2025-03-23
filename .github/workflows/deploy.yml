@@ -25,7 +25,9 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build
+        run: |
+          ./gradlew dependencies  # 의존성 트리 출력
+          ./gradlew clean build --no-build-cache --refresh-dependencies
 
       - name: Upload JAR to EC2
         uses: appleboy/scp-action@v0.1.3
