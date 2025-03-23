@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,8 +98,8 @@ public class PostService {
         // 현재 인증된 사용자 정보 가져오기
 //        User currentUser = userService.getCurrentUser();
 
-        // 테스트용 하드코딩된 사용자 정보 가져오기 (kakaoId가 987654321인 사용자)
-        User testUser = userRepository.findByKakaoId(987654321L)
+        // 테스트용 하드코딩된 사용자 정보 가져오기 (kakaoId가 12345678901인 사용자)
+        User testUser = userRepository.findById(1L)
                 .orElseThrow(() -> {
                     log.error("테스트용 사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
@@ -352,7 +353,7 @@ public class PostService {
         // User currentUser = userService.getCurrentUser();
 
         // 테스트용 하드코딩된 사용자 정보 가져오기
-        User testUser = userRepository.findByKakaoId(987654321L)
+        User testUser = userRepository.findById(1L)
                 .orElseThrow(() -> {
                     log.error("테스트용 사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);});
@@ -596,7 +597,7 @@ public class PostService {
         // User currentUser = userService.getCurrentUser();
 
         // 테스트용 하드코딩된 사용자 정보 가져오기 (추후 인증 기능 구현 후 변경 필요)
-        User testUser = userRepository.findByKakaoId(987654321L)
+        User testUser = userRepository.findById(1L)
                 .orElseThrow(() -> {
                     log.error("테스트용 사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
@@ -646,7 +647,7 @@ public class PostService {
         }
 
         // 테스트용 하드코딩된 사용자 정보 가져오기
-        User testUser = userRepository.findByKakaoId(987654321L)
+        User testUser = userRepository.findById(1L)
                 .orElseThrow(() -> {
                     log.error("테스트용 사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
@@ -666,6 +667,40 @@ public class PostService {
             log.error("게시글 공개 상태 변경 중 오류 발생: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.FAILED_TO_UPDATE_POST);
         }
+    }
+
+    /**
+     * 위치 ID 기반 게시글 목록 조회 메소드
+     * @param locationInfoId 조회할 위치 정보 ID
+     * @return 게시글 목록 응답 DTO
+     */
+    @Transactional(readOnly = true)
+    public List<LocationResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId) {
+        if (locationInfoId == null) {
+            log.error("위치 정보 ID가 null입니다");
+            throw new BusinessException(ErrorCode.INVALID_LOCATION_ID);
+        }
+
+        log.info("위치 ID 기반 게시글 ID 조회 시작: locationInfoId={}", locationInfoId);
+
+        // 위치 ID로 게시글 직접 조회 (단일 쿼리 최적화)
+        List<Post> posts = postRepository.findActivePostsByLocationInfoId(locationInfoId);
+
+        if (posts.isEmpty()) {
+            log.info("해당 위치에 게시글이 없습니다: locationInfoId={}", locationInfoId);
+            return Collections.emptyList();
+        }
+
+        log.info("위치 ID 기반 게시글 조회 완료: locationInfoId={}, 조회된 게시글 수={}",
+                locationInfoId, posts.size());
+
+        // 게시글 ID와 주소 ID만 추출하여 DTO로 변환
+        return posts.stream()
+                .map(post -> LocationResponseDto.builder()
+                        .postId(post.getId())
+                        .address(post.getAddress().getAddress())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
 

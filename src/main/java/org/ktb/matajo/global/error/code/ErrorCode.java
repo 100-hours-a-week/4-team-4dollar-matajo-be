@@ -15,7 +15,7 @@ public enum ErrorCode {
     INVALID_POST_TAGS(HttpStatus.BAD_REQUEST, "invalid_post_tags", "게시글 태그가 유효하지 않습니다"),
     INVALID_POST_IMAGES(HttpStatus.BAD_REQUEST, "invalid_post_images", "게시글 이미지가 유효하지 않습니다"),
     INVALID_PREFER_PRICE(HttpStatus.BAD_REQUEST, "invalid_prefer_price", "선호 가격이 유효하지 않습니다"),
-
+    INVALID_LOCATION_ID(HttpStatus.BAD_REQUEST, "invalid_location_id", "올바르지 않은 위치 정보입니다"),
     // 일반적인 입력값 검증 오류
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "invalid_input_value", "입력값이 유효하지 않습니다"),
 

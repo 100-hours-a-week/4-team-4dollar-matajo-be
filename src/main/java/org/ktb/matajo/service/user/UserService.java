@@ -1,3 +1,9 @@
 package org.ktb.matajo.service.user;
 
-public class UserService {}
+import org.ktb.matajo.dto.user.KakaoUserInfo;
+import java.util.Map;
+
+
+public interface UserService {
+    Map<String, String> processKakaoUser(KakaoUserInfo userInfo);
+}
