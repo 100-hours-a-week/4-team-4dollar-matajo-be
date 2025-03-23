@@ -134,7 +134,8 @@ public class Address{
     private String roadnameEnglish;  // 도로명의 영문 값
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "location_info_id")
+    @JoinColumn(name = "location_info_id",
+            foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT), nullable = false)
     private LocationInfo locationInfo;
 
     /**
