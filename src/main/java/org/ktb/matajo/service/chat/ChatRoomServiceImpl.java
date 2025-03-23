@@ -17,6 +17,7 @@ import org.ktb.matajo.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -134,6 +135,9 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         String lastMessage = "";
         String lastMessageTime = "";
 
+        // 날짜 포매터
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
+
         if (!chatRoom.getChatMessageList().isEmpty()) {
             ChatMessage lastChatMessage = chatRoom.getChatMessageList().stream()
                     .max(Comparator.comparing(ChatMessage::getCreatedAt))
@@ -141,7 +145,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
             if (lastChatMessage != null) {
                 lastMessage = lastChatMessage.getContent();
-                lastMessageTime = lastChatMessage.getCreatedAt().toString();
+                lastMessageTime = formatter.format(lastChatMessage.getCreatedAt());
             }
         }
 
