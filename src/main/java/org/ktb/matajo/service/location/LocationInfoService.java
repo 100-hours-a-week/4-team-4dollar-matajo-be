@@ -46,7 +46,7 @@ public class LocationInfoService {
         
         // 2. 구 이름 기반 검색
         if (guName != null && !guName.isBlank()) {
-            Optional<LocationInfo> guMatch = locationInfoRepository.findByCityDistrictContaining(guName);
+            Optional<LocationInfo> guMatch = locationInfoRepository.findFirstByCityDistrictContaining(guName);
             if (guMatch.isPresent()) {
                 log.debug("구 이름 매칭 결과 발견: {}", guName);
                 return Collections.singletonList(guMatch.get());

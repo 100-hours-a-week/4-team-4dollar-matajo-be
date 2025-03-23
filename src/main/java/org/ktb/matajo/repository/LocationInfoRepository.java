@@ -11,6 +11,6 @@ public interface LocationInfoRepository extends JpaRepository<LocationInfo, Long
     Optional<LocationInfo> findByOriginalName(String originalName);
 
     // 구 이름으로 검색 (가장 첫번째에 있는 구)
-    Optional<LocationInfo> findByCityDistrictContaining(String cityDistrict);
+    Optional<LocationInfo> findFirstByCityDistrictContaining(String cityDistrict);
 
 }
