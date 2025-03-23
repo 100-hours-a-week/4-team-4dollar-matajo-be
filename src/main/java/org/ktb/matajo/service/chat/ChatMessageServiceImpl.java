@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,7 +55,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .content(messageDto.getContent())
                 .messageType(messageDto.getMessageType())
                 .readStatus(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")))
                 .build();
 
         // DB에 저장
@@ -87,7 +88,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         // 캐시에 없거나 첫 페이지가 아니면 DB에서 조회
         log.info("DB에서 메시지 조회: roomId={}, page={}, size={}", roomId, page, size);
 
-        // 최신 메시지부터 조회 (내림차순)
+        // 메시지 조회
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         List<ChatMessage> messages = chatMessageRepository.findByChatRoomId(roomId, pageRequest);
 

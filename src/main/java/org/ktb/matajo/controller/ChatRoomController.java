@@ -22,18 +22,16 @@ import java.util.List;
 public class ChatRoomController {
     private final ChatRoomService chatRoomService;
 
-    // 테스트용 의뢰인 ID (실제 구현 시 제거)
-    private static final Long TEST_CLIENT_ID = 1L;
-
     // 채팅방 생성
     @PostMapping
     public ResponseEntity<CommonResponse<ChatRoomCreateResponseDto>> createChatRoom(
-            @Valid @RequestBody ChatRoomCreateRequestDto chatRoomRequestDto) {
+            @Valid @RequestBody ChatRoomCreateRequestDto chatRoomRequestDto,
+            @RequestHeader(value = "userId", required = false) Long userId) {
 
         log.info("채팅방 생성: postId={}", chatRoomRequestDto.getPostId());
 
         // userId 로직은 나중에 로그인 구현되면 수정할 부분!
-        ChatRoomCreateResponseDto chatRoom = chatRoomService.createChatRoom(chatRoomRequestDto, TEST_CLIENT_ID);
+        ChatRoomCreateResponseDto chatRoom = chatRoomService.createChatRoom(chatRoomRequestDto, userId);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -42,11 +40,11 @@ public class ChatRoomController {
 
     // 채팅 리스트 조회
     @GetMapping
-    public ResponseEntity<CommonResponse<List<ChatRoomResponseDto>>> getChatRoom() {
+    public ResponseEntity<CommonResponse<List<ChatRoomResponseDto>>> getChatRoom(@RequestHeader(value = "userId", required = false) Long userId) {
 
-        log.info("채팅 리스트 조회: userId={}", TEST_CLIENT_ID);
+        log.info("채팅 리스트 조회: userId={}", userId);
 
-        List<ChatRoomResponseDto> myChatRooms = chatRoomService.getMyChatRooms(TEST_CLIENT_ID);
+        List<ChatRoomResponseDto> myChatRooms = chatRoomService.getMyChatRooms(userId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -55,10 +53,11 @@ public class ChatRoomController {
 
     // 채팅방 나가기
     @DeleteMapping("/{roomId}")
-    public ResponseEntity<CommonResponse<Void>> leaveChatRoom(@PathVariable Long roomId) {
+    public ResponseEntity<CommonResponse<Void>> leaveChatRoom(@PathVariable Long roomId,
+                                                              @RequestHeader(value = "userId", required = false) Long userId) {
 
-        chatRoomService.leaveChatRoom(TEST_CLIENT_ID, roomId);
-        log.info("채팅방 나가기: userId={}, roomId={}", TEST_CLIENT_ID, roomId);
+        chatRoomService.leaveChatRoom(userId, roomId);
+        log.info("채팅방 나가기: userId={}, roomId={}", userId, roomId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

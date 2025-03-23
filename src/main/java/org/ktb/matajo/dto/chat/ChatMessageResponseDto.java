@@ -1,5 +1,6 @@
 package org.ktb.matajo.dto.chat;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import org.ktb.matajo.entity.MessageType;
 
