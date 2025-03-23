@@ -4,6 +4,9 @@ on:
   push:
     branches: ["dev/test"] # 또는 main 브랜치 등
 
+  pull_request:
+    branches: ["dev/test"] # PR이 생성될 때 트리거
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
