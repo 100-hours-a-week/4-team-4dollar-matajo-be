@@ -1,77 +1,68 @@
 package org.ktb.matajo.service.user;
 
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
-import org.ktb.matajo.entity.RefreshToken;
 import org.ktb.matajo.entity.User;
-import org.ktb.matajo.entity.UserType;
-import org.ktb.matajo.repository.RefreshTokenRepository;
 import org.ktb.matajo.repository.UserRepository;
-import org.ktb.matajo.security.JwtUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final JwtUtil jwtUtil;
 
-    public UserServiceImpl(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtUtil jwtUtil) {
-        this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
-        this.jwtUtil = jwtUtil;
+    // 닉네임 중복 확인
+    @Override
+    public boolean isNicknameAvailable(String nickname) {
+        return !userRepository.existsByNickname(nickname);
     }
 
+    // 닉네임 변경 (JWT 인증 없음 가정)
+    @Override
     @Transactional
+    public boolean updateNickname(String newNickname) {
+        if (userRepository.existsByNickname(newNickname)) {
+            return false;
+        }
+
+        Optional<User> userOptional = userRepository.findTopByOrderByIdAsc();  // 임시 인증
+        if (userOptional.isEmpty()) {
+            return false;
+        }
+
+        User user = userOptional.get();
+        user.setNickname(newNickname);
+        userRepository.save(user);
+        return true;
+    }
+
+    // 카카오 인증 없이 임시 로직 (더미 userInfo 처리)
+    @Override
     public Map<String, String> processKakaoUser(KakaoUserInfo userInfo) {
-        Optional<User> optionalUser = userRepository.findByKakaoId(userInfo.getKakaoId());
+        Map<String, String> response = new HashMap<>();
 
-        User user = optionalUser.orElseGet(() -> {
-            String uniqueNickname = generateUniqueNickname();
+        // 실제 카카오 ID 없이 처리하기 위해 userInfo.getId()를 더미로 가정
+        Long dummyKakaoId = userInfo.getKakaoId();  // 실제론 테스트용 값
 
+        Optional<User> userOptional = userRepository.findByKakaoId(dummyKakaoId);
+
+        if (userOptional.isEmpty()) {
             User newUser = User.builder()
-                    .kakaoId(userInfo.getKakaoId())
-                    .nickname(uniqueNickname)
-                    .username(userInfo.getNickname())
-                    .phoneNumber(userInfo.getPhoneNumber())
-                    .role(UserType.USER)
-                    .keeperAgreement(false)
+                    .kakaoId(dummyKakaoId)
+                    .nickname("test_user_" + dummyKakaoId)
                     .build();
-            return userRepository.save(newUser);
-        });
+            userRepository.save(newUser);
+            response.put("message", "임시 회원가입 완료");
+        } else {
+            response.put("message", "기존 임시 회원 로그인");
+        }
 
-        // 액세스 토큰 및 리프레시 토큰 생성
-        String accessToken = jwtUtil.createAccessToken(user.getId(), user.getRole().toString(), user.getNickname(), user.getDeletedAt());
-        String refreshToken = jwtUtil.createRefreshToken(user.getId());
-
-        // 리프레시 토큰을 DB에 저장 (이전 토큰이 있으면 업데이트)
-        refreshTokenRepository.findByUserId(user.getId())
-                .ifPresentOrElse(
-                        existingToken -> existingToken.updateToken(refreshToken),
-                        () -> refreshTokenRepository.save(new RefreshToken(user.getId(), refreshToken))
-                );
-
-
-        return Map.of(
-                "accessToken", accessToken,
-                "refreshToken", refreshToken
-        );
+        return response;
     }
-
-    private String generateUniqueNickname() {
-        Random random = new Random();
-        String nickname;
-        do {
-            int randomNumber = 10000 + random.nextInt(90000); // 10000 ~ 99999 범위의 랜덤 숫자 생성
-            nickname = "타조" + randomNumber;
-        } while (userRepository.existsByNickname(nickname)); // 중복되면 다시 생성
-
-        return nickname;
-    }
-
 }
