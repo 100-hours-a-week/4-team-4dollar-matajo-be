@@ -3,6 +3,7 @@ package org.ktb.matajo.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.ktb.matajo.entity.common.BaseEntity;
+import org.ktb.matajo.dto.post.AddressDto;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -131,4 +132,58 @@ public class Address{
 
     @Column(length = 50)
     private String roadnameEnglish;  // 도로명의 영문 값
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_info_id")
+    private LocationInfo locationInfo;
+
+    /**
+     * 주소 정보 업데이트
+     */
+    public void update(AddressDto addressDto) {
+        this.postcode = addressDto.getPostcode();
+        this.postcode1 = addressDto.getPostcode1();
+        this.postcode2 = addressDto.getPostcode2();
+        this.postcodeSeq = addressDto.getPostcodeSeq();
+        this.zonecode = addressDto.getZonecode();
+        this.address = addressDto.getAddress();
+        this.addressEnglish = addressDto.getAddressEnglish();
+        this.addressType = addressDto.getAddressType();
+        this.bcode = addressDto.getBcode();
+        this.bname = addressDto.getBname();
+        this.bnameEnglish = addressDto.getBnameEnglish();
+        this.bname1 = addressDto.getBname1();
+        this.bname1English = addressDto.getBname1English();
+        this.bname2 = addressDto.getBname2();
+        this.bname2English = addressDto.getBname2English();
+        this.sido = addressDto.getSido();
+        this.sidoEnglish = addressDto.getSidoEnglish();
+        this.sigungu = addressDto.getSigungu();
+        this.sigunguEnglish = addressDto.getSigunguEnglish();
+        this.sigunguCode = addressDto.getSigunguCode();
+        this.userLanguageType = addressDto.getUserLanguageType();
+        this.query = addressDto.getQuery();
+        this.buildingName = addressDto.getBuildingName();
+        this.buildingCode = addressDto.getBuildingCode();
+        this.apartment = addressDto.getApartment();
+        this.jibunAddress = addressDto.getJibunAddress();
+        this.jibunAddressEnglish = addressDto.getJibunAddressEnglish();
+        this.roadAddress = addressDto.getRoadAddress();
+        this.roadAddressEnglish = addressDto.getRoadAddressEnglish();
+        this.autoRoadAddress = addressDto.getAutoRoadAddress();
+        this.autoRoadAddressEnglish = addressDto.getAutoRoadAddressEnglish();
+        this.autoJibunAddress = addressDto.getAutoJibunAddress();
+        this.autoJibunAddressEnglish = addressDto.getAutoJibunAddressEnglish();
+        this.userSelectedType = addressDto.getUserSelectedType();
+        this.noSelected = addressDto.getNoSelected();
+        this.hname = addressDto.getHname();
+        this.roadnameCode = addressDto.getRoadnameCode();
+        this.roadname = addressDto.getRoadname();
+        this.roadnameEnglish = addressDto.getRoadnameEnglish();
+    }
+
+    // LocationInfo 업데이트 메서드
+    public void updateLocationInfo(LocationInfo locationInfo) {
+        this.locationInfo = locationInfo;
+    }
 }

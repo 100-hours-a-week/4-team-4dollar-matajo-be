@@ -8,6 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    boolean existsByNickname(String nickname);
-    Optional<User> findTopByOrderByIdAsc(); // JWT 인증이 없으므로 첫 번째 유저 조회
+    Optional<User> findByKakaoId(Long kakaoId);          // 카카오용
+    Optional<User> findTopByOrderByIdAsc();              // 임시 사용자 조회용 (예: JWT 없는 환경)
+    boolean existsByNickname(String nickname);           // 닉네임 중복 체크
 }
