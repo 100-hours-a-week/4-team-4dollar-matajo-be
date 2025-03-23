@@ -1,50 +1,45 @@
 package org.ktb.matajo.controller;
 
-import jakarta.servlet.http.HttpServletResponse;
+import java.util.Map;
+
 import org.ktb.matajo.dto.user.KakaoUserInfo;
-import org.ktb.matajo.service.oauth.KakaoAuthService;
-import org.ktb.matajo.service.user.KakaoUserService;
 import org.ktb.matajo.service.user.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final KakaoAuthService kakaoAuthService;
-    private final KakaoUserService kakaoUserService;
-    private final UserService userService;
+  private final UserService userService;
 
-    public AuthController(KakaoAuthService kakaoAuthService, KakaoUserService kakaoUserService, UserService userService) {
-        this.kakaoAuthService = kakaoAuthService;
-        this.kakaoUserService = kakaoUserService;
-        this.userService = userService;
-    }
+  public AuthController(UserService userService) {
+    this.userService = userService;
+  }
 
-    @PostMapping("/kakao")
-    public ResponseEntity<?> kakaoLogin(@RequestBody Map<String, String> request, HttpServletResponse response) {
+  @PostMapping("/kakao")
+  public ResponseEntity<?> kakaoLogin(
+          @RequestBody Map<String, String> request, HttpServletResponse response) {
 
-        String code = request.get("code");
-        String accessToken = kakaoAuthService.getAccessToken(code);
-        KakaoUserInfo userInfo = kakaoUserService.getUserInfo(accessToken);
+    // 실제 카카오 로그인 대신 더미 유저로 대체
+    KakaoUserInfo userInfo = new KakaoUserInfo(
+            9999L, "dummy@example.com", "더미유저", "010-1234-5678", "USER"
+    );
 
-        Map<String, String> tokens = userService.processKakaoUser(userInfo);
-        String jwtToken = tokens.get("accessToken");
-        String refreshToken = tokens.get("refreshToken");
+    // 더미 유저 처리
+    userService.processKakaoUser(userInfo);
 
-        response.addHeader("Set-Cookie", "refreshToken=" + refreshToken + "; HttpOnly; Secure; Path=/; Max-Age=1209600"); // 14일
-
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "login_success",
-                "data", Map.of(
-                        "accessToken", jwtToken,
-                        "refreshToken", refreshToken,
-                        "nickname", userInfo.getNickname()
-                )
-        ));
-    }
+    // 로그인 성공 응답
+    return ResponseEntity.ok(
+            Map.of(
+                    "success", true,
+                    "message", "login_success",
+                    "data", Map.of(
+                            "nickname", userInfo.getNickname()
+                    )
+            )
+    );
+  }
 }

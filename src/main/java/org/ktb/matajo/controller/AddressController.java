@@ -1,5 +1,3 @@
 package org.ktb.matajo.controller;
 
-public class AddressController {
-
-}
+public class AddressController {}

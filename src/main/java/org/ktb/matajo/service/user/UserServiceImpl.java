@@ -1,68 +1,57 @@
 package org.ktb.matajo.service.user;
 
-import lombok.RequiredArgsConstructor;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
 import org.ktb.matajo.entity.User;
 import org.ktb.matajo.repository.UserRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
+import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
 
-    // 닉네임 중복 확인
-    @Override
-    public boolean isNicknameAvailable(String nickname) {
-        return !userRepository.existsByNickname(nickname);
+  @Override
+  public Map<String, String> processKakaoUser(KakaoUserInfo userInfo) {
+    // 새로운 User 객체 생성
+    User user = new User();
+    user.setKakaoId(userInfo.getKakaoId().toString());  // Long을 String으로 변환해서 저장
+    user.setEmail(userInfo.getEmail()); // 이메일 저장
+    user.setNickname(userInfo.getNickname());
+    user.setPhoneNumber(userInfo.getPhoneNumber());
+    user.setRole(userInfo.getRole() != null ? userInfo.getRole() : "USER"); // role을 하드코딩하거나 전달된 값 사용
+
+    // DB에 유저 정보 저장
+    userRepository.save(user);
+
+    // 로그인 후 반환될 JWT 토큰과 리프레시 토큰을 더미로 반환 (예시)
+    Map<String, String> tokens = new HashMap<>();
+    tokens.put("accessToken", "dummyAccessToken");
+    tokens.put("refreshToken", "dummyRefreshToken");
+    return tokens;
+  }
+
+  @Override
+  public boolean isNicknameAvailable(String nickname) {
+    // 닉네임 중복 확인 로직 (예시)
+    User user = userRepository.findByNickname(nickname);
+    return user == null; // 중복이 없다면 true
+  }
+
+  @Override
+  public boolean updateNickname(String newNickname) {
+    // 닉네임 업데이트 로직 (예시)
+    // 특정 사용자를 찾아 닉네임을 업데이트하는 로직 추가
+    User user = userRepository.findById(1L).orElse(null); // 예시로 1번 id 사용자
+    if (user != null) {
+      user.setNickname(newNickname);
+      userRepository.save(user);
+      return true;
     }
-
-    // 닉네임 변경 (JWT 인증 없음 가정)
-    @Override
-    @Transactional
-    public boolean updateNickname(String newNickname) {
-        if (userRepository.existsByNickname(newNickname)) {
-            return false;
-        }
-
-        Optional<User> userOptional = userRepository.findTopByOrderByIdAsc();  // 임시 인증
-        if (userOptional.isEmpty()) {
-            return false;
-        }
-
-        User user = userOptional.get();
-        user.setNickname(newNickname);
-        userRepository.save(user);
-        return true;
-    }
-
-    // 카카오 인증 없이 임시 로직 (더미 userInfo 처리)
-    @Override
-    public Map<String, String> processKakaoUser(KakaoUserInfo userInfo) {
-        Map<String, String> response = new HashMap<>();
-
-        // 실제 카카오 ID 없이 처리하기 위해 userInfo.getId()를 더미로 가정
-        Long dummyKakaoId = userInfo.getKakaoId();  // 실제론 테스트용 값
-
-        Optional<User> userOptional = userRepository.findByKakaoId(dummyKakaoId);
-
-        if (userOptional.isEmpty()) {
-            User newUser = User.builder()
-                    .kakaoId(dummyKakaoId)
-                    .nickname("test_user_" + dummyKakaoId)
-                    .build();
-            userRepository.save(newUser);
-            response.put("message", "임시 회원가입 완료");
-        } else {
-            response.put("message", "기존 임시 회원 로그인");
-        }
-
-        return response;
-    }
+    return false;
+  }
 }

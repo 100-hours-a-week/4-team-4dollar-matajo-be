@@ -7,5 +7,5 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ChatRoomCreateResponseDto {
-    private Long id; // 채팅 ID
+  private Long id; // 채팅 ID
 }

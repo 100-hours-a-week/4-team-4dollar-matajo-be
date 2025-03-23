@@ -2,4 +2,6 @@ spring:
   application:
     name: matajo
   profiles:
-    active: dev,aws
+    active: local,aws
+  jackson:
+    property-naming-strategy: SNAKE_CASE
