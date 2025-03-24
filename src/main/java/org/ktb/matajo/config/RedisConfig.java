@@ -23,11 +23,21 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // 기존에 생성된 ObjectMapper 사용
+        // JacksonConfig에서 설정된 objectMapper를 사용하여 Jackson2JsonRedisSerializer 생성
+        Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, Object.class);
+
+        // 문자열 키 / Jackson JSON 값 설정
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(objectMapper, Object.class));
+        template.setValueSerializer(jackson2JsonRedisSerializer);
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new Jackson2JsonRedisSerializer<>(objectMapper, Object.class));
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+
+        // 기본 직렬화 도구 설정 (명시적으로 설정하지 않은 작업에 사용됨)
+        template.setDefaultSerializer(jackson2JsonRedisSerializer);
+
+        // 모든 설정을 템플릿에 적용
+        template.afterPropertiesSet();
 
         return template;
     }
