@@ -54,6 +54,7 @@ jobs:
           key: ${{ secrets.EC2_KEY }}  # GitHub Secrets에 등록된 PEM 키
           source: "build/libs/*.jar"
           target: "/home/ubuntu/app"  # EC2의 이 경로에 JAR 저장
+          strip_components: 2   # 경로에서 build/libs 잘라냄
 
       # 9. EC2에서 애플리케이션 실행
       - name: Run JAR on EC2 via SSH
