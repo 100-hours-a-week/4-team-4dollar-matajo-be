@@ -2,53 +2,60 @@ name: Deploy Spring Boot to EC2
 
 on:
   push:
-    branches: ["dev/test"] # 또는 main 브랜치 등
-
+    branches: ["dev/test"]  # dev/test 브랜치에 push될 때 동작
   pull_request:
-    branches: ["dev/test"] # PR이 생성될 때 트리거
+    branches: ["dev/test"]  # dev/test 브랜치에 PR이 생성될 때도 동작
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # GitHub Actions에서 사용할 OS
 
     steps:
-      - name: Checkout source
+      # 1. GitHub 저장소 코드 체크아웃
+      - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Set up Java
+      # 2. Java 17 설치
+      - name: Set up Java 17
         uses: actions/setup-java@v3
         with:
           java-version: "17"
           distribution: "temurin"
-          cache: "gradle" # Gradle 의존성 캐싱
+          cache: "gradle"
 
+      # 3. Gradle 실행 권한 부여
       - name: Grant execute permission for Gradle
         run: chmod +x ./gradlew
 
+      # 4. Gradle 버전 출력 (디버깅용)
       - name: Print Gradle version
         run: ./gradlew -v
 
+      # 5. Gradle 캐시 삭제 및 의존성 새로 받기
       - name: Clean Gradle cache
         run: |
           rm -rf ~/.gradle/caches/
           ./gradlew --refresh-dependencies
 
+      # 6. Spotless 코드 포맷 자동 적용
       - name: Apply Spotless before build
         run: ./gradlew spotlessApply
 
+      # 7. Gradle 빌드 (테스트 제외)
       - name: Build with Gradle
-        run: |
-          ./gradlew clean build -x test --stacktrace --info
+        run: ./gradlew clean build -x test --stacktrace --info
 
+      # 8. 빌드된 JAR 파일 EC2로 업로드 (app 폴더에 저장됨)
       - name: Upload JAR to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
           host: 13.209.77.214
           username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
+          key: ${{ secrets.EC2_KEY }}  # GitHub Secrets에 등록된 PEM 키
           source: "build/libs/*.jar"
-          target: "/home/ubuntu/app"
+          target: "/home/ubuntu/app"  # EC2의 이 경로에 JAR 저장
 
+      # 9. EC2에서 애플리케이션 실행
       - name: Run JAR on EC2 via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -56,26 +63,26 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            # 기존 프로세스 종료
+            # 기존 실행 중인 애플리케이션 종료
             pkill -f 'java -jar' || echo "실행 중인 프로세스가 없습니다"
 
             # 로그 디렉토리 생성
             mkdir -p /home/ubuntu/app/logs
 
-            # 최신 JAR 파일 찾기
+            # 가장 최신 JAR 파일 찾기
             JAR_FILE=$(find /home/ubuntu/app -name "*.jar" -type f -printf "%T@ %p\n" | sort -rn | head -1 | cut -d' ' -f2-)
 
-            # 애플리케이션 실행
+            # JAR 실행
             cd /home/ubuntu/app
-            nohup java -jar $JAR_FILE --spring.profiles.active=prod > ./logs/application.log 2>&1 &
+            nohup java -jar "$JAR_FILE" --spring.profiles.active=prod > ./logs/application.log 2>&1 &
 
-            # 실행 확인
+            # 5초 후 실행 확인
             sleep 5
             if pgrep -f "$JAR_FILE" > /dev/null; then
-              echo "애플리케이션이 성공적으로 시작되었습니다"
+              echo "✅ 애플리케이션이 성공적으로 시작되었습니다"
               exit 0
             else
-              echo "애플리케이션 시작에 실패했습니다"
+              echo "❌ 애플리케이션 시작에 실패했습니다. 로그 출력:"
               cat ./logs/application.log
               exit 1
             fi
