@@ -7,5 +7,5 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class TradeInfoResponseDto {
-    private Long tradeId;
+  private Long tradeId;
 }

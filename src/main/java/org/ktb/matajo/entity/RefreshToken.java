@@ -1,10 +1,11 @@
 package org.ktb.matajo.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.ktb.matajo.entity.common.BaseEntity;
+
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Getter
@@ -14,13 +15,12 @@ import org.ktb.matajo.entity.common.BaseEntity;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class RefreshToken extends BaseEntity {
-    @Id
-    private Long userId;
+  @Id private Long userId;
 
-    @Column(nullable = false, unique = true)
-    private String token;
+  @Column(nullable = false, unique = true)
+  private String token;
 
-    public void updateToken(String newToken) {
-        this.token = newToken;
-    }
+  public void updateToken(String newToken) {
+    this.token = newToken;
+  }
 }

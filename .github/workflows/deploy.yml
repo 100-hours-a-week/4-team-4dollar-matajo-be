@@ -33,6 +33,9 @@ jobs:
           rm -rf ~/.gradle/caches/
           ./gradlew --refresh-dependencies
 
+      - name: Apply Spotless before build
+        run: ./gradlew spotlessApply
+
       - name: Build with Gradle
         run: |
           ./gradlew clean build -x test --stacktrace --info
