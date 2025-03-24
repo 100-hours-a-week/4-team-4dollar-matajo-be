@@ -1,8 +1,7 @@
 package org.ktb.matajo.entity;
 
 public enum MessageType {
-  TEXT(1),
-  IMAGE(2);
+    TEXT(1), IMAGE(2), SYSTEM(3);
 
   private int value;
 

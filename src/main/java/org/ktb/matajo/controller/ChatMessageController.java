@@ -1,12 +1,14 @@
 package org.ktb.matajo.controller;
 
-import java.util.List;
-
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.chat.ChatMessageRequestDto;
 import org.ktb.matajo.dto.chat.ChatMessageResponseDto;
 import org.ktb.matajo.entity.MessageType;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.chat.ChatMessageService;
+import org.ktb.matajo.service.chat.ChatSessionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -24,22 +28,39 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ChatMessageController {
 
-  private final ChatMessageService chatMessageService;
-  private final SimpMessagingTemplate messagingTemplate;
+    private final ChatMessageService chatMessageService;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final ChatSessionService chatSessionService;
 
-  /** WebSocket을 통한 메시지 전송 /app/chat/{roomId} 엔드포인트로 메시지가 전송됨 */
-  @MessageMapping("/{roomId}/message")
-  public void sendMessage(
-      @DestinationVariable Long roomId, @Payload ChatMessageRequestDto messageDto) {
-    log.info(
-        "메시지 전송: roomId={}, senderId={}, type={}",
-        roomId,
-        messageDto.getSenderId(),
-        messageDto.getMessageType());
+    /**
+     * WebSocket을 통한 메시지 전송
+     * /app/chat/{roomId} 엔드포인트로 메시지가 전송됨
+     */
+    @MessageMapping("/{roomId}/message")
+    public void sendMessage(@DestinationVariable Long roomId, @Valid @Payload ChatMessageRequestDto messageDto) {
+        log.info("메시지 전송: roomId={}, senderId={}, type={}", roomId, messageDto.getSenderId(), messageDto.getMessageType());
 
-    // 이미지 메시지 처리를 위한 로그 추가
-    if (messageDto.getMessageType() == MessageType.IMAGE) {
-      log.info("이미지 메시지 처리: content(URL)={}", messageDto.getContent());
+        // 이미지 메시지 처리를 위한 로그 추가
+        if (messageDto.getMessageType() == MessageType.IMAGE) {
+            log.info("이미지 메시지 처리: content(URL)={}", messageDto.getContent());
+        }
+
+        // 메시지 저장 및 처리
+        ChatMessageResponseDto response = chatMessageService.saveMessage(roomId, messageDto);
+
+        // 채팅방 현재 접속 중인 사용자 목록 확인
+        Set<Long> activeUsersInRoom = chatSessionService.getActiveUsersInRoom(roomId);
+
+        // 접속 중인 사용자들에게는 자동으로 읽음 처리
+        if (!activeUsersInRoom.isEmpty()) {
+            // 발신자를 제외한 채팅방 접속자들에 대해 읽음 처리
+            activeUsersInRoom.stream()
+                    .filter(userId -> !userId.equals(messageDto.getSenderId()))
+                    .forEach(userId -> chatMessageService.markMessagesAsRead(roomId, userId));
+        }
+
+        // 메시지를 특정 채팅방 구독자들에게 브로드캐스트
+        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
     }
 
     // 메시지 저장 및 처리

@@ -6,6 +6,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -32,8 +35,8 @@ public class TradeInfo {
   @Column(nullable = false, updatable = false)
   private LocalDateTime tradeDate;
 
-  @Column(nullable = false)
-  private LocalDateTime startDate;
+    @Column(nullable = false)
+    private LocalDateTime startDate;
 
   @Column(nullable = false)
   private int storagePeriod;

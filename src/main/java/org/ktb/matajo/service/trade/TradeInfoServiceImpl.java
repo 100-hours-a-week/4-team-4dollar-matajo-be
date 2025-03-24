@@ -1,14 +1,12 @@
 package org.ktb.matajo.service.trade;
 
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.trade.TradeInfoListResponseDto;
 import org.ktb.matajo.dto.trade.TradeInfoRequestDto;
 import org.ktb.matajo.dto.trade.TradeInfoResponseDto;
 import org.ktb.matajo.entity.ChatRoom;
+import org.ktb.matajo.entity.MessageType;
 import org.ktb.matajo.entity.Post;
 import org.ktb.matajo.entity.TradeInfo;
 import org.ktb.matajo.entity.User;
@@ -17,6 +15,8 @@ import org.ktb.matajo.global.error.exception.BusinessException;
 import org.ktb.matajo.repository.ChatRoomRepository;
 import org.ktb.matajo.repository.TradeInfoRepository;
 import org.ktb.matajo.repository.UserRepository;
+import org.ktb.matajo.service.chat.ChatMessageService;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,9 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TradeInfoServiceImpl implements TradeInfoService {
-  private final UserRepository userRepository;
-  private final ChatRoomRepository chatRoomRepository;
-  private final TradeInfoRepository tradeInfoRepository;
+    private final UserRepository userRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final TradeInfoRepository tradeInfoRepository;
 
   @Override
   @Transactional
@@ -77,9 +77,11 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         savedTradeInfo.getProductName(),
         chatRoom.getId());
 
-    // 응답 DTO 변환 및 반환
-    return TradeInfoResponseDto.builder().tradeId(savedTradeInfo.getId()).build();
-  }
+        // 응답 DTO 변환 및 반환
+        return TradeInfoResponseDto.builder()
+                .tradeId(savedTradeInfo.getId())
+                .build();
+    }
 
   @Override
   public List<TradeInfoListResponseDto> getMyTrades(Long userId) {

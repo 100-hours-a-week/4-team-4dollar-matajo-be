@@ -28,17 +28,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     registry.setUserDestinationPrefix("/user");
   }
 
-  @Override
-  public void registerStompEndpoints(StompEndpointRegistry registry) {
-    // STOMP 엔드포인트 설정
-    registry
-        .addEndpoint("/ws-chat")
-        .setAllowedOriginPatterns("*") // CORS 설정 (운영 환경에서는 구체적인 도메인 지정 권장)
-        .withSockJS() // SockJS 지원 (WebSocket을 지원하지 않는 브라우저를 위한 폴백)
-        .setSessionCookieNeeded(true)
-        .setHeartbeatTime(25000)
-        .setDisconnectDelay(5000);
-  }
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // STOMP 엔드포인트 설정
+        registry.addEndpoint("/ws-chat")
+                .setAllowedOriginPatterns("*") // CORS 설정 (운영 환경에서는 구체적인 도메인 지정 권장)
+                .withSockJS() // SockJS 지원 (WebSocket을 지원하지 않는 브라우저를 위한 폴백)
+                .setSessionCookieNeeded(false)
+                .setHeartbeatTime(25000)
+                .setDisconnectDelay(5000);
+    }
 
   @Override
   public void configureClientInboundChannel(ChannelRegistration registration) {
