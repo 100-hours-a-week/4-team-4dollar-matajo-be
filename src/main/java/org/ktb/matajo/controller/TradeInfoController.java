@@ -25,18 +25,15 @@ public class TradeInfoController {
 
     @PostMapping("/trade")
     public ResponseEntity<CommonResponse<TradeInfoResponseDto>> createTrade(
-            @Valid @RequestBody TradeInfoRequestDto tradeInfoRequestDto) {
+            @Valid @RequestBody TradeInfoRequestDto tradeInfoRequestDto,
+            @RequestHeader(value = "userId", required = true) Long userId) {
 
-        // 로그 기록
-        log.info("거래 정보 생성 요청: 상품명={}, 카테고리={}, 보관기간={}",
+        log.info("거래 정보 생성 요청: userId={}, 상품명={}, 카테고리={}, 보관기간={}",
+                userId,
                 tradeInfoRequestDto.getProductName(),
                 tradeInfoRequestDto.getCategory(),
                 tradeInfoRequestDto.getStoragePeriod());
 
-        // 토큰에서 사용자 ID 추출 로직 (실제 구현에서는 JWT 파싱 등으로 처리)
-        Long userId = 1L;
-
-        // 거래 정보 생성
         TradeInfoResponseDto response = tradeInfoService.createTrade(tradeInfoRequestDto, userId);
 
         return ResponseEntity
@@ -45,14 +42,11 @@ public class TradeInfoController {
     }
 
     @GetMapping("/my/trade")
-    public ResponseEntity<CommonResponse<List<TradeInfoListResponseDto>>> getMyTrades() {
+    public ResponseEntity<CommonResponse<List<TradeInfoListResponseDto>>> getMyTrades(
+            @RequestHeader(value = "userId", required = true) Long userId) {
 
-        log.info("내 거래 내역 조회 요청");
+        log.info("내 거래 내역 조회 요청: userId={}", userId);
 
-        // 토큰에서 사용자 ID 추출
-        Long userId = 2L;
-
-        // 사용자의 거래 정보 목록 조회
         List<TradeInfoListResponseDto> tradeInfoList = tradeInfoService.getMyTrades(userId);
 
         if (tradeInfoList.isEmpty()) {
