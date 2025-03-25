@@ -38,6 +38,7 @@ public enum ErrorCode {
     REQUIRED_PERMISSION(HttpStatus.FORBIDDEN, "required_permission", "권한이 없습니다"),
     NO_PERMISSION_TO_UPDATE(HttpStatus.FORBIDDEN, "no_permission_to_update", "게시글 수정 권한이 없습니다"),
     NO_PERMISSION_TO_DELETE(HttpStatus.FORBIDDEN, "no_permission_to_delete", "게시글 삭제 권한이 없습니다"),
+    KEEPER_CANNOT_CREATE_CHATROOM(HttpStatus.FORBIDDEN, "keeper_cannot_create_chatroom", "보관인은 자신의 게시글에 채팅방을 생성할 수 없습니다"),
 
     // 404 NOT FOUND
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "not_found_post", "게시글을 찾을 수 없습니다"),
@@ -47,9 +48,13 @@ public enum ErrorCode {
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "not_found_chat_room", "채팅방을 찾을 수 없습니다"),
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "not_found_chat_message", "채팅 메시지를 찾을 수 없습니다"),
     CHAT_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "not_found_chat_user", "채팅방 사용자를 찾을 수 없습니다"),
+    POST_ALREADY_DELETED(HttpStatus.NOT_FOUND, "post_already_deleted", "이미 삭제된 게시글입니다"),
 
     // 405 METHOD NOT ALLOWED - 누락된 에러 코드 추가
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "지원하지 않는 HTTP 메소드입니다"),
+
+    // 409 CONFLICT
+    CHAT_USER_ALREADY_LEFT(HttpStatus.CONFLICT, "chat_user_already_left", "이미 채팅방을 나간 사용자입니다"),
 
     // 500 INTERNAL SERVER ERROR
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "internal_server_error", "서버 내부 오류가 발생했습니다"),
