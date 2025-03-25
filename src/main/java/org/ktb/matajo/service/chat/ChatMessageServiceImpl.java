@@ -15,9 +15,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -25,15 +26,17 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class ChatMessageServiceImpl implements ChatMessageService {
 
-  private final ChatMessageRepository chatMessageRepository;
-  private final ChatRoomRepository chatRoomRepository;
-  private final UserRepository userRepository;
-  private final RedisChatMessageService redisChatMessageService;
+    private final ChatMessageRepository chatMessageRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final UserRepository userRepository;
+    private final RedisChatMessageService redisChatMessageService;
 
-  /** 채팅 메시지 저장 */
-  @Override
-  @Transactional
-  public ChatMessageResponseDto saveMessage(Long roomId, ChatMessageRequestDto messageDto) {
+    /**
+     * 채팅 메시지 저장
+     */
+    @Override
+    @Transactional
+    public ChatMessageResponseDto saveMessage(Long roomId, ChatMessageRequestDto messageDto) {
 
         validateRoomId(roomId);
 
@@ -62,22 +65,21 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
 
-    // 채팅 메시지 생성
-    ChatMessage chatMessage =
-        ChatMessage.builder()
-            .chatRoom(chatRoom)
-            .user(sender)
-            .content(messageDto.getContent())
-            .messageType(messageDto.getMessageType())
-            .readStatus(false)
-            .createdAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")))
-            .build();
+        // 채팅 메시지 생성
+        ChatMessage chatMessage = ChatMessage.builder()
+                .chatRoom(chatRoom)
+                .user(sender)
+                .content(messageDto.getContent())
+                .messageType(messageDto.getMessageType())
+                .readStatus(false)
+                .createdAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")))
+                .build();
 
-    // DB에 저장
-    ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
+        // DB에 저장
+        ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
 
-    // 응답 DTO 생성
-    ChatMessageResponseDto responseDto = convertToChatMessageResponseDto(savedMessage);
+        // 응답 DTO 생성
+        ChatMessageResponseDto responseDto = convertToChatMessageResponseDto(savedMessage);
 
         // 안전한 캐싱 (예외가 발생해도 메인 로직에 영향 없게)
         try {
@@ -86,21 +88,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             log.warn("메시지 캐싱 실패 (무시됨): {}", e.getMessage());
         }
 
-    return responseDto;
-  }
-
-  /** 채팅방의 메시지 목록 조회 */
-  @Override
-  public List<ChatMessageResponseDto> getChatMessages(Long roomId, int page, int size) {
-    // 첫 페이지이면 캐시에서 먼저 조회 시도
-    if (page == 0) {
-      List<ChatMessageResponseDto> cachedMessages =
-          redisChatMessageService.getCachedMessages(roomId, size);
-
-      if (!cachedMessages.isEmpty()) {
-        log.info("Redis 캐시에서 메시지 조회: roomId={}, cachedCount={}", roomId, cachedMessages.size());
-        return cachedMessages;
-      }
+        return responseDto;
     }
 
     /**
@@ -119,12 +107,14 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         if (page == 0) {
             List<ChatMessageResponseDto> cachedMessages = redisChatMessageService.getCachedMessages(roomId, size);
 
-    // 메시지 조회
-    PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-    List<ChatMessage> messages = chatMessageRepository.findByChatRoomId(roomId, pageRequest);
+            if (!cachedMessages.isEmpty()) {
+                log.info("Redis 캐시에서 메시지 조회: roomId={}, cachedCount={}", roomId, cachedMessages.size());
+                return cachedMessages;
+            }
+        }
 
-    List<ChatMessageResponseDto> messageDtos =
-        messages.stream().map(this::convertToChatMessageResponseDto).collect(Collectors.toList());
+        // 캐시에 없거나 첫 페이지가 아니면 DB에서 조회
+        log.info("DB에서 메시지 조회: roomId={}, page={}, size={}", roomId, page, size);
 
         // 메시지 조회
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -164,13 +154,9 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         // 읽지 않은 메시지 중 다른 사용자가 보낸 메시지만 읽음 처리
         List<ChatMessage> unreadMessages = chatMessageRepository.findUnreadMessagesForUser(roomId, userId);
 
-  /** 메시지 읽음 상태 업데이트 */
-  @Override
-  @Transactional
-  public void markMessagesAsRead(Long roomId, Long userId) {
-    // 읽지 않은 메시지 중 다른 사용자가 보낸 메시지만 읽음 처리
-    List<ChatMessage> unreadMessages =
-        chatMessageRepository.findUnreadMessagesForUser(roomId, userId);
+        for (ChatMessage message : unreadMessages) {
+            message.updateReadStatus(true);
+        }
 
         chatMessageRepository.saveAll(unreadMessages);
 
