@@ -29,7 +29,6 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
-    //    private final UserService userService;
     private final AddressService addressService;
     private final S3Service s3Service;
 
@@ -92,21 +91,18 @@ public class PostServiceImpl implements PostService {
      * @return 생성된 게시글 ID를 담은 응답 DTO
      */
     @Transactional
-    public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages) {
+    public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages, Long userId) {
         // 요청 데이터 유효성 검증
         validatePostRequest(requestDto, mainImage);
 
-        // 현재 인증된 사용자 정보 가져오기
-//        User currentUser = userService.getCurrentUser();
-
         // 테스트용 하드코딩된 사용자 정보 가져오기 (kakaoId가 12345678901인 사용자)
-        User testUser = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.error("테스트용 사용자를 찾을 수 없습니다");
+                    log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
 
-        log.info("테스트 사용자 정보: ID={}, 닉네임={}", testUser.getId(), testUser.getNickname());
+        log.info("사용자 정보: ID={}, 닉네임={}", user.getId(), user.getNickname());
 
         //TODO:keeper인 사람만 게시글을 등록할 수 있다.
 
@@ -121,7 +117,7 @@ public class PostServiceImpl implements PostService {
 
         // Post 엔티티 생성 및 저장
         Post post = Post.builder()
-                .user(testUser)
+                .user(user)
                 .title(requestDto.getPostTitle())
                 .content(requestDto.getPostContent())
                 .preferPrice(requestDto.getPreferPrice())
@@ -132,7 +128,7 @@ public class PostServiceImpl implements PostService {
 
         Post savedPost = postRepository.save(post);
 
-        log.info("테스트 사용자 정보: tagName={}", requestDto.getPostTags());
+        log.info("사용자 정보: tagName={}", requestDto.getPostTags());
         // 태그 처리
         if (requestDto.getPostTags() != null && !requestDto.getPostTags().isEmpty()) {
             processPostTags(savedPost, requestDto.getPostTags());
@@ -329,7 +325,8 @@ public class PostServiceImpl implements PostService {
      */
     @Transactional
     public PostCreateResponseDto updatePost(Long postId,PostCreateRequestDto requestDto,
-                                            MultipartFile mainImage,List<MultipartFile> detailImages){
+                                            MultipartFile mainImage,List<MultipartFile> detailImages,
+                                            Long userId){
 
         //게시글 id 검증
         if (postId == null) {
@@ -350,19 +347,17 @@ public class PostServiceImpl implements PostService {
             throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
-        // 현재 인증된 사용자 정보 가져오기
-        // User currentUser = userService.getCurrentUser();
 
         // 테스트용 하드코딩된 사용자 정보 가져오기
-        User testUser = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.error("테스트용 사용자를 찾을 수 없습니다");
+                    log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);});
 
         //게시글 작성자- 현재 사용자 비교
         // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
-        if (!post.getUser().getId().equals(testUser.getId())) {
-            log.error("게시글 수정 권한이 없습니다: postId={}, userId={}", postId, testUser.getId());
+        if (!post.getUser().getId().equals(user.getId())) {
+            log.error("게시글 수정 권한이 없습니다: postId={}, userId={}", postId, user.getId());
             throw new BusinessException(ErrorCode.NO_PERMISSION_TO_UPDATE);
         }
 
@@ -573,7 +568,7 @@ public class PostServiceImpl implements PostService {
      * @param postId 삭제할 게시글 ID
      */
     @Transactional
-    public void deletePost(Long postId) {
+    public void deletePost(Long postId, Long userId) {
 
         // postId null 체크 추가
         if (postId == null) {
@@ -595,18 +590,17 @@ public class PostServiceImpl implements PostService {
         }
 
         // 현재 인증된 사용자 정보 가져오기
-        // User currentUser = userService.getCurrentUser();
 
         // 테스트용 하드코딩된 사용자 정보 가져오기 (추후 인증 기능 구현 후 변경 필요)
-        User testUser = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.error("테스트용 사용자를 찾을 수 없습니다");
+                    log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
 
         // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
-        if (!post.getUser().getId().equals(testUser.getId())) {
-            log.error("게시글 삭제 권한이 없습니다: postId={}, userId={}", postId, testUser.getId());
+        if (!post.getUser().getId().equals(user.getId())) {
+            log.error("게시글 삭제 권한이 없습니다: postId={}, userId={}", postId, user.getId());
             throw new BusinessException(ErrorCode.NO_PERMISSION_TO_DELETE);
         }
 
@@ -627,7 +621,7 @@ public class PostServiceImpl implements PostService {
      * @param postId 상태를 변경할 게시글 ID
      */
     @Transactional
-    public void togglePostVisibility(Long postId) {
+    public void togglePostVisibility(Long postId, Long userId) {
         // postId null 체크
         if (postId == null) {
             log.error("게시글 ID가 null입니다");
@@ -648,9 +642,9 @@ public class PostServiceImpl implements PostService {
         }
 
         // 테스트용 하드코딩된 사용자 정보 가져오기
-        User testUser = userRepository.findById(1L)
+        User testUser = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.error("테스트용 사용자를 찾을 수 없습니다");
+                    log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
 
