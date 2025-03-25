@@ -52,6 +52,15 @@ jobs:
           source: "build/libs/app.jar"
           target: "/home/ubuntu/app/app.jar"
 
+      - name: Upload Docker config files to EC2
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: 13.209.77.214
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          source: "Dockerfile,.dockerignore"
+          target: "/home/ubuntu/app"
+
       # 5️⃣ Docker 이미지 빌드 및 컨테이너 실행
       - name: Deploy with Docker
         uses: appleboy/ssh-action@v1.0.0
