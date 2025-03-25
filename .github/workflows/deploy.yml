@@ -78,9 +78,12 @@ jobs:
           script: |
             cd /home/ubuntu/app
             
-            # 압축 해제
-            tar -xzf app.tar.gz
-            rm app.tar.gz
+            # 기존 파일/디렉토리 삭제 후 압축 해제
+            rm -rf app.jar
+            mkdir -p temp_extract
+            tar -xzf app.tar.gz -C temp_extract
+            mv temp_extract/app.jar ./app.jar
+            rm -rf temp_extract app.tar.gz
             
             # JAR 파일 검증
             echo "🔍 JAR 파일 크기 확인:"
