@@ -49,9 +49,8 @@ jobs:
           host: 13.209.77.214 # EC2 IP
           username: ubuntu
           key: ${{ secrets.EC2_KEY }} # SSH Private Key 직접 전달
-          source: "build/libs/app.jar,Dockerfile,.dockerignore"
-          target: "/home/ubuntu/app"
-          strip_components: 0
+          source: "build/libs/app.jar"
+          target: "/home/ubuntu/app/app.jar"
 
       # 5️⃣ Docker 이미지 빌드 및 컨테이너 실행
       - name: Deploy with Docker
