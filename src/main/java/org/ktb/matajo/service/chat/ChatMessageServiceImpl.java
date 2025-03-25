@@ -38,15 +38,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     @Transactional
     public ChatMessageResponseDto saveMessage(Long roomId, ChatMessageRequestDto messageDto) {
 
-        if(roomId == null) {
-            log.error("roomId가 null입니다");
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
-        if(messageDto == null && messageDto.getSenderId() == null) {
-            log.error("messageDto 또는 senderId가 null입니다");
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+        validateRoomId(roomId);
 
         // DTO 추가 메서드를 활용한 검증
         if(messageDto.isImageTypeWithEmptyContent()) {
@@ -105,13 +97,9 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     @Override
     public List<ChatMessageResponseDto> getChatMessages(Long roomId, int page, int size) {
 
-        // 간단한 파라미터 검증
-        if (roomId == null) {
-            log.error("roomId가 null입니다");
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+        validateRoomId(roomId);
 
-        if (page < 0 || size <= 0) {
+        if (page < 0 || size <= 0 || size > 100) {
             log.error("페이지네이션 파라미터가 유효하지 않습니다: page={}, size={}", page, size);
             throw new BusinessException(ErrorCode.INVALID_OFFSET_OR_LIMIT);
         }
@@ -155,10 +143,12 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     @Transactional
     public void markMessagesAsRead(Long roomId, Long userId) {
 
+        validateRoomId(roomId);
+
         // 파라미터 검증
-        if (roomId == null || userId == null) {
-            log.error("roomId 또는 userId가 null입니다");
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        if (userId == null || userId <= 0) {
+            log.error("유효하지 않은 userId 값입니다: {}", userId);
+            throw new BusinessException(ErrorCode.INVALID_USER_ID);
         }
 
         // 읽지 않은 메시지 중 다른 사용자가 보낸 메시지만 읽음 처리
@@ -192,5 +182,18 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .readStatus(message.isReadStatus())
                 .createdAt(message.getCreatedAt())
                 .build();
+    }
+
+    private void validateRoomId(Long roomId) {
+        // 간단한 파라미터 검증
+        if (roomId == null) {
+            log.error("roomId가 null입니다");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        if (roomId <= 0) {
+            log.error("유효하지 않은 roomId 값입니다: {}", roomId);
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
     }
 }
