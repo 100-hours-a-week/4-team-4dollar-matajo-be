@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ GitHub Actions에서 코드 체크아웃
+      # 1️⃣ 코드 체크아웃
       - name: Checkout source code
         uses: actions/checkout@v3
 
@@ -28,7 +28,7 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew spotlessApply  # 코드 스타일 적용
-          ./gradlew clean build -x test --stacktrace  # 테스트 제외하고 빌드
+          ./gradlew clean build -x test --stacktrace
 
           echo "🔍 빌드된 JAR 파일 확인:"
           ls -lh build/libs
@@ -36,54 +36,44 @@ jobs:
           # JAR 파일 자동 탐색 후 app.jar로 복사
           JAR_FILE=$(find build/libs -name "*.jar" ! -name "*plain.jar" | head -n 1)
           echo "🔍 찾은 JAR 파일: $JAR_FILE"
-
           if [ -z "$JAR_FILE" ]; then
             echo "❌ JAR 파일을 찾을 수 없습니다! 빌드가 실패했을 수 있습니다."
             exit 1
           fi
-
           mv "$JAR_FILE" build/libs/app.jar  # Docker COPY 에러 방지
 
-      # 4️⃣ SSH Key를 저장하고 권한 설정
-      - name: Set up SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 13.209.77.214 >> ~/.ssh/known_hosts  # 호스트 키 등록
-
-      # 5️⃣ Dockerfile, JAR 파일을 EC2로 전송
+      # 4️⃣ Dockerfile, JAR 파일, .dockerignore를 EC2로 전송
       - name: Upload files to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
           host: 13.209.77.214 # EC2 IP
           username: ubuntu
-          key_path: ~/.ssh/id_rsa # ✅ SSH Key를 로컬 파일로 저장 후 사용
+          key: ${{ secrets.EC2_KEY }} # SSH Private Key 직접 전달
           source: "build/libs/app.jar,Dockerfile,.dockerignore"
           target: "/home/ubuntu/app"
           strip_components: 0
 
-      # 6️⃣ Docker 이미지 빌드 및 컨테이너 실행
+      # 5️⃣ Docker 이미지 빌드 및 컨테이너 실행
       - name: Deploy with Docker
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: 13.209.77.214
           username: ubuntu
-          key_path: ~/.ssh/id_rsa # ✅ SSH Key를 로컬 파일로 저장 후 사용
+          key: ${{ secrets.EC2_KEY }} # SSH Private Key 직접 전달
           script: |
             cd /home/ubuntu/app
 
-            # ✅ 기존 컨테이너 종료 및 삭제
+            # 기존 컨테이너 종료 및 삭제
             docker stop matajo-app || true
             docker rm matajo-app || true
 
-            # ✅ 기존 이미지 삭제 (선택사항)
+            # 기존 이미지 삭제 (선택사항)
             docker image prune -f
 
-            # ✅ 새로운 Docker 이미지 빌드
+            # 새로운 Docker 이미지 빌드
             docker build -t matajo:latest .
 
-            # ✅ 컨테이너 실행
+            # 컨테이너 실행
             docker run -d \
               --name matajo-app \
               -p 8080:8080 \
@@ -91,7 +81,7 @@ jobs:
               -v /home/ubuntu/app/logs:/app/logs \
               matajo:latest
 
-            # ✅ 컨테이너 상태 확인
+            # 컨테이너 상태 확인
             sleep 10
             if [ "$(docker ps -q -f name=matajo-app)" ]; then
               echo "✅ 애플리케이션이 성공적으로 시작되었습니다"
