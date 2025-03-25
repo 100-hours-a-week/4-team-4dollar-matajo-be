@@ -16,6 +16,8 @@ public enum ErrorCode {
     INVALID_POST_IMAGES(HttpStatus.BAD_REQUEST, "invalid_post_images", "게시글 이미지가 유효하지 않습니다"),
     INVALID_PREFER_PRICE(HttpStatus.BAD_REQUEST, "invalid_prefer_price", "선호 가격이 유효하지 않습니다"),
     INVALID_LOCATION_ID(HttpStatus.BAD_REQUEST, "invalid_location_id", "올바르지 않은 위치 정보입니다"),
+    INVALID_USER_ID(HttpStatus.BAD_REQUEST, "invalid_user_id", "사용자 ID가 유효하지 않습니다"),
+    INVALID_CHAT_ROOM_ID(HttpStatus.BAD_REQUEST, "invalid_chat_room_id", "채팅방 ID가 유효하지 않습니다"),
     INVALID_IMAGE_CONTENT(HttpStatus.BAD_REQUEST, "invalid_image_content", "이미지 타입 메시지의 내용이 비어있습니다"),
     INVALID_IMAGE_URL(HttpStatus.BAD_REQUEST, "invalid_image_url", "유효하지 않은 이미지 URL 형식입니다"),
     // 일반적인 입력값 검증 오류
