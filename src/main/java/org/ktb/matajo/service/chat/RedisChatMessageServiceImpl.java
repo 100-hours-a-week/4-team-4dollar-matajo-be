@@ -18,14 +18,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.ktb.matajo.dto.chat.ChatMessageResponseDto;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-/** Redis를 활용한 채팅 메시지 캐싱 서비스 구현체 */
+/**
+ * Redis를 활용한 채팅 메시지 캐싱 서비스 구현체
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -111,38 +106,38 @@ public class RedisChatMessageServiceImpl implements RedisChatMessageService {
 
             // LinkedHashMap -> ChatMessageResponseDto 변환 로직 수정
             return cachedMessages.stream()
-                    .map(msg -> {
-                        try {
-                            if (msg instanceof ChatMessageResponseDto) {
-                                return (ChatMessageResponseDto) msg;
-                            } else if (msg instanceof Map) {
-                                Map<String, Object> mapMsg = (Map<String, Object>) msg;
+                .map(msg -> {
+                    try {
+                        if (msg instanceof ChatMessageResponseDto) {
+                            return (ChatMessageResponseDto) msg;
+                        } else if (msg instanceof Map) {
+                            Map<String, Object> mapMsg = (Map<String, Object>) msg;
 
-                                // createdAt 필드가 문자열인 경우 직접 처리
-                                if (mapMsg.containsKey("created_at") && mapMsg.get("created_at") instanceof String) {
-                                    String dateStr = (String) mapMsg.get("created_at");
-                                    try {
-                                        // 문자열을 LocalDateTime으로 파싱
-                                        LocalDateTime dateTime = LocalDateTime.parse(dateStr, DATE_FORMAT);
-                                        mapMsg.put("created_at", dateTime);
-                                    } catch (Exception e) {
-                                        log.warn("날짜 변환 실패: {} - {}", dateStr, e.getMessage());
-                                    }
+                            // createdAt 필드가 문자열인 경우 직접 처리
+                            if (mapMsg.containsKey("created_at") && mapMsg.get("created_at") instanceof String) {
+                                String dateStr = (String) mapMsg.get("created_at");
+                                try {
+                                    // 문자열을 LocalDateTime으로 파싱
+                                    LocalDateTime dateTime = LocalDateTime.parse(dateStr, DATE_FORMAT);
+                                    mapMsg.put("created_at", dateTime);
+                                } catch (Exception e) {
+                                    log.warn("날짜 변환 실패: {} - {}", dateStr, e.getMessage());
                                 }
-
-                                // 커스텀 ObjectMapper로 변환
-                                return dateMapper.convertValue(mapMsg, ChatMessageResponseDto.class);
-                            } else {
-                                log.warn("알 수 없는 메시지 타입: {}", msg.getClass().getName());
-                                return null;
                             }
-                        } catch (Exception e) {
-                            log.error("메시지 변환 중 오류 발생: {}", e.getMessage(), e);
+
+                            // 커스텀 ObjectMapper로 변환
+                            return dateMapper.convertValue(mapMsg, ChatMessageResponseDto.class);
+                        } else {
+                            log.warn("알 수 없는 메시지 타입: {}", msg.getClass().getName());
                             return null;
                         }
-                    })
-                    .filter(dto -> dto != null)
-                    .collect(Collectors.toList());
+                    } catch (Exception e) {
+                        log.error("메시지 변환 중 오류 발생: {}", e.getMessage(), e);
+                        return null;
+                    }
+                })
+                .filter(dto -> dto != null)
+                .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("캐시된 메시지 조회 중 오류 발생: {}", e.getMessage(), e);
             return Collections.emptyList();
@@ -162,5 +157,4 @@ public class RedisChatMessageServiceImpl implements RedisChatMessageService {
             log.error("채팅방 캐시 무효화 중 오류 발생: {}", e.getMessage(), e);
         }
     }
-  }
 }
