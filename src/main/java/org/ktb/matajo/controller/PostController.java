@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.location.LocationResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.global.common.CommonResponse;
-import org.ktb.matajo.service.post.PostServiceImpl;
+import org.ktb.matajo.service.post.PostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostController {
 
-    private final PostServiceImpl postService;
+  
+    private final PostService postService;
 
     //게시글 목록 조회
     @GetMapping
