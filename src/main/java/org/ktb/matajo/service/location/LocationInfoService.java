@@ -5,22 +5,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.entity.LocationInfo;
 import org.ktb.matajo.repository.LocationInfoRepository;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class LocationInfoService {
 
     private final LocationInfoRepository locationInfoRepository;
 
     //@Cacheable(value = "locationCache", key = "#dongName + '_' + #guName")
-    @Transactional(readOnly = true)
     public List<LocationInfo> findLocationInfo(String dongName, String guName) {
         log.debug("위치 정보 검색 시작: dongName={}, guName={}", dongName, guName);
         
@@ -55,5 +58,23 @@ public class LocationInfoService {
         
         log.debug("위치 정보 검색 결과 없음: dongName={}, guName={}", dongName, guName);
         return Collections.emptyList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> searchLocations(String searchTerm) {
+        log.debug("위치 검색 시작: searchTerm={}", searchTerm);
+        
+        if (searchTerm == null || searchTerm.isBlank()) {
+            log.debug("검색어가 비어있어 빈 결과 반환");
+            return Collections.emptyList();
+        }
+        
+        // 최대 50개 결과로 제한
+        Pageable limit = PageRequest.of(0, 20);
+        
+        return locationInfoRepository.searchByDisplayNameOrderByPriority(searchTerm, limit)
+            .stream()
+            .map(LocationInfo::getFormattedAddress)
+            .collect(Collectors.toList());
     }
 }
