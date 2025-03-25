@@ -15,6 +15,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.ktb.matajo.entity.CustomUserDetails;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.Collections;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -26,8 +35,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain chain)
       throws ServletException, IOException {
 
-    // 요청에서 Authorization 헤더 가져오기
-    String authorizationHeader = request.getHeader("Authorization");
+        if (claims != null) {
+            Long userId = ((Number) claims.get("userId")).longValue();
+            String nickname = (String) claims.get("nickname");
+            String role = (String) claims.get("role");
+
+            CustomUserDetails userDetails = new CustomUserDetails(userId, nickname, role);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
 
     if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
       chain.doFilter(request, response);

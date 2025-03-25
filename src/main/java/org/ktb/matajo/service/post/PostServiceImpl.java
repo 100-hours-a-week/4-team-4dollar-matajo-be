@@ -851,7 +851,7 @@ public class PostServiceImpl implements PostService {
             Tag tag = tagRepository.findByTagName(tagName)
                     .orElseThrow(() -> {
                         log.error("존재하지 않는 태그: {}", tagName);
-                        return new BusinessException(ErrorCode.INVALID_TAG_NAME);
+                        return new BusinessException(ErrorCode.TAG_NAME_NOT_FOUND);
                     });
 
             // 이미 연결된 태그인지 확인 (중복 방지)
@@ -929,13 +929,13 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
-                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                    return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
 
         // 삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
-            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         // 이미지 URL 목록 추출 - 썸네일 이미지를 첫 번째 위치에 배치
@@ -1003,13 +1003,13 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
-                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                    return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
 
         //삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
-            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         // 현재 인증된 사용자 정보 가져오기
@@ -1125,7 +1125,7 @@ public class PostServiceImpl implements PostService {
             Tag tag = tagRepository.findByTagName(tagName)
                     .orElseThrow(() -> {
                         log.error("존재하지 않는 태그: {}", tagName);
-                        return new BusinessException(ErrorCode.INVALID_TAG_NAME);
+                        return new BusinessException(ErrorCode.TAG_NAME_NOT_FOUND);
                     });
 
             PostTag postTag = PostTag.builder()
@@ -1247,13 +1247,13 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
-                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                    return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
 
         // 이미 삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
-            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         // 현재 인증된 사용자 정보 가져오기
@@ -1300,13 +1300,13 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
-                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                    return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
 
         // 삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
-            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         // 테스트용 하드코딩된 사용자 정보 가져오기

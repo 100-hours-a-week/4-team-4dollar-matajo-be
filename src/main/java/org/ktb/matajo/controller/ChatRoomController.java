@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.ktb.matajo.dto.chat.ChatRoomCreateRequestDto;
 import org.ktb.matajo.dto.chat.ChatRoomCreateResponseDto;
+import org.ktb.matajo.dto.chat.ChatRoomDetailResponseDto;
 import org.ktb.matajo.dto.chat.ChatRoomResponseDto;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.chat.ChatRoomService;
@@ -50,10 +51,25 @@ public class ChatRoomController {
         .body(CommonResponse.success("get_my_chat_list_success", myChatRooms));
   }
 
-  // 채팅방 나가기
-  @DeleteMapping("/{roomId}")
-  public ResponseEntity<CommonResponse<Void>> leaveChatRoom(
-      @PathVariable Long roomId, @RequestHeader(value = "userId", required = false) Long userId) {
+    // 채팅방 상세 정보 조회
+    @GetMapping("/{roomId}")
+    public ResponseEntity<CommonResponse<ChatRoomDetailResponseDto>> getChatRoomDetail(
+            @PathVariable Long roomId,
+            @RequestHeader(value = "userId", required = false) Long userId) {
+
+        log.info("채팅방 상세 조회: roomId={}, userId={}", roomId, userId);
+
+        ChatRoomDetailResponseDto chatRoomDetail = chatRoomService.getChatRoomDetail(userId, roomId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(CommonResponse.success("get_chat_room_detail_success", chatRoomDetail));
+    }
+
+    // 채팅방 나가기
+    @DeleteMapping("/{roomId}")
+    public ResponseEntity<CommonResponse<Void>> leaveChatRoom(@PathVariable Long roomId,
+                                                              @RequestHeader(value = "userId", required = false) Long userId) {
 
     chatRoomService.leaveChatRoom(userId, roomId);
     log.info("채팅방 나가기: userId={}, roomId={}", userId, roomId);

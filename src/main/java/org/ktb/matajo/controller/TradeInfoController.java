@@ -24,22 +24,18 @@ import lombok.extern.slf4j.Slf4j;
 public class TradeInfoController {
   private final TradeInfoService tradeInfoService;
 
-  @PostMapping("/trade")
-  public ResponseEntity<CommonResponse<TradeInfoResponseDto>> createTrade(
-      @Valid @RequestBody TradeInfoRequestDto tradeInfoRequestDto) {
+    @PostMapping("/trade")
+    public ResponseEntity<CommonResponse<TradeInfoResponseDto>> createTrade(
+            @Valid @RequestBody TradeInfoRequestDto tradeInfoRequestDto,
+            @RequestHeader(value = "userId", required = true) Long userId) {
 
-    // 로그 기록
-    log.info(
-        "거래 정보 생성 요청: 상품명={}, 카테고리={}, 보관기간={}",
-        tradeInfoRequestDto.getProductName(),
-        tradeInfoRequestDto.getCategory(),
-        tradeInfoRequestDto.getStoragePeriod());
+        log.info("거래 정보 생성 요청: userId={}, 상품명={}, 카테고리={}, 보관기간={}",
+                userId,
+                tradeInfoRequestDto.getProductName(),
+                tradeInfoRequestDto.getCategory(),
+                tradeInfoRequestDto.getStoragePeriod());
 
-    // 토큰에서 사용자 ID 추출 로직 (실제 구현에서는 JWT 파싱 등으로 처리)
-    Long userId = 1L;
-
-    // 거래 정보 생성
-    TradeInfoResponseDto response = tradeInfoService.createTrade(tradeInfoRequestDto, userId);
+        TradeInfoResponseDto response = tradeInfoService.createTrade(tradeInfoRequestDto, userId);
 
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(CommonResponse.success("write_trade_success", response));
@@ -60,7 +56,20 @@ public class TradeInfoController {
       throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
-    return ResponseEntity.status(HttpStatus.OK)
-        .body(CommonResponse.success("get_my_trades_success", tradeInfoList));
-  }
+    @GetMapping("/my/trade")
+    public ResponseEntity<CommonResponse<List<TradeInfoListResponseDto>>> getMyTrades(
+            @RequestHeader(value = "userId", required = true) Long userId) {
+
+        log.info("내 거래 내역 조회 요청: userId={}", userId);
+
+        List<TradeInfoListResponseDto> tradeInfoList = tradeInfoService.getMyTrades(userId);
+
+        if (tradeInfoList.isEmpty()) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(CommonResponse.success("get_my_trades_success", tradeInfoList));
+    }
 }
