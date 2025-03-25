@@ -2,6 +2,7 @@ package org.ktb.matajo.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
+import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.oauth.KakaoAuthService;
 import org.ktb.matajo.service.user.KakaoUserService;
 import org.ktb.matajo.service.user.UserService;
@@ -46,5 +47,21 @@ public class AuthController {
                         "nickname", userInfo.getNickname()
                 )
         ));
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<?> getCurrentUserId() {
+        try {
+            Long currentUserId = SecurityUtil.getCurrentUserId();
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "userId", currentUserId
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
     }
 }
