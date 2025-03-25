@@ -3,9 +3,10 @@ package org.ktb.matajo.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ktb.matajo.dto.location.LocationResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.global.common.CommonResponse;
-import org.ktb.matajo.service.post.PostService;
+import org.ktb.matajo.service.post.PostServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostController {
 
-    private final PostService postService;
+    private final PostServiceImpl postService;
 
     //게시글 목록 조회
     @GetMapping
@@ -111,19 +112,20 @@ public class PostController {
         return ResponseEntity.ok(CommonResponse.success("delete_post_success", null));
     }
 
-    /**
-     * 특정 위치(동)의 게시글 목록 조회
-     * @param locationInfoId 위치 정보 ID
-     * @return 위치 기반 게시글 목록
-     */
-    @GetMapping("/location")
-    public ResponseEntity<CommonResponse<List<LocationResponseDto>>> getPostsByLocation(
-            @RequestParam Long locationInfoId) {
-        
-        log.info("위치 기반 게시글 목록 조회 요청: locationInfoId={}", locationInfoId);
-        
-        List<LocationResponseDto> postList = postService.getPostsIdsByLocationInfoId(locationInfoId);
-        
-        return ResponseEntity.ok(CommonResponse.success("get_posts_by_location_success", postList));
-    }
+  /**
+   * 특정 위치(동)의 게시글 목록 조회
+   *
+   * @param locationInfoId 위치 정보 ID
+   * @return 위치 기반 게시글 목록
+   */
+  @GetMapping("/location")
+  public ResponseEntity<CommonResponse<List<LocationResponseDto>>> getPostsByLocation(
+      @RequestParam Long locationInfoId) {
+
+    log.info("위치 기반 게시글 목록 조회 요청: locationInfoId={}", locationInfoId);
+
+    List<LocationResponseDto> postList = postService.getPostsIdsByLocationInfoId(locationInfoId);
+
+    return ResponseEntity.ok(CommonResponse.success("get_posts_by_location_success", postList));
+  }
 }

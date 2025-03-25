@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.chat.ChatRoomCreateRequestDto;
 import org.ktb.matajo.dto.chat.ChatRoomCreateResponseDto;
+import org.ktb.matajo.dto.chat.ChatRoomDetailResponseDto;
 import org.ktb.matajo.dto.chat.ChatRoomResponseDto;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.chat.ChatRoomService;
@@ -49,6 +50,21 @@ public class ChatRoomController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(CommonResponse.success("get_my_chat_list_success", myChatRooms));
+    }
+
+    // 채팅방 상세 정보 조회
+    @GetMapping("/{roomId}")
+    public ResponseEntity<CommonResponse<ChatRoomDetailResponseDto>> getChatRoomDetail(
+            @PathVariable Long roomId,
+            @RequestHeader(value = "userId", required = false) Long userId) {
+
+        log.info("채팅방 상세 조회: roomId={}, userId={}", roomId, userId);
+
+        ChatRoomDetailResponseDto chatRoomDetail = chatRoomService.getChatRoomDetail(userId, roomId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(CommonResponse.success("get_chat_room_detail_success", chatRoomDetail));
     }
 
     // 채팅방 나가기
