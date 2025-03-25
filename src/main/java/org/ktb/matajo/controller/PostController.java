@@ -2,6 +2,7 @@ package org.ktb.matajo.controller;
 
 import java.util.List;
 
+import org.ktb.matajo.dto.location.LocationResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.post.PostServiceImpl;

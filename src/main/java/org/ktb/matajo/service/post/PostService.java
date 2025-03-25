@@ -2,6 +2,7 @@ package org.ktb.matajo.service.post;
 
 import java.util.List;
 
+import org.ktb.matajo.dto.location.LocationResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.springframework.web.multipart.MultipartFile;
 
