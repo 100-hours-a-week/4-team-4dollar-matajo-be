@@ -2,20 +2,20 @@ name: Deploy Spring Boot with Docker
 
 on:
   push:
-    branches: ["dev/test"] # 배포 대상 브랜치
+    branches: ["dev/test"]  # 배포 대상 브랜치
   pull_request:
-    branches: ["dev/test"] # PR 시에도 동작
+    branches: ["dev/test"]  # PR 시에도 동작
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 코드 체크아웃
+      # 1️⃣ GitHub Actions에서 코드 체크아웃
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      # Java 17 설정
+      # 2️⃣ Java 17 설정
       - name: Set up Java 17
         uses: actions/setup-java@v3
         with:
@@ -23,25 +23,26 @@ jobs:
           distribution: "temurin"
           cache: "gradle"
 
-      # Gradle 권한 설정 및 빌드
+      # 3️⃣ Gradle 빌드 수행 (테스트 제외)
       - name: Grant execute permission for Gradle and build
         run: |
           chmod +x ./gradlew
           ./gradlew spotlessApply  # 코드 스타일 적용
-          ./gradlew clean build -x test --stacktrace
+          ./gradlew clean build -x test --stacktrace  # 테스트 제외하고 빌드
+          mv build/libs/*.jar build/libs/app.jar  # Docker COPY 에러 방지
 
-      # Dockerfile, JAR 파일 EC2로 전송
+      # 4️⃣ Dockerfile, JAR 파일을 EC2로 전송
       - name: Upload files to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
-          host: 13.209.77.214 # 설정에 있는 EC2 IP 주소
+          host: 13.209.77.214  # EC2 IP
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
-          source: "build/libs/*.jar,Dockerfile"
+          source: "build/libs/app.jar,Dockerfile,.dockerignore"
           target: "/home/ubuntu/app"
           strip_components: 0
 
-      # Docker 이미지 빌드 및 컨테이너 실행
+      # 5️⃣ Docker 이미지 빌드 및 컨테이너 실행
       - name: Deploy with Docker
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -51,17 +52,17 @@ jobs:
           script: |
             cd /home/ubuntu/app
 
-            # 현재 실행 중인 컨테이너 정지 및 삭제
+            # ✅ 기존 컨테이너 종료 및 삭제
             docker stop matajo-app || true
             docker rm matajo-app || true
 
-            # 이전 이미지 삭제 (선택사항)
+            # ✅ 기존 이미지 삭제 (선택사항)
             docker image prune -f
 
-            # 새 Docker 이미지 빌드
+            # ✅ 새로운 Docker 이미지 빌드
             docker build -t matajo:latest .
 
-            # 컨테이너 실행
+            # ✅ 컨테이너 실행
             docker run -d \
               --name matajo-app \
               -p 8080:8080 \
@@ -69,7 +70,7 @@ jobs:
               -v /home/ubuntu/app/logs:/app/logs \
               matajo:latest
 
-            # 컨테이너 상태 확인
+            # ✅ 컨테이너 상태 확인
             sleep 10
             if [ "$(docker ps -q -f name=matajo-app)" ]; then
               echo "✅ 애플리케이션이 성공적으로 시작되었습니다"
