@@ -5,7 +5,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # 빌드된 JAR 파일 복사
-COPY build/libs/matajo-0.0.1-SNAPSHOT.jar app.jar
+COPY app.jar app.jar
 
 # 애플리케이션 실행 시 사용할 프로파일 설정을 위한 환경변수
 ENV SPRING_PROFILES_ACTIVE=dev,aws
