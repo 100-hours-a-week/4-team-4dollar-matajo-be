@@ -19,7 +19,14 @@ public enum ErrorCode {
     INVALID_USER_ID(HttpStatus.BAD_REQUEST, "invalid_user_id", "사용자 ID가 유효하지 않습니다"),
     INVALID_CHAT_ROOM_ID(HttpStatus.BAD_REQUEST, "invalid_chat_room_id", "채팅방 ID가 유효하지 않습니다"),
     INVALID_IMAGE_CONTENT(HttpStatus.BAD_REQUEST, "invalid_image_content", "이미지 타입 메시지의 내용이 비어있습니다"),
-    INVALID_IMAGE_URL(HttpStatus.BAD_REQUEST, "invalid_image_url", "유효하지 않은 이미지 URL 형식입니다"),
+    INVALID_IMAGE_URL(HttpStatus.BAD_REQUEST, "invalid_image_url", "이미지 URL이 유효하지 않습니다"),
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "invalid_file_type", "파일 형식이 유효하지 않습니다"),
+    FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "file_size_exceeded", "파일 크기는 10MB 이하여야 합니다"),
+    INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "invalid_category", "이미지 카테고리가 유효하지 않습니다"),
+    EMPTY_IMAGE(HttpStatus.BAD_REQUEST, "empty_image", "이미지 파일이 비어있거나 없습니다"),
+    INVALID_FILE_NAME(HttpStatus.BAD_REQUEST, "invalid_file_name", "파일 이름이 유효하지 않습니다"),
+    INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "invalid_file_extension", "지원하지 않는 파일 확장자입니다. jpg, jpeg, png, bmp, webp, heic 형식만 업로드 가능합니다"),
+    FILE_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "file_count_exceeded", "최대 업로드 가능한 파일 개수(4개)를 초과했습니다"),
     // 일반적인 입력값 검증 오류
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "invalid_input_value", "입력값이 유효하지 않습니다"),
 
