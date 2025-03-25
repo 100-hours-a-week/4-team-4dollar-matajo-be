@@ -29,7 +29,20 @@ jobs:
           chmod +x ./gradlew
           ./gradlew spotlessApply  # 코드 스타일 적용
           ./gradlew clean build -x test --stacktrace  # 테스트 제외하고 빌드
-          mv build/libs/*.jar build/libs/app.jar  # Docker COPY 에러 방지
+
+          echo "🔍 빌드된 JAR 파일 확인:"
+          ls -lh build/libs
+
+          # JAR 파일 자동 탐색 후 app.jar로 복사
+          JAR_FILE=$(find build/libs -name "*.jar" ! -name "*plain.jar" | head -n 1)
+          echo "🔍 찾은 JAR 파일: $JAR_FILE"
+
+          if [ -z "$JAR_FILE" ]; then
+            echo "❌ JAR 파일을 찾을 수 없습니다! 빌드가 실패했을 수 있습니다."
+            exit 1
+          fi
+
+          mv "$JAR_FILE" build/libs/app.jar  # Docker COPY 에러 방지
 
       # 4️⃣ SSH Key를 저장하고 권한 설정
       - name: Set up SSH key
