@@ -1,8 +1,8 @@
 package org.ktb.matajo.controller;
 
-import java.util.List;
-
-import org.ktb.matajo.dto.location.LocationResponseDto;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.post.PostServiceImpl;
@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PostController {
 
-  private final PostServiceImpl postService;
+    private final PostService postService;
 
   // 게시글 목록 조회
   @GetMapping
