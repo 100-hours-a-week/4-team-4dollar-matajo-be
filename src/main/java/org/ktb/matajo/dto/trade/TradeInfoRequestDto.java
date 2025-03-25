@@ -1,5 +1,6 @@
 package org.ktb.matajo.dto.trade;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.Max;
@@ -22,8 +23,8 @@ public class TradeInfoRequestDto {
 
   @NotBlank private String category;
 
-    @NotNull
-    private LocalDateTime startDate;
+  @NotNull
+  private LocalDate startDate;
 
   @Min(value = 1)
   private int storagePeriod;

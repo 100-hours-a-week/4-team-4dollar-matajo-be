@@ -1,5 +1,6 @@
 package org.ktb.matajo.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -35,8 +36,8 @@ public class TradeInfo {
   @Column(nullable = false, updatable = false)
   private LocalDateTime tradeDate;
 
-    @Column(nullable = false)
-    private LocalDateTime startDate;
+  @Column(nullable = false)
+  private LocalDate startDate;
 
   @Column(nullable = false)
   private int storagePeriod;
