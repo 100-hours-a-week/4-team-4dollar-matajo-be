@@ -1,6 +1,5 @@
 package org.ktb.matajo.service.chat;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.chat.ChatRoomCreateRequestDto;
@@ -10,10 +9,7 @@ import org.ktb.matajo.dto.chat.ChatRoomResponseDto;
 import org.ktb.matajo.entity.*;
 import org.ktb.matajo.global.error.code.ErrorCode;
 import org.ktb.matajo.global.error.exception.BusinessException;
-import org.ktb.matajo.repository.ChatRoomRepository;
-import org.ktb.matajo.repository.ChatUserRepository;
-import org.ktb.matajo.repository.PostRepository;
-import org.ktb.matajo.repository.UserRepository;
+import org.ktb.matajo.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +28,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     private final PostRepository postRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatUserRepository chatUserRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     // 채팅방 생성
     @Override
@@ -39,13 +36,22 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public ChatRoomCreateResponseDto createChatRoom(
             ChatRoomCreateRequestDto chatRoomCreateRequestDto, Long userId) {
 
-        // 게시글 조회(에러는 추후 수정)
+        // 게시글 조회
         Post post = postRepository.findById(chatRoomCreateRequestDto.getPostId())
-                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> {
+                   log.error("게시글 조회에 실패했습니다. postId={}", chatRoomCreateRequestDto.getPostId());
+                   return new BusinessException(ErrorCode.POST_NOT_FOUND);
+                });
+
+        // 여기에 삭제된 게시글 확인 코드 추가
+        if (post.isDeleted()) {
+            log.error("삭제된 게시글에 대한 채팅방 생성 시도: postId={}", post.getId());
+            throw new BusinessException(ErrorCode.POST_ALREADY_DELETED);
+        }
 
         // 보관인이 자신의 게시글에 채팅방을 생성하는 경우 방지
         if (post.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("보관인은 자신의 게시글에 채팅방을 생성할 수 없습니다.");
+            throw new BusinessException(ErrorCode.KEEPER_CANNOT_CREATE_CHATROOM);
         }
 
         // 채팅방이 있는지 확인하기(의뢰인ID 및 게시글ID)
@@ -71,7 +77,10 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
         // 현재 사용자 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> {
+                    log.error("사용자가 존재하지 않습니다. userId={}", userId);
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND);
+                });
 
         // 새 채팅방 생성
         ChatRoom chatRoom = ChatRoom.builder()
@@ -177,7 +186,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public ChatRoomDetailResponseDto getChatRoomDetail(Long userId, Long roomId) {
         // 채팅방 조회
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         // 사용자가 채팅방 참여자인지 확인
         boolean isMember = chatUserRepository.existsByUserIdAndChatRoomIdAndActiveStatusIsTrue(userId, roomId);
@@ -227,7 +236,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public void leaveChatRoom(Long userId, Long roomId) {
         // 채팅방 조회
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         // 보관인 확인
         Long keeperId = chatRoom.getPost().getUser().getId();
@@ -239,10 +248,10 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
         // 채팅방의 사용자 참여 정보 조회
         ChatUser chatUser = chatUserRepository.findByChatRoomAndUserId(chatRoom, userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_USER_NOT_FOUND));
 
         if(!chatUser.isActiveStatus()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(ErrorCode.CHAT_USER_ALREADY_LEFT);
         }
 
         // 채팅방 나가기
