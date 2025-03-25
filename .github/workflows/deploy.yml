@@ -42,15 +42,22 @@ jobs:
           fi
           mv "$JAR_FILE" build/libs/app.jar  # Docker COPY 에러 방지
 
-      # 4️⃣ Dockerfile, JAR 파일, .dockerignore를 EC2로 전송
-      - name: Upload files to EC2
+      # 4️⃣ JAR 파일 압축
+      - name: Compress JAR file
+        run: |
+          tar -czf app.tar.gz -C build/libs app.jar
+          ls -lh app.tar.gz  # 압축 파일 크기 확인
+
+      # 5️⃣ 압축 파일 및 Docker 설정 파일 전송
+      - name: Upload compressed JAR
         uses: appleboy/scp-action@v0.1.3
         with:
-          host: 13.209.77.214 # EC2 IP
+          host: 13.209.77.214
           username: ubuntu
-          key: ${{ secrets.EC2_KEY }} # SSH Private Key 직접 전달
-          source: "build/libs/app.jar"
-          target: "/home/ubuntu/app/app.jar"
+          key: ${{ secrets.EC2_KEY }}
+          source: "app.tar.gz"
+          target: "/home/ubuntu/app"
+          timeout: 30m
 
       - name: Upload Docker config files to EC2
         uses: appleboy/scp-action@v0.1.3
@@ -61,16 +68,27 @@ jobs:
           source: "Dockerfile,.dockerignore"
           target: "/home/ubuntu/app"
 
-      # 5️⃣ Docker 이미지 빌드 및 컨테이너 실행
+      # 6️⃣ 압축 해제 및 Docker 이미지 빌드, 컨테이너 실행
       - name: Deploy with Docker
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: 13.209.77.214
           username: ubuntu
-          key: ${{ secrets.EC2_KEY }} # SSH Private Key 직접 전달
+          key: ${{ secrets.EC2_KEY }}
           script: |
             cd /home/ubuntu/app
-
+            
+            # 압축 해제
+            tar -xzf app.tar.gz
+            rm app.tar.gz
+            
+            # JAR 파일 검증
+            echo "🔍 JAR 파일 크기 확인:"
+            ls -lh app.jar
+            
+            # JAR 파일 유효성 확인
+            file app.jar
+            
             # 기존 컨테이너 종료 및 삭제
             docker stop matajo-app || true
             docker rm matajo-app || true
