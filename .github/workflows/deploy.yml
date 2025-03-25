@@ -27,6 +27,7 @@ jobs:
       - name: Grant execute permission for Gradle and build
         run: |
           chmod +x ./gradlew
+          ./gradlew spotlessApply  # 코드 스타일 적용
           ./gradlew clean build -x test --stacktrace
 
       # Dockerfile, JAR 파일 EC2로 전송
