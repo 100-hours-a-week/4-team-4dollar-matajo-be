@@ -29,7 +29,20 @@ jobs:
           chmod +x ./gradlew
           ./gradlew spotlessApply  # 코드 스타일 적용
           ./gradlew clean build -x test --stacktrace  # 테스트 제외하고 빌드
-          mv build/libs/*.jar build/libs/app.jar  # Docker COPY 에러 방지
+
+          echo "🔍 빌드된 JAR 파일 확인:"
+          ls -lh build/libs
+
+          # JAR 파일 자동 탐색 후 app.jar로 복사
+          JAR_FILE=$(find build/libs -name "*.jar" ! -name "*plain.jar" | head -n 1)
+          echo "🔍 찾은 JAR 파일: $JAR_FILE"
+
+          if [ -z "$JAR_FILE" ]; then
+            echo "❌ JAR 파일을 찾을 수 없습니다! 빌드가 실패했을 수 있습니다."
+            exit 1
+          fi
+
+          mv "$JAR_FILE" build/libs/app.jar  # Docker COPY 에러 방지
 
       # 4️⃣ Dockerfile, JAR 파일을 EC2로 전송
       - name: Upload files to EC2
@@ -46,37 +59,4 @@ jobs:
       - name: Deploy with Docker
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: 13.209.77.214
-          username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            cd /home/ubuntu/app
-
-            # ✅ 기존 컨테이너 종료 및 삭제
-            docker stop matajo-app || true
-            docker rm matajo-app || true
-
-            # ✅ 기존 이미지 삭제 (선택사항)
-            docker image prune -f
-
-            # ✅ 새로운 Docker 이미지 빌드
-            docker build -t matajo:latest .
-
-            # ✅ 컨테이너 실행
-            docker run -d \
-              --name matajo-app \
-              -p 8080:8080 \
-              --restart always \
-              -v /home/ubuntu/app/logs:/app/logs \
-              matajo:latest
-
-            # ✅ 컨테이너 상태 확인
-            sleep 10
-            if [ "$(docker ps -q -f name=matajo-app)" ]; then
-              echo "✅ 애플리케이션이 성공적으로 시작되었습니다"
-              docker logs matajo-app --tail 50
-            else
-              echo "❌ 애플리케이션 시작에 실패했습니다"
-              docker logs matajo-app
-              exit 1
-            fi
+          host: 13.209.77
