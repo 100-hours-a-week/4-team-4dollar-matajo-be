@@ -23,7 +23,14 @@ jobs:
           distribution: "temurin"
           cache: "gradle"
 
-      # 3️⃣ Gradle 빌드 수행 (테스트 제외)
+      # 3️⃣ 설정 파일 준비
+      - name: Prepare configuration files
+        run: |
+          mkdir -p config
+          cp src/main/resources/application-dev.yml config/
+          cp src/main/resources/application-aws.yml config/
+
+      # 4️⃣ Gradle 빌드 수행 (테스트 제외)
       - name: Grant execute permission for Gradle and build
         run: |
           chmod +x ./gradlew
@@ -42,13 +49,13 @@ jobs:
           fi
           mv "$JAR_FILE" build/libs/app.jar  # Docker COPY 에러 방지
 
-      # 4️⃣ JAR 파일 압축
+      # 5️⃣ JAR 파일 압축
       - name: Compress JAR file
         run: |
           tar -czf app.tar.gz -C build/libs app.jar
           ls -lh app.tar.gz  # 압축 파일 크기 확인
 
-      # 5️⃣ 압축 파일 및 Docker 설정 파일 전송
+      # 6️⃣ 압축 파일, 설정 파일, Docker 설정 파일 전송
       - name: Upload compressed JAR
         uses: appleboy/scp-action@v0.1.3
         with:
@@ -59,6 +66,16 @@ jobs:
           target: "/home/ubuntu/app"
           timeout: 30m
 
+      - name: Upload configuration files
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: 13.209.77.214
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          source: "config/*.yml"
+          target: "/home/ubuntu/app"
+          timeout: 10m
+
       - name: Upload Docker config files to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
@@ -68,7 +85,7 @@ jobs:
           source: "Dockerfile,.dockerignore"
           target: "/home/ubuntu/app"
 
-      # 6️⃣ 압축 해제 및 Docker 이미지 빌드, 컨테이너 실행
+      # 7️⃣ 압축 해제 및 Docker 이미지 빌드, 컨테이너 실행
       - name: Deploy with Docker
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -84,6 +101,12 @@ jobs:
             tar -xzf app.tar.gz -C temp_extract
             mv temp_extract/app.jar ./app.jar
             rm -rf temp_extract app.tar.gz
+            
+            # 설정 파일 디렉토리 생성 및 확인
+            mkdir -p config
+            mv *.yml config/ 2>/dev/null || true
+            echo "🔍 설정 파일 확인:"
+            ls -la config/
             
             # JAR 파일 검증
             echo "🔍 JAR 파일 크기 확인:"
@@ -102,12 +125,14 @@ jobs:
             # 새로운 Docker 이미지 빌드
             docker build -t matajo:latest .
 
-            # 컨테이너 실행
+            # 컨테이너 실행 (설정 파일 마운트 추가)
             docker run -d \
               --name matajo-app \
               -p 8080:8080 \
               --restart always \
               -v /home/ubuntu/app/logs:/app/logs \
+              -v /home/ubuntu/app/config:/app/config \
+              -e SPRING_CONFIG_ADDITIONAL_LOCATION=file:/app/config/ \
               matajo:latest
 
             # 컨테이너 상태 확인
