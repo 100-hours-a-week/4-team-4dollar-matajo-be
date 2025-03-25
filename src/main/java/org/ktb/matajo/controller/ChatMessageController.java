@@ -7,6 +7,7 @@ import org.ktb.matajo.dto.chat.ChatMessageRequestDto;
 import org.ktb.matajo.dto.chat.ChatMessageResponseDto;
 import org.ktb.matajo.entity.MessageType;
 import org.ktb.matajo.global.common.CommonResponse;
+import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.chat.ChatMessageService;
 import org.ktb.matajo.service.chat.ChatSessionService;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,7 +37,9 @@ public class ChatMessageController {
      * /app/chat/{roomId} 엔드포인트로 메시지가 전송됨
      */
     @MessageMapping("/{roomId}/message")
-    public void sendMessage(@DestinationVariable Long roomId, @Valid @Payload ChatMessageRequestDto messageDto) {
+    public void sendMessage(@DestinationVariable Long roomId,
+                            @Valid @Payload ChatMessageRequestDto messageDto,
+                            SimpMessageHeaderAccessor headerAccessor) {
         log.info("메시지 전송: roomId={}, senderId={}, type={}", roomId, messageDto.getSenderId(), messageDto.getMessageType());
 
         // 이미지 메시지 처리를 위한 로그 추가
@@ -79,15 +83,15 @@ public class ChatMessageController {
                 .body(CommonResponse.success("get_messages_success", messages));
     }
 
-
-
     /**
      * 메시지 읽음 상태 업데이트
      */
     @PutMapping("/{roomId}/read")
     public ResponseEntity<CommonResponse<Void>> markMessagesAsRead(
-            @PathVariable Long roomId,
-            @RequestParam Long userId) {
+            @PathVariable Long roomId) {
+
+        // 토큰에서 userId 추출
+        Long userId = SecurityUtil.getCurrentUserId();
 
         log.info("메시지 읽음 처리: roomId={}, userId={}", roomId, userId);
 
