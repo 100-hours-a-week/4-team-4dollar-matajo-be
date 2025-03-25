@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.location.LocationResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.global.common.CommonResponse;
+import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.post.PostServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -55,7 +56,9 @@ public class PostController {
                 postData.getPostAddressData() != null ? postData.getPostAddressData().getAddress() : "정보 없음",
                 mainImage.getSize());
 
-        PostCreateResponseDto responseDto = postService.createPost(postData, mainImage, detailImages);
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        PostCreateResponseDto responseDto = postService.createPost(postData, mainImage, detailImages, userId);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -83,9 +86,11 @@ public class PostController {
         log.info("게시글 수정 요청: ID={}, 제목={}, 주소={}",                                                              
                 postId,
                 postData.getPostTitle(),
-                postData.getPostAddressData());                                                               
+                postData.getPostAddressData());
+
+        Long userId = SecurityUtil.getCurrentUserId();
                               
-        PostCreateResponseDto responseDto = postService.updatePost(postId,postData,mainImage,detailImages);
+        PostCreateResponseDto responseDto = postService.updatePost(postId,postData,mainImage,detailImages, userId);
 
         return ResponseEntity.ok(CommonResponse.success("update_post_success",responseDto));
     }
@@ -95,8 +100,10 @@ public class PostController {
             @PathVariable Long postId) {
         
         log.info("게시글 공개 상태 변경 요청: postId={}", postId);
-        
-        postService.togglePostVisibility(postId);
+
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        postService.togglePostVisibility(postId, userId);
         
         return ResponseEntity.ok(CommonResponse.success("toggle_post_visibility_success", null));
     }
@@ -106,8 +113,10 @@ public class PostController {
             @PathVariable Long postId) {
         
         log.info("게시글 삭제 요청: postId={}", postId);
+
+        Long userId = SecurityUtil.getCurrentUserId();
         
-        postService.deletePost(postId);
+        postService.deletePost(postId, userId);
         
         return ResponseEntity.ok(CommonResponse.success("delete_post_success", null));
     }
