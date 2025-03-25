@@ -95,12 +95,16 @@ public class PostServiceImpl implements PostService {
         // 요청 데이터 유효성 검증
         validatePostRequest(requestDto, mainImage);
 
-        // 테스트용 하드코딩된 사용자 정보 가져오기 (kakaoId가 12345678901인 사용자)
+        // 유저 정보 가져오기
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
+
+        if (user.getRole() == UserType.USER) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
 
         log.info("사용자 정보: ID={}, 닉네임={}", user.getId(), user.getNickname());
 
@@ -348,11 +352,15 @@ public class PostServiceImpl implements PostService {
         }
 
 
-        // 테스트용 하드코딩된 사용자 정보 가져오기
+        // 사용자 정보 가져오기
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);});
+
+        if (user.getRole() == UserType.USER) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
 
         //게시글 작성자- 현재 사용자 비교
         // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
@@ -591,12 +599,16 @@ public class PostServiceImpl implements PostService {
 
         // 현재 인증된 사용자 정보 가져오기
 
-        // 테스트용 하드코딩된 사용자 정보 가져오기 (추후 인증 기능 구현 후 변경 필요)
+        // 사용자 정보 가져오기
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
+
+        if (user.getRole() == UserType.USER) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
 
         // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
         if (!post.getUser().getId().equals(user.getId())) {
@@ -642,15 +654,19 @@ public class PostServiceImpl implements PostService {
         }
 
         // 테스트용 하드코딩된 사용자 정보 가져오기
-        User testUser = userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
 
+        if (user.getRole() == UserType.USER) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
+
         // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
-        if (!post.getUser().getId().equals(testUser.getId())) {
-            log.error("게시글 상태 변경 권한이 없습니다: postId={}, userId={}", postId, testUser.getId());
+        if (!post.getUser().getId().equals(user.getId())) {
+            log.error("게시글 상태 변경 권한이 없습니다: postId={}, userId={}", postId, user.getId());
             throw new BusinessException(ErrorCode.NO_PERMISSION_TO_UPDATE);
         }
 
