@@ -2,10 +2,10 @@ package org.ktb.matajo.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ktb.matajo.dto.location.LocationCompleteDto;
 import org.ktb.matajo.dto.location.LocationResponseDto;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.post.PostService;
+import org.ktb.matajo.service.location.LocationInfoService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +21,7 @@ import java.util.List;
 public class LocationController {
 
     private final PostService postService;
+    private final LocationInfoService locationInfoService;
 
     /**
      * 특정 위치(동)의 게시글 목록 조회
@@ -40,11 +41,17 @@ public class LocationController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<CommonResponse<List<LocationCompleteDto>>> getSearchByLocation() {
-        // 구현 로직 추가
-        return ResponseEntity.ok(CommonResponse.success("location_search_success", null));
+    public ResponseEntity<CommonResponse<List<String>>> searchLocations(
+            @RequestParam(required = true) String dong) {
+        
+        log.info("위치 검색 요청: query={}", dong);
+        
+        List<String> searchResults = locationInfoService.searchLocations(dong);
+        
+        return ResponseEntity.ok(CommonResponse.success(
+            "location_search_success", 
+            searchResults
+        ));
     }
-
-
 
 }
