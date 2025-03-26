@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
@@ -38,4 +37,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findTopDiscountedPostsByLocationInfoId(
         @Param("locationInfoId") Long locationInfoId
     );
+
+    // ✅ [추가] 유저 ID로 게시글 조회 (페이지네이션 포함)
+    @Query("SELECT p FROM Post p WHERE p.user.id = :userId AND p.deletedAt IS NULL ORDER BY p.createdAt DESC")
+    List<Post> findByUserId(@Param("userId") Long userId, Pageable pageable);
 }

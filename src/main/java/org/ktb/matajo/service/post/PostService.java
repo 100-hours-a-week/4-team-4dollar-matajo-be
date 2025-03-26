@@ -72,4 +72,7 @@ public interface PostService {
    * @return 할인율 상위 2개 게시글 목록
    */
   List<LocationDealResponseDto> getTopDiscountedPosts(Long locationInfoId);
+  
+  // 내 보관소 조회
+  List<MyPostResponseDto> getMyPosts(Long userId, int offset, int limit);
 }

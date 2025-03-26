@@ -745,5 +745,24 @@ public class PostServiceImpl implements PostService {
 
         return dealResponses;
     }
+    // 내 보관소 조회
+    @Override
+    @Transactional(readOnly = true)
+    public List<MyPostResponseDto> getMyPosts(Long userId, int offset, int limit) {
+        Pageable pageable = PageRequest.of(offset / limit, limit);
+        List<Post> posts = postRepository.findByUserId(userId, pageable);
+
+        return posts.stream()
+                .map(post -> MyPostResponseDto.builder()
+                        .postId(post.getId())
+                        .postTitle(post.getTitle())
+                        .postAddress(post.getAddress().getAddress())
+                        .preferPrice(post.getPreferPrice())
+                        .hiddenStatus(post.isHiddenStatus())
+                        .createdAt(post.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 }
 
