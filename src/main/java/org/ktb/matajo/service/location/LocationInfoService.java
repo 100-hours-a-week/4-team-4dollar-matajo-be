@@ -1,6 +1,7 @@
 package org.ktb.matajo.service.location;
 
 import org.ktb.matajo.entity.LocationInfo;
+import org.ktb.matajo.dto.location.LocationIdResponseDto;
 import java.util.List;
 
 public interface LocationInfoService {
@@ -19,4 +20,11 @@ public interface LocationInfoService {
      * @return 검색된 주소 문자열 목록
      */
     List<String> searchLocations(String searchTerm);
+
+    /**
+     * 주소 정보로 위치 정보를 조회합니다.
+     * @param formattedAddress 형식화된 주소
+     * @return 위치 정보 응답 목록
+     */
+    List<LocationIdResponseDto> findLocationByAddress(String formattedAddress);
 }

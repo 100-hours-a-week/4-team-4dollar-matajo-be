@@ -1,8 +1,11 @@
 package org.ktb.matajo.controller;
 
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ktb.matajo.dto.location.LocationResponseDto;
+import org.ktb.matajo.dto.location.LocationDealResponseDto;
+import org.ktb.matajo.dto.location.LocationIdResponseDto;
+import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.post.PostService;
 import org.ktb.matajo.service.location.LocationInfoService;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -30,16 +34,18 @@ public class LocationController {
      * @return 위치 기반 게시글 목록
      */
     @GetMapping
-    public ResponseEntity<CommonResponse<List<LocationResponseDto>>> getPostsByLocation(
-            @RequestParam Long locationInfoId) {
+    public ResponseEntity<CommonResponse<List<LocationPostResponseDto>>> getPostsByLocation(
+            @RequestParam("locationInfoId") Long locationInfoId) {
 
         log.info("위치 기반 게시글 목록 조회 요청: locationInfoId={}", locationInfoId);
 
-        List<LocationResponseDto> postList = postService.getPostsIdsByLocationInfoId(locationInfoId);
+        List<LocationPostResponseDto> postList = postService.getPostsIdsByLocationInfoId(locationInfoId);
 
         return ResponseEntity.ok(CommonResponse.success("get_posts_by_location_success", postList));
     }
 
+
+    //동 검색
     @GetMapping("/search")
     public ResponseEntity<CommonResponse<List<String>>> searchLocations(
             @RequestParam(required = true) String dong) {
@@ -52,6 +58,47 @@ public class LocationController {
             "location_search_success", 
             searchResults
         ));
+    }
+
+    //지역 특가 조회
+    @GetMapping("/deal")
+    public ResponseEntity<CommonResponse<Map<String, Object>>> getDeals(
+            @RequestParam("locationInfoId") Long locationInfoId) {
+      
+        log.info("지역 특가 조회 요청: locationInfoId={}", locationInfoId);
+      
+        List<LocationDealResponseDto> deals = postService.getTopDiscountedPosts(locationInfoId);
+      
+        Map<String, Object> responseData = Map.of(
+            "locationInfoId", locationInfoId,
+            "posts", deals
+        );
+      
+        String message = deals.isEmpty() ? "no_deals_found" : "get_deals_success";
+      
+        return ResponseEntity.ok(CommonResponse.success(message, responseData));
+    }
+
+    /**
+     * 주소로 위치 정보 조회
+     *
+     * @param formattedAddress 형식화된 주소
+     * @return 위치 정보 응답
+     */
+    @GetMapping("/find")
+    public ResponseEntity<CommonResponse<List<LocationIdResponseDto>>> findLocationByAddress(
+            @RequestParam("formattedAddress") String formattedAddress) {
+        
+        log.info("주소로 위치 정보 조회 요청: formattedAddress={}", formattedAddress);
+        
+        List<LocationIdResponseDto> locations = locationInfoService.findLocationByAddress(formattedAddress);
+        
+        if (locations.isEmpty()) {
+            return ResponseEntity.status(404).body(CommonResponse.error(
+                "location_not_found", Collections.emptyList()));
+        }
+        
+        return ResponseEntity.ok(CommonResponse.success("location_find_success", locations));
     }
 
 }
