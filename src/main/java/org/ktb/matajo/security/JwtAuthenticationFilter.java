@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.ktb.matajo.entity.CustomUserDetails;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -37,8 +38,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Claims claims = jwtUtil.parseToken(token);
 
         if (claims != null) {
-            String userId = claims.getSubject();
-            UserDetails userDetails = new User(userId, "", Collections.emptyList());
+            Long userId = ((Number) claims.get("userId")).longValue();
+            String nickname = (String) claims.get("nickname");
+            String role = (String) claims.get("role");
+
+            CustomUserDetails userDetails = new CustomUserDetails(userId, nickname, role);
+
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);

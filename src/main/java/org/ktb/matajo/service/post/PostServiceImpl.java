@@ -2,7 +2,8 @@ package org.ktb.matajo.service.post;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ktb.matajo.dto.location.LocationResponseDto;
+import org.ktb.matajo.dto.location.LocationDealResponseDto;
+import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.entity.*;
 import org.ktb.matajo.global.error.code.ErrorCode;
@@ -25,11 +26,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
-    //    private final UserService userService;
     private final AddressService addressService;
     private final S3Service s3Service;
 
@@ -38,7 +39,7 @@ public class PostServiceImpl implements PostService {
     /**
      * 게시글 목록 조회 메소드
      */
-    @Transactional(readOnly = true)
+    @Override
     public List<PostListResponseDto> getPostList(int offset, int limit) {
         // 요청 파라미터 검증
         if (offset < 0 || limit <= 0) {
@@ -91,22 +92,24 @@ public class PostServiceImpl implements PostService {
      * @param detailImages 상세 이미지 파일들
      * @return 생성된 게시글 ID를 담은 응답 DTO
      */
+    @Override
     @Transactional
-    public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages) {
+    public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages, Long userId) {
         // 요청 데이터 유효성 검증
         validatePostRequest(requestDto, mainImage);
 
-        // 현재 인증된 사용자 정보 가져오기
-//        User currentUser = userService.getCurrentUser();
-
-        // 테스트용 하드코딩된 사용자 정보 가져오기 (kakaoId가 12345678901인 사용자)
-        User testUser = userRepository.findById(1L)
+        // 유저 정보 가져오기
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.error("테스트용 사용자를 찾을 수 없습니다");
+                    log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
 
-        log.info("테스트 사용자 정보: ID={}, 닉네임={}", testUser.getId(), testUser.getNickname());
+        if (user.getRole() == UserType.USER) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
+
+        log.info("사용자 정보: ID={}, 닉네임={}", user.getId(), user.getNickname());
 
         //TODO:keeper인 사람만 게시글을 등록할 수 있다.
 
@@ -121,7 +124,7 @@ public class PostServiceImpl implements PostService {
 
         // Post 엔티티 생성 및 저장
         Post post = Post.builder()
-                .user(testUser)
+                .user(user)
                 .title(requestDto.getPostTitle())
                 .content(requestDto.getPostContent())
                 .preferPrice(requestDto.getPreferPrice())
@@ -132,7 +135,7 @@ public class PostServiceImpl implements PostService {
 
         Post savedPost = postRepository.save(post);
 
-        log.info("테스트 사용자 정보: tagName={}", requestDto.getPostTags());
+        log.info("사용자 정보: tagName={}", requestDto.getPostTags());
         // 태그 처리
         if (requestDto.getPostTags() != null && !requestDto.getPostTags().isEmpty()) {
             processPostTags(savedPost, requestDto.getPostTags());
@@ -189,7 +192,7 @@ public class PostServiceImpl implements PostService {
             Tag tag = tagRepository.findByTagName(tagName)
                     .orElseThrow(() -> {
                         log.error("존재하지 않는 태그: {}", tagName);
-                        return new BusinessException(ErrorCode.INVALID_TAG_NAME);
+                        return new BusinessException(ErrorCode.TAG_NAME_NOT_FOUND);
                     });
 
             // 이미 연결된 태그인지 확인 (중복 방지)
@@ -261,19 +264,19 @@ public class PostServiceImpl implements PostService {
      * @param postId 조회할 게시글 ID
      * @return 게시글 상세 정보 DTO
      */
-    @Transactional(readOnly = true)
+    @Override
     public PostDetailResponseDto getPostDetail(Long postId) {
         // 게시글 조회
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
-                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                    return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
 
         // 삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
-            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         // 이미지 URL 목록 추출 - 썸네일 이미지를 첫 번째 위치에 배치
@@ -327,9 +330,11 @@ public class PostServiceImpl implements PostService {
      * @param detailImages 새 상세 이미지들 (선택적)
      * @return 수정된 게시글 ID 응답 DTO
      */
+    @Override
     @Transactional
     public PostCreateResponseDto updatePost(Long postId,PostCreateRequestDto requestDto,
-                                            MultipartFile mainImage,List<MultipartFile> detailImages){
+                                            MultipartFile mainImage,List<MultipartFile> detailImages,
+                                            Long userId){
 
         //게시글 id 검증
         if (postId == null) {
@@ -341,28 +346,30 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
-                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                    return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
 
         //삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
-            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
-        // 현재 인증된 사용자 정보 가져오기
-        // User currentUser = userService.getCurrentUser();
 
-        // 테스트용 하드코딩된 사용자 정보 가져오기
-        User testUser = userRepository.findById(1L)
+        // 사용자 정보 가져오기
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.error("테스트용 사용자를 찾을 수 없습니다");
+                    log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);});
+
+        if (user.getRole() == UserType.USER) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
 
         //게시글 작성자- 현재 사용자 비교
         // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
-        if (!post.getUser().getId().equals(testUser.getId())) {
-            log.error("게시글 수정 권한이 없습니다: postId={}, userId={}", postId, testUser.getId());
+        if (!post.getUser().getId().equals(user.getId())) {
+            log.error("게시글 수정 권한이 없습니다: postId={}, userId={}", postId, user.getId());
             throw new BusinessException(ErrorCode.NO_PERMISSION_TO_UPDATE);
         }
 
@@ -463,7 +470,7 @@ public class PostServiceImpl implements PostService {
             Tag tag = tagRepository.findByTagName(tagName)
                     .orElseThrow(() -> {
                         log.error("존재하지 않는 태그: {}", tagName);
-                        return new BusinessException(ErrorCode.INVALID_TAG_NAME);
+                        return new BusinessException(ErrorCode.TAG_NAME_NOT_FOUND);
                     });
 
             PostTag postTag = PostTag.builder()
@@ -572,8 +579,9 @@ public class PostServiceImpl implements PostService {
      * 게시글 삭제 메소드 (소프트 딜리트)
      * @param postId 삭제할 게시글 ID
      */
+    @Override
     @Transactional
-    public void deletePost(Long postId) {
+    public void deletePost(Long postId, Long userId) {
 
         // postId null 체크 추가
         if (postId == null) {
@@ -585,28 +593,31 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
-                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                    return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
 
         // 이미 삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
-            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         // 현재 인증된 사용자 정보 가져오기
-        // User currentUser = userService.getCurrentUser();
 
-        // 테스트용 하드코딩된 사용자 정보 가져오기 (추후 인증 기능 구현 후 변경 필요)
-        User testUser = userRepository.findById(1L)
+        // 사용자 정보 가져오기
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.error("테스트용 사용자를 찾을 수 없습니다");
+                    log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
 
+        if (user.getRole() == UserType.USER) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
+
         // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
-        if (!post.getUser().getId().equals(testUser.getId())) {
-            log.error("게시글 삭제 권한이 없습니다: postId={}, userId={}", postId, testUser.getId());
+        if (!post.getUser().getId().equals(user.getId())) {
+            log.error("게시글 삭제 권한이 없습니다: postId={}, userId={}", postId, user.getId());
             throw new BusinessException(ErrorCode.NO_PERMISSION_TO_DELETE);
         }
 
@@ -626,8 +637,9 @@ public class PostServiceImpl implements PostService {
      * 게시글 공개/비공개 상태 전환 메서드
      * @param postId 상태를 변경할 게시글 ID
      */
+    @Override
     @Transactional
-    public void togglePostVisibility(Long postId) {
+    public void togglePostVisibility(Long postId, Long userId) {
         // postId null 체크
         if (postId == null) {
             log.error("게시글 ID가 null입니다");
@@ -638,25 +650,29 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
-                    return new BusinessException(ErrorCode.NOT_FOUND_POST);
+                    return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
 
         // 삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
-            throw new BusinessException(ErrorCode.NOT_FOUND_POST);
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         // 테스트용 하드코딩된 사용자 정보 가져오기
-        User testUser = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.error("테스트용 사용자를 찾을 수 없습니다");
+                    log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
 
+        if (user.getRole() == UserType.USER) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
+
         // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
-        if (!post.getUser().getId().equals(testUser.getId())) {
-            log.error("게시글 상태 변경 권한이 없습니다: postId={}, userId={}", postId, testUser.getId());
+        if (!post.getUser().getId().equals(user.getId())) {
+            log.error("게시글 상태 변경 권한이 없습니다: postId={}, userId={}", postId, user.getId());
             throw new BusinessException(ErrorCode.NO_PERMISSION_TO_UPDATE);
         }
 
@@ -675,8 +691,8 @@ public class PostServiceImpl implements PostService {
      * @param locationInfoId 조회할 위치 정보 ID
      * @return 게시글 목록 응답 DTO
      */
-    @Transactional(readOnly = true)
-    public List<LocationResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId) {
+    @Override
+    public List<LocationPostResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId) {
         if (locationInfoId == null) {
             log.error("위치 정보 ID가 null입니다");
             throw new BusinessException(ErrorCode.INVALID_LOCATION_ID);
@@ -697,11 +713,66 @@ public class PostServiceImpl implements PostService {
 
         // 게시글 ID와 주소 ID만 추출하여 DTO로 변환
         return posts.stream()
-                .map(post -> LocationResponseDto.builder()
+                .map(post -> LocationPostResponseDto.builder()
                         .postId(post.getId())
                         .address(post.getAddress().getAddress())
                         .build())
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<LocationDealResponseDto> getTopDiscountedPosts(Long locationInfoId) {
+        log.info("지역 특가 게시글 조회 시작: locationInfoId={}", locationInfoId);
+
+        if (locationInfoId == null) {
+            log.error("위치 정보 ID가 null입니다");
+            throw new BusinessException(ErrorCode.INVALID_LOCATION_ID);
+        }
+
+        List<Post> topDiscountedPosts = postRepository.findTopDiscountedPostsByLocationInfoId(locationInfoId);
+
+        if (topDiscountedPosts.isEmpty() || 
+            topDiscountedPosts.stream().allMatch(post -> post.getDiscountRate() == 0)) {
+            log.info("해당 지역의 할인 게시글이 없거나 모두 할인율이 0입니다: locationInfoId={}", locationInfoId);
+            return Collections.emptyList();
+        }
+
+        // DTO 변환
+        List<LocationDealResponseDto> dealResponses = topDiscountedPosts.stream()
+            .map(post -> LocationDealResponseDto.builder()
+                .title(post.getTitle())
+                .discount(String.format("-%d%%", Math.round(post.getDiscountRate())))
+                .imageUrl(post.getImageList().stream()
+                    .filter(Image::isThumbnailStatus)
+                    .findFirst()
+                    .map(Image::getImageUrl)
+                    .orElse(null))
+                .build())
+            .collect(Collectors.toList());
+
+        log.info("지역 특가 게시글 조회 완료: locationInfoId={}, 조회된 게시글 수={}", 
+            locationInfoId, dealResponses.size());
+
+        return dealResponses;
+    }
+    // 내 보관소 조회
+    @Override
+    @Transactional(readOnly = true)
+    public List<MyPostResponseDto> getMyPosts(Long userId, int offset, int limit) {
+        Pageable pageable = PageRequest.of(offset / limit, limit);
+        List<Post> posts = postRepository.findByUserId(userId, pageable);
+
+        return posts.stream()
+                .map(post -> MyPostResponseDto.builder()
+                        .postId(post.getId())
+                        .postTitle(post.getTitle())
+                        .postAddress(post.getAddress().getAddress())
+                        .preferPrice(post.getPreferPrice())
+                        .hiddenStatus(post.isHiddenStatus())
+                        .createdAt(post.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 }
 

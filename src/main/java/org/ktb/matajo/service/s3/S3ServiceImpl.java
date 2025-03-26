@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,10 +34,9 @@ public class S3ServiceImpl implements S3Service {
 
     @Override
     public String uploadImage(MultipartFile file, String category) {
-        // 파일 유효성 검증
-        if (file == null || file.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_POST_IMAGES);
-        }
+
+        validateImage(file);
+        validateCategory(category);
 
         try {
             // 원본 파일명 추출 및 고유한 파일명 생성
@@ -82,6 +82,14 @@ public class S3ServiceImpl implements S3Service {
             return new ArrayList<>();
         }
 
+        // 파일 개수 제한
+        int maxFiles = 4;
+        if(files.size() > maxFiles) {
+            log.error("파일 업로드 개수 초과: {}개 (최대 {}개)", files.size(), maxFiles);
+            throw new BusinessException(ErrorCode.FILE_COUNT_EXCEEDED);
+        }
+
+        // 개별 파일 업로드
         List<String> imageUrls = new ArrayList<>();
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
@@ -145,4 +153,65 @@ public class S3ServiceImpl implements S3Service {
         }
         return null;
     }
+
+    /**
+     * 이미지 파일 유효성 검증
+     */
+    private void validateImage(MultipartFile file) {
+        // 파일 존재 여부 확인
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException(ErrorCode.EMPTY_IMAGE);
+        }
+
+        // 파일 타입 확인
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            log.error("유효하지 않은 파일 타입: {}", contentType);
+            throw new BusinessException(ErrorCode.INVALID_FILE_TYPE);
+        }
+
+        // 파일 확장자 검증
+        String fileName = file.getOriginalFilename();
+        if (fileName == null || fileName.isBlank()) {
+            log.error("파일 이름이 없습니다");
+            throw new BusinessException(ErrorCode.INVALID_FILE_NAME);
+        }
+
+        String extension = getExtensionFromFilename(fileName).toLowerCase();
+        List<String> allowedExtensions = Arrays.asList(
+                ".jpg", ".jpeg", ".png", ".bmp", ".webp", ".heic");
+
+        if (!allowedExtensions.contains(extension)) {
+            log.error("지원하지 않는 파일 확장자: {}", extension);
+            throw new BusinessException(ErrorCode.INVALID_FILE_EXTENSION);
+        }
+
+
+        // 파일 크기 확인 (10MB 이하)
+        long maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.getSize() > maxSize) {
+            log.error("파일 크기 제한 초과: {}KB (최대 {}MB)",
+                    file.getSize() / 1024, maxSize / (1024 * 1024));
+            throw new BusinessException(ErrorCode.FILE_SIZE_EXCEEDED);
+        }
+    }
+
+    /**
+     * 카테고리 유효성 검증
+     */
+    private void validateCategory(String category) {
+        if (category == null || category.isBlank()) {
+            log.error("카테고리 값이 비어있습니다");
+            throw new BusinessException(ErrorCode.INVALID_CATEGORY);
+        }
+
+        // 허용된 카테고리 목록
+        List<String> allowedCategories = Arrays.asList("post", "chat");
+
+        if (!allowedCategories.contains(category.toLowerCase())) {
+            log.error("지원하지 않는 카테고리: {}", category);
+            throw new BusinessException(ErrorCode.INVALID_CATEGORY);
+        }
+    }
+
 }
