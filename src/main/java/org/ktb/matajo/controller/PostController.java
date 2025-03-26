@@ -8,7 +8,7 @@ import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.security.SecurityUtil;
-import org.ktb.matajo.service.post.PostServiceImpl;
+import org.ktb.matajo.service.post.PostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +25,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PostController {
 
-    private final PostServiceImpl postService;
+    private final PostService postService;
 
     //게시글 목록 조회
     @GetMapping
