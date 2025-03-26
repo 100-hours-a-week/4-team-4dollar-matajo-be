@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.chat.ChatMessageRequestDto;
 import org.ktb.matajo.dto.chat.ChatMessageResponseDto;
+import org.ktb.matajo.dto.trade.TradeInfoCurrentResponseDto;
 import org.ktb.matajo.dto.trade.TradeInfoListResponseDto;
 import org.ktb.matajo.dto.trade.TradeInfoRequestDto;
 import org.ktb.matajo.dto.trade.TradeInfoResponseDto;
@@ -18,6 +19,8 @@ import org.ktb.matajo.repository.ChatRoomRepository;
 import org.ktb.matajo.repository.TradeInfoRepository;
 import org.ktb.matajo.repository.UserRepository;
 import org.ktb.matajo.service.chat.ChatMessageService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -158,5 +161,29 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         log.info("사용자 {}의 거래 내역 {}건을 조회했습니다.", userId, result.size());
 
         return result;
+    }
+
+    @Override
+    public List<TradeInfoCurrentResponseDto> getCurrentTrades(Long localInfoId) {
+        Pageable pageable = PageRequest.of(0, 2);
+        List<TradeInfo> currentTradeInfoList = tradeInfoRepository.findTop2ByLocationId(localInfoId, pageable);
+
+        // `TradeInfo` 리스트를 `TradeInfoResponseDTO` 리스트로 매핑
+        return currentTradeInfoList.stream().map(tradeInfo -> {
+            String mainImage = tradeInfo.getChatRoom().getPost().getImageList().stream()
+                    .filter(image -> image.isThumbnailStatus() == true)  // 메인 이미지만 선택
+                    .map(image -> image.getImageUrl())
+                    .findFirst()
+                    .orElse(null);  // 메인 이미지가 없으면 null 반환
+
+            return new TradeInfoCurrentResponseDto(
+                    mainImage,
+                    tradeInfo.getProductName(),
+                    tradeInfo.getCategory(),
+                    tradeInfo.getTradeDate(),
+                    tradeInfo.getTradePrice(),
+                    tradeInfo.getStoragePeriod()
+            );
+        }).collect(Collectors.toList());
     }
 }
