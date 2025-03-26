@@ -1,12 +1,10 @@
 package org.ktb.matajo.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -19,10 +17,7 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 @Configuration
 @EnableWebSocketMessageBroker  // WebSocket 메시지 브로커 기능 활성화
 @EnableScheduling              // 스케줄링 기능 활성화 (비활성 세션 정리 등에 사용)
-@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
-    private final WebSocketEventListener webSocketEventListener;
 
     /**
      * 메시지 브로커 설정
@@ -93,12 +88,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     /**
-     * 비활성 WebSocket 세션 정리 스케줄러
-     * 5분(300,000ms)마다 실행되어 비활성 상태의 WebSocket 세션을 정리합니다.
-     * 메모리 누수를 방지하고 리소스를 효율적으로 관리합니다.
+     * 세션 정리 기능을 위한 스케줄러 빈 등록
+     * SessionCleanupScheduler가 WebSocketEventListener에 의존하지만,
+     * WebSocketConfig는 이제 WebSocketEventListener에 직접 의존하지 않습니다.
      */
-    @Scheduled(fixedRate = 300000)
-    public void cleanupInactiveSessions() {
-        webSocketEventListener.cleanupInactiveSessions();
+    @Bean
+    public SessionCleanupScheduler sessionCleanupScheduler(WebSocketEventListener eventListener) {
+        return new SessionCleanupScheduler(eventListener);
     }
 }

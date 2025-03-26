@@ -5,12 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.chat.ChatMessageResponseDto;
 import org.ktb.matajo.entity.MessageType;
 import org.ktb.matajo.global.common.ErrorResponse;
-import org.ktb.matajo.global.error.code.ErrorCode;
 import org.ktb.matajo.global.error.exception.BusinessException;
 import org.ktb.matajo.service.chat.ChatMessageService;
 import org.ktb.matajo.service.chat.ChatSessionService;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
@@ -36,11 +34,11 @@ public class WebSocketEventListener {
 
     // 웹소켓 세션 ID와 구독 정보 매핑
     private final Map<String, Map<String, Long>> sessionSubscriptions = new ConcurrentHashMap<>();
-    
+
     // 세션별 연결 오류 횟수 관리 (DoS 방지)
     private final Map<String, Integer> sessionErrorCounts = new ConcurrentHashMap<>();
     private static final int MAX_ERROR_COUNT = 5;
-    
+
     // 마지막 활동 시간 기록 (타임아웃 감지용)
     private final Map<String, LocalDateTime> sessionLastActivity = new ConcurrentHashMap<>();
     private static final long SESSION_TIMEOUT_MINUTES = 30;
@@ -83,7 +81,7 @@ public class WebSocketEventListener {
                 if (destination.contains("/error")) {
                     return;
                 }
-                
+
                 // "/topic/chat/{roomId}" 형식에서 roomId 추출
                 String roomIdStr = destination.substring(destination.lastIndexOf('/') + 1);
                 Long roomId = Long.parseLong(roomIdStr);
@@ -91,7 +89,7 @@ public class WebSocketEventListener {
                 // userId 파라미터 검증
                 String userIdStr = headers.getFirstNativeHeader("userId");
                 if (userIdStr == null || userIdStr.isEmpty()) {
-                    log.warn("구독 요청 시 userId 없음: sessionId={}, destination={}", 
+                    log.warn("구독 요청 시 userId 없음: sessionId={}, destination={}",
                             sessionId, destination);
                     incrementErrorCount(sessionId);
                     return;
@@ -107,7 +105,7 @@ public class WebSocketEventListener {
                 try {
                     // 채팅방 입장 처리
                     chatSessionService.userJoinedRoom(roomId, userId);
-                    
+
                     // 해당 사용자로 온 메시지 읽음 처리
                     chatMessageService.markMessagesAsRead(roomId, userId);
 
@@ -160,10 +158,10 @@ public class WebSocketEventListener {
                         try {
                             // 채팅방 퇴장 처리
                             chatSessionService.userLeftRoom(roomId, userId);
-                            
+
                             // 구독 정보에서 제거
                             subscriptions.remove(destination);
-                            
+
                             // 시스템 메시지 전송 (선택사항)
                             sendSystemMessage(roomId, userId, "사용자가 채팅방을 나갔습니다.");
 
@@ -198,14 +196,14 @@ public class WebSocketEventListener {
         try {
             // 세션 구독 정보 조회
             Map<String, Long> subscriptions = sessionSubscriptions.remove(sessionId);
-            
+
             if (subscriptions != null && !subscriptions.isEmpty()) {
                 // 모든 구독 채팅방에서 사용자 퇴장 처리
                 // userId 정보가 없어 처리 불가능하므로 로그만 남김
                 log.info("WebSocket 연결 종료: sessionId={}, 구독 채팅방 수={}",
                         sessionId, subscriptions.size());
             }
-            
+
             // 세션 관련 정보 정리
             sessionErrorCounts.remove(sessionId);
             sessionLastActivity.remove(sessionId);
@@ -213,7 +211,7 @@ public class WebSocketEventListener {
             log.error("WebSocket 연결 종료 처리 중 오류: {}", e.getMessage(), e);
         }
     }
-    
+
     /**
      * Heartbeat 처리 메서드 (ChatMessageController에서 호출)
      */
@@ -221,21 +219,21 @@ public class WebSocketEventListener {
         if (sessionId == null || roomId == null || userId == null) {
             return;
         }
-        
+
         // 활동 시간 업데이트
         sessionLastActivity.put(sessionId, LocalDateTime.now());
-        
+
         // 세션이 해당 채팅방을 구독 중인지 확인
         Map<String, Long> subscriptions = sessionSubscriptions.get(sessionId);
         if (subscriptions != null) {
             // 해당 채팅방 구독이 없는 경우 확인
             boolean hasRoomSubscription = subscriptions.values().contains(roomId);
-            
+
             if (!hasRoomSubscription) {
                 // 구독 정보 동기화 (정리되었지만 실제로는 활성 상태인 경우)
                 log.debug("Heartbeat을 통한 구독 정보 복구: roomId={}, userId={}, sessionId={}",
                         roomId, userId, sessionId);
-                
+
                 // 채팅방 세션 활성화 상태 업데이트
                 try {
                     // 채팅방에 사용자가 활성화 상태인지 확인
@@ -327,8 +325,7 @@ public class WebSocketEventListener {
     }
 
     /**
-     * 비활성 세션 정리 (스케줄러로 호출됨)
-     * 실제 구현 시에는 @Scheduled 어노테이션 사용 권장
+     * 비활성 세션 정리 (SessionCleanupScheduler에서 호출됨)
      */
     public void cleanupInactiveSessions() {
         LocalDateTime timeoutThreshold = LocalDateTime.now().minusMinutes(SESSION_TIMEOUT_MINUTES);
