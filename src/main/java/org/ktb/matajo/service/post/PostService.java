@@ -1,6 +1,7 @@
 package org.ktb.matajo.service.post;
 
-import org.ktb.matajo.dto.location.LocationResponseDto;
+import org.ktb.matajo.dto.location.LocationDealResponseDto;
+import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,7 +27,7 @@ public interface PostService {
    * @param detailImages 상세 이미지 파일들
    * @return 생성된 게시글 정보
    */
-  PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages);
+  PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages, Long userId);
 
   /**
    * 게시글 상세 조회
@@ -44,24 +45,34 @@ public interface PostService {
    * @return 수정된 게시글 정보
    */
   PostCreateResponseDto updatePost(Long postId, PostCreateRequestDto requestDto,
-      MultipartFile mainImage, List<MultipartFile> detailImages);
+      MultipartFile mainImage, List<MultipartFile> detailImages, Long userId);
 
   /**
    * 게시글 삭제 (소프트 딜리트)
    * @param postId 삭제할 게시글 ID
    */
-  void deletePost(Long postId);
+  void deletePost(Long postId, Long userId);
 
   /**
    * 게시글 공개/비공개 상태 전환
    * @param postId 상태를 변경할 게시글 ID
    */
-  void togglePostVisibility(Long postId);
+  void togglePostVisibility(Long postId, Long userId);
 
   /**
    * 위치 ID 기반 게시글 목록 조회
    * @param locationInfoId 조회할 위치 정보 ID
    * @return 위치 기반 게시글 목록
    */
-  List<LocationResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId);
+  List<LocationPostResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId);
+
+  /**
+   * 특정 지역의 최고 할인율 게시글 조회
+   * @param locationInfoId 위치 정보 ID
+   * @return 할인율 상위 2개 게시글 목록
+   */
+  List<LocationDealResponseDto> getTopDiscountedPosts(Long locationInfoId);
+  
+  // 내 보관소 조회
+  List<MyPostResponseDto> getMyPosts(Long userId, int offset, int limit);
 }
