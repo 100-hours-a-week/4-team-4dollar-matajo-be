@@ -9,14 +9,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/chat/images")
+@RequestMapping("/api/chats/image")
 @RequiredArgsConstructor
 @Slf4j
 public class ChatImageController {
     
     private final S3Service s3Service;
     
-    @PostMapping("/upload")
+    @PostMapping
     public ResponseEntity<CommonResponse<String>> uploadChatImage(
             @RequestParam("chatImage") MultipartFile chatImage) {
         
