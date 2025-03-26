@@ -3,6 +3,7 @@ package org.ktb.matajo.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ktb.matajo.config.WebSocketEventListener;
 import org.ktb.matajo.dto.chat.ChatMessageRequestDto;
 import org.ktb.matajo.dto.chat.ChatMessageResponseDto;
 import org.ktb.matajo.entity.MessageType;
@@ -20,6 +21,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -31,6 +33,37 @@ public class ChatMessageController {
     private final ChatMessageService chatMessageService;
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatSessionService chatSessionService;
+    private final WebSocketEventListener webSocketEventListener;
+
+    /**
+     * 클라이언트 Heartbeat 처리 (연결 상태 확인)
+     */
+    @MessageMapping("/heartbeat")
+    public void handleHeartbeat(Map<String, Object> payload, SimpMessageHeaderAccessor headerAccessor) {
+        try {
+            String sessionId = headerAccessor.getSessionId();
+
+            // 필수 파라미터 확인
+            if (payload == null || !payload.containsKey("roomId") || !payload.containsKey("userId")) {
+                log.warn("Heartbeat 누락된 필수 파라미터: sessionId={}", sessionId);
+                return;
+            }
+
+            Long roomId = Long.valueOf(payload.get("roomId").toString());
+            Long userId = Long.valueOf(payload.get("userId").toString());
+
+            // 세션 활성 상태 업데이트
+            webSocketEventListener.updateSessionActivity(sessionId, roomId, userId);
+
+            if (log.isTraceEnabled()) {
+                log.trace("Heartbeat 수신: roomId={}, userId={}, sessionId={}",
+                        roomId, userId, sessionId);
+            }
+        } catch (Exception e) {
+            // Heartbeat 오류는 심각한 문제가 아니므로 로그만 남김
+            log.debug("Heartbeat 처리 중 오류: {}", e.getMessage());
+        }
+    }
 
     /**
      * WebSocket을 통한 메시지 전송
