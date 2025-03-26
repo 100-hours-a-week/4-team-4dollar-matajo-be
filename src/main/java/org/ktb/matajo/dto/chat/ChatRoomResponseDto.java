@@ -14,4 +14,5 @@ public class ChatRoomResponseDto {
     private String postAddress;
     private String lastMessage;
     private String lastMessageTime;
+    private Long unreadCount;
 }
