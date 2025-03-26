@@ -2,7 +2,8 @@ package org.ktb.matajo.service.post;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ktb.matajo.dto.location.LocationResponseDto;
+import org.ktb.matajo.dto.location.LocationDealResponseDto;
+import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.entity.*;
 import org.ktb.matajo.global.error.code.ErrorCode;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
@@ -38,7 +40,7 @@ public class PostServiceImpl implements PostService {
     /**
      * 게시글 목록 조회 메소드
      */
-    @Transactional(readOnly = true)
+    @Override
     public List<PostListResponseDto> getPostList(int offset, int limit) {
         // 요청 파라미터 검증
         if (offset < 0 || limit <= 0) {
@@ -91,6 +93,7 @@ public class PostServiceImpl implements PostService {
      * @param detailImages 상세 이미지 파일들
      * @return 생성된 게시글 ID를 담은 응답 DTO
      */
+    @Override
     @Transactional
     public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages) {
         // 요청 데이터 유효성 검증
@@ -261,7 +264,7 @@ public class PostServiceImpl implements PostService {
      * @param postId 조회할 게시글 ID
      * @return 게시글 상세 정보 DTO
      */
-    @Transactional(readOnly = true)
+    @Override
     public PostDetailResponseDto getPostDetail(Long postId) {
         // 게시글 조회
         Post post = postRepository.findById(postId)
@@ -327,6 +330,7 @@ public class PostServiceImpl implements PostService {
      * @param detailImages 새 상세 이미지들 (선택적)
      * @return 수정된 게시글 ID 응답 DTO
      */
+    @Override
     @Transactional
     public PostCreateResponseDto updatePost(Long postId,PostCreateRequestDto requestDto,
                                             MultipartFile mainImage,List<MultipartFile> detailImages){
@@ -572,6 +576,7 @@ public class PostServiceImpl implements PostService {
      * 게시글 삭제 메소드 (소프트 딜리트)
      * @param postId 삭제할 게시글 ID
      */
+    @Override
     @Transactional
     public void deletePost(Long postId) {
 
@@ -626,6 +631,7 @@ public class PostServiceImpl implements PostService {
      * 게시글 공개/비공개 상태 전환 메서드
      * @param postId 상태를 변경할 게시글 ID
      */
+    @Override
     @Transactional
     public void togglePostVisibility(Long postId) {
         // postId null 체크
@@ -675,8 +681,8 @@ public class PostServiceImpl implements PostService {
      * @param locationInfoId 조회할 위치 정보 ID
      * @return 게시글 목록 응답 DTO
      */
-    @Transactional(readOnly = true)
-    public List<LocationResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId) {
+    @Override
+    public List<LocationPostResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId) {
         if (locationInfoId == null) {
             log.error("위치 정보 ID가 null입니다");
             throw new BusinessException(ErrorCode.INVALID_LOCATION_ID);
@@ -697,13 +703,48 @@ public class PostServiceImpl implements PostService {
 
         // 게시글 ID와 주소 ID만 추출하여 DTO로 변환
         return posts.stream()
-                .map(post -> LocationResponseDto.builder()
+                .map(post -> LocationPostResponseDto.builder()
                         .postId(post.getId())
                         .address(post.getAddress().getAddress())
                         .build())
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<LocationDealResponseDto> getTopDiscountedPosts(Long locationInfoId) {
+        log.info("지역 특가 게시글 조회 시작: locationInfoId={}", locationInfoId);
+
+        if (locationInfoId == null) {
+            log.error("위치 정보 ID가 null입니다");
+            throw new BusinessException(ErrorCode.INVALID_LOCATION_ID);
+        }
+
+        List<Post> topDiscountedPosts = postRepository.findTopDiscountedPostsByLocationInfoId(locationInfoId);
+
+        if (topDiscountedPosts.isEmpty() || 
+            topDiscountedPosts.stream().allMatch(post -> post.getDiscountRate() == 0)) {
+            log.info("해당 지역의 할인 게시글이 없거나 모두 할인율이 0입니다: locationInfoId={}", locationInfoId);
+            return Collections.emptyList();
+        }
+
+        // DTO 변환
+        List<LocationDealResponseDto> dealResponses = topDiscountedPosts.stream()
+            .map(post -> LocationDealResponseDto.builder()
+                .title(post.getTitle())
+                .discount(String.format("-%d%%", Math.round(post.getDiscountRate())))
+                .imageUrl(post.getImageList().stream()
+                    .filter(Image::isThumbnailStatus)
+                    .findFirst()
+                    .map(Image::getImageUrl)
+                    .orElse(null))
+                .build())
+            .collect(Collectors.toList());
+
+        log.info("지역 특가 게시글 조회 완료: locationInfoId={}, 조회된 게시글 수={}", 
+            locationInfoId, dealResponses.size());
+
+        return dealResponses;
+    }
     // 내 보관소 조회
     @Override
     @Transactional(readOnly = true)
