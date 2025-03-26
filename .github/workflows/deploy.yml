@@ -52,8 +52,9 @@ jobs:
       - name: Prepare configuration directory
         run: |
           mkdir -p config
-          cp src/main/resources/application-dev.yml config/
-          cp src/main/resources/application-aws.yml config/
+          # 설정 파일을 동적으로 생성
+          echo "${{ secrets.APPLICATION_DEV_YML }}" > config/application-dev.yml
+          echo "${{ secrets.APPLICATION_AWS_YML }}" > config/application-aws.yml
           echo "설정 파일 준비 완료:"
           ls -la config/
 

@@ -20,6 +20,8 @@ logs/
 *.log
 
 # 설정 파일 (민감한 정보 포함)
+src/main/resources/application-dev.yml
+src/main/resources/application-aws.yml
 src/main/resources/application-local.yml
 src/main/resources/application-prod.yml
 .env
