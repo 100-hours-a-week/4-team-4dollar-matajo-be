@@ -3,12 +3,11 @@ name: Deploy Spring Boot with Docker
 on:
   push:
     branches: ["dev/test"] # 배포 대상 브랜치
-  pull_request_review:
-    types: [submitted] # PR 리뷰가 제출될 때 실행
+  pull_request:
+    branches: ["dev/test"] # PR 시에도 동작
 
 jobs:
   build-and-deploy:
-    if: github.event.action == 'submitted' && github.event.review.state == 'approved' # PR 승인된 경우만 실행
     runs-on: ubuntu-latest
 
     steps:
