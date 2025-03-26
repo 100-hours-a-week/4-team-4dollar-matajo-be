@@ -2,6 +2,8 @@ package org.ktb.matajo.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
+import org.ktb.matajo.global.common.CommonResponse;
+import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.oauth.KakaoAuthService;
 import org.ktb.matajo.service.user.KakaoUserService;
 import org.ktb.matajo.service.user.UserService;
@@ -25,7 +27,7 @@ public class AuthController {
     }
 
     @PostMapping("/kakao")
-    public ResponseEntity<?> kakaoLogin(@RequestBody Map<String, String> request, HttpServletResponse response) {
+    public ResponseEntity<CommonResponse<?>> kakaoLogin(@RequestBody Map<String, String> request, HttpServletResponse response) {
 
         String code = request.get("code");
         String accessToken = kakaoAuthService.getAccessToken(code);
@@ -35,16 +37,30 @@ public class AuthController {
         String jwtToken = tokens.get("accessToken");
         String refreshToken = tokens.get("refreshToken");
 
-        response.addHeader("Set-Cookie", "refreshToken=" + refreshToken + "; HttpOnly; Secure; Path=/; Max-Age=1209600"); // 14일
+        response.addHeader("Set-Cookie", "refreshToken=" + refreshToken + "; HttpOnly; Path=/; Max-Age=1209600"); // 14일
 
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "login_success",
-                "data", Map.of(
-                        "accessToken", jwtToken,
-                        "refreshToken", refreshToken,
-                        "nickname", userInfo.getNickname()
-                )
-        ));
+        Map<String, Object> responseData = Map.of(
+                "accessToken", jwtToken,
+                "refreshToken", refreshToken,
+                "nickname", userInfo.getNickname()
+        );
+
+        return ResponseEntity.ok(CommonResponse.success("login_success", responseData));
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<?> getCurrentUserId() {
+        try {
+            Long currentUserId = SecurityUtil.getCurrentUserId();
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "userId", currentUserId
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
     }
 }

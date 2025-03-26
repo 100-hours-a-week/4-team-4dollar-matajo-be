@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -24,7 +24,7 @@ public class TradeInfoRequestDto {
     private String category;
 
     @NotNull
-    private LocalDateTime startDate;
+    private LocalDate startDate;
 
     @Min(value = 1)
     private int storagePeriod;
