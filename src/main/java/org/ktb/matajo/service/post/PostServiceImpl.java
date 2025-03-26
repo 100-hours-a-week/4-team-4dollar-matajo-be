@@ -3,7 +3,7 @@ package org.ktb.matajo.service.post;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.location.LocationDealResponseDto;
-import org.ktb.matajo.dto.location.LocationResponseDto;
+import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.entity.*;
 import org.ktb.matajo.global.error.code.ErrorCode;
@@ -682,7 +682,7 @@ public class PostServiceImpl implements PostService {
      * @return 게시글 목록 응답 DTO
      */
     @Override
-    public List<LocationResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId) {
+    public List<LocationPostResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId) {
         if (locationInfoId == null) {
             log.error("위치 정보 ID가 null입니다");
             throw new BusinessException(ErrorCode.INVALID_LOCATION_ID);
@@ -703,7 +703,7 @@ public class PostServiceImpl implements PostService {
 
         // 게시글 ID와 주소 ID만 추출하여 DTO로 변환
         return posts.stream()
-                .map(post -> LocationResponseDto.builder()
+                .map(post -> LocationPostResponseDto.builder()
                         .postId(post.getId())
                         .address(post.getAddress().getAddress())
                         .build())

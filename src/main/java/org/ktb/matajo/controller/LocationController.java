@@ -3,7 +3,7 @@ package org.ktb.matajo.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.location.LocationDealResponseDto;
-import org.ktb.matajo.dto.location.LocationResponseDto;
+import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.post.PostService;
 import org.ktb.matajo.service.location.LocationInfoService;
@@ -32,12 +32,12 @@ public class LocationController {
      * @return 위치 기반 게시글 목록
      */
     @GetMapping
-    public ResponseEntity<CommonResponse<List<LocationResponseDto>>> getPostsByLocation(
+    public ResponseEntity<CommonResponse<List<LocationPostResponseDto>>> getPostsByLocation(
             @RequestParam Long locationInfoId) {
 
         log.info("위치 기반 게시글 목록 조회 요청: locationInfoId={}", locationInfoId);
 
-        List<LocationResponseDto> postList = postService.getPostsIdsByLocationInfoId(locationInfoId);
+        List<LocationPostResponseDto> postList = postService.getPostsIdsByLocationInfoId(locationInfoId);
 
         return ResponseEntity.ok(CommonResponse.success("get_posts_by_location_success", postList));
     }
