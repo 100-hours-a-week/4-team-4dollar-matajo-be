@@ -86,7 +86,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public Map<String, String> reissueAccessToken(String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
-            throw new BusinessException(ErrorCode.MISSING_REFRESH_TOKEN);
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
         Claims claims;

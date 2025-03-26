@@ -57,7 +57,7 @@ public class AuthController {
 
         response.addHeader("Set-Cookie", "refreshToken=" + tokens.get("refreshToken") + "; HttpOnly; Path=/; Max-Age=1209600");
 
-        return ResponseEntity.ok(CommonResponse.success("token_refresh_success", tokens));
+        return ResponseEntity.ok(CommonResponse.success("accesstoken_reissue_success", tokens));
     }
 
 
