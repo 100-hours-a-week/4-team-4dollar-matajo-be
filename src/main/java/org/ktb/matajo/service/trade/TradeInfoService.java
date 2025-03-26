@@ -1,5 +1,6 @@
 package org.ktb.matajo.service.trade;
 
+import org.ktb.matajo.dto.trade.TradeInfoCurrentResponseDto;
 import org.ktb.matajo.dto.trade.TradeInfoListResponseDto;
 import org.ktb.matajo.dto.trade.TradeInfoRequestDto;
 import org.ktb.matajo.dto.trade.TradeInfoResponseDto;
@@ -12,4 +13,7 @@ public interface TradeInfoService {
 
     // 내 거래 내역 조회
     List<TradeInfoListResponseDto> getMyTrades(Long userId);
+
+    // 동 기반 최근 거래 내역 2개 조회
+    List<TradeInfoCurrentResponseDto> getCurrentTrades(Long localInfoId);
 }
