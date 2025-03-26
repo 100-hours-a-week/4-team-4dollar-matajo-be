@@ -158,6 +158,8 @@ public class ChatRoomServiceImpl implements ChatRoomService {
             }
         }
 
+        long unreadCount = chatMessageRepository.countUnreadMessages(chatRoom.getId(), userId);
+
         return ChatRoomResponseDto.builder()
                 .chatRoomId(chatRoom.getId())
                 .keeperStatus(keeperStatus)
@@ -166,6 +168,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
                 .postAddress(postAddress)
                 .lastMessage(lastMessage)
                 .lastMessageTime(lastMessageTime)
+                .unreadCount(unreadCount)
                 .build();
     }
 
