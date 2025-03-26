@@ -6,4 +6,6 @@ import java.util.Map;
 
 public interface UserService {
     Map<String, String> processKakaoUser(KakaoUserInfo userInfo);
+
+    Map<String, String> reissueAccessToken(String refreshToken);
 }

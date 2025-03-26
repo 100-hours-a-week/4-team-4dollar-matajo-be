@@ -26,6 +26,8 @@ public enum ErrorCode {
 
     // 401 UNAUTHORIZED
     REQUIRED_AUTHORIZATION(HttpStatus.UNAUTHORIZED, "required_authorization", "인증이 필요합니다"),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "invalid_token", "리프레시 토큰이 유효하지 않습니다"),
+    MISSING_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "invalid_request", "리프레시 토큰이 존재하지 않습니다"),
 
     // 403 FORBIDDEN
     REQUIRED_PERMISSION(HttpStatus.FORBIDDEN, "required_permission", "권한이 없습니다"),

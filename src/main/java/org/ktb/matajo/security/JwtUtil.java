@@ -47,10 +47,21 @@ public class JwtUtil {
     }
 
     public Claims parseToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        try {
+            return Jwts.parser()
+                    .setSigningKey(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException e) {
+            // accessToken이 만료되면 여기서 로그만 남기고 null 반환
+            System.out.println("[JWT] Access token expired at: " + e.getClaims().getExpiration());
+            return null;
+        } catch (JwtException e) {
+            // 토큰 자체가 잘못된 경우
+            System.out.println("[JWT] Invalid token: " + e.getMessage());
+            return null;
+        }
     }
+
 }
