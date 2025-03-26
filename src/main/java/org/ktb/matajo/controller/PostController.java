@@ -3,6 +3,8 @@ package org.ktb.matajo.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ktb.matajo.dto.location.LocationDealResponseDto;
+import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.security.SecurityUtil;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 //로깅 기능
 @Slf4j
@@ -118,6 +121,57 @@ public class PostController {
         postService.deletePost(postId, userId);
         
         return ResponseEntity.ok(CommonResponse.success("delete_post_success", null));
+    }
+
+    /**
+     * ~동 기반 게시글 요청
+     *
+     * @param locationInfoId 위치 정보 ID
+     * @return 위치 기반 게시글 목록
+     */
+    @GetMapping("/location")
+    public ResponseEntity<CommonResponse<List<LocationPostResponseDto>>> getPostsByLocation(
+            @RequestParam("locationInfoId") Long locationInfoId) {
+
+        log.info("위치 기반 게시글 목록 조회 요청: locationInfoId={}", locationInfoId);
+
+        List<LocationPostResponseDto> postList = postService.getPostsIdsByLocationInfoId(locationInfoId);
+
+        return ResponseEntity.ok(CommonResponse.success("get_posts_by_location_success", postList));
+    }
+
+    // 지역 특가 조회
+    @GetMapping("/promotion")
+    public ResponseEntity<CommonResponse<Map<String, Object>>> getDeals(
+            @RequestParam("locationInfoId") Long locationInfoId) {
+
+        log.info("지역 특가 조회 요청: locationInfoId={}", locationInfoId);
+
+        List<LocationDealResponseDto> deals = postService.getTopDiscountedPosts(locationInfoId);
+
+        Map<String, Object> responseData = Map.of(
+                "locationInfoId", locationInfoId,
+                "posts", deals
+        );
+
+        String message = deals.isEmpty() ? "no_deals_found" : "get_deals_success";
+
+        return ResponseEntity.ok(CommonResponse.success(message, responseData));
+    }
+
+
+    /**
+     * 내 보관소 게시글 목록 조회
+     */
+    @GetMapping("/my-posts")
+    public ResponseEntity<CommonResponse<List<MyPostResponseDto>>> getMyPosts(
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        Long userId = SecurityUtil.getCurrentUserId();
+        log.info("내 게시글 조회 요청: userId={}, offset={}, limit={}", userId, offset, limit);
+        List<MyPostResponseDto> myPosts = postService.getMyPosts(userId, offset, limit);
+        return ResponseEntity.ok(CommonResponse.success("get_my_posts_success", myPosts));
     }
 
 }
