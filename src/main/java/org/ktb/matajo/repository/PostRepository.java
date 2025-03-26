@@ -17,6 +17,25 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findAllActivePostsOrderByCreatedAtDesc(Pageable pageable);
 
     // location_info_id로 게시글 직접 조회 (단일 쿼리로 처리)
-    @Query("SELECT p FROM Post p JOIN p.address a WHERE a.locationInfo.id = :locationInfoId AND p.deletedAt IS NULL AND p.hiddenStatus = false ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Post p " +
+           "JOIN p.address a " +
+           "WHERE a.locationInfo.id = :locationInfoId " + 
+           "AND p.deletedAt IS NULL " +
+           "AND p.hiddenStatus = false " +
+           "ORDER BY p.createdAt DESC")
     List<Post> findActivePostsByLocationInfoId(@Param("locationInfoId") Long locationInfoId);
+
+
+    //할인율 상위 2개 조회
+    @Query("SELECT p FROM Post p " +
+           "JOIN p.address a " +
+           "WHERE a.locationInfo.id = :locationInfoId " +
+           "AND p.deletedAt IS NULL " +
+           "AND p.hiddenStatus = false " +
+           "AND p.discountRate > 0 " +
+           "ORDER BY p.discountRate DESC " +
+           "LIMIT 2")
+    List<Post> findTopDiscountedPostsByLocationInfoId(
+        @Param("locationInfoId") Long locationInfoId
+    );
 }

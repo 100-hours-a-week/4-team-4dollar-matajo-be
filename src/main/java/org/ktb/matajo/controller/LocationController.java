@@ -2,6 +2,7 @@ package org.ktb.matajo.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ktb.matajo.dto.location.LocationDealResponseDto;
 import org.ktb.matajo.dto.location.LocationResponseDto;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.post.PostService;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -40,6 +42,8 @@ public class LocationController {
         return ResponseEntity.ok(CommonResponse.success("get_posts_by_location_success", postList));
     }
 
+
+    //동 검색
     @GetMapping("/search")
     public ResponseEntity<CommonResponse<List<String>>> searchLocations(
             @RequestParam(required = true) String dong) {
@@ -52,6 +56,25 @@ public class LocationController {
             "location_search_success", 
             searchResults
         ));
+    }
+
+    //지역 특가 조회
+    @GetMapping("/deals")
+    public ResponseEntity<CommonResponse<Map<String, Object>>> getDeals(
+            @RequestParam("location_info_id") Long locationInfoId) {
+      
+        log.info("지역 특가 조회 요청: locationInfoId={}", locationInfoId);
+      
+        List<LocationDealResponseDto> deals = postService.getTopDiscountedPosts(locationInfoId);
+      
+        Map<String, Object> responseData = Map.of(
+            "local_info_id", locationInfoId,
+            "posts", deals
+        );
+      
+        String message = deals.isEmpty() ? "no_deals_found" : "get_deals_success";
+      
+        return ResponseEntity.ok(CommonResponse.success(message, responseData));
     }
 
 }

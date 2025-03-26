@@ -1,5 +1,6 @@
 package org.ktb.matajo.service.post;
 
+import org.ktb.matajo.dto.location.LocationDealResponseDto;
 import org.ktb.matajo.dto.location.LocationResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -64,4 +65,11 @@ public interface PostService {
    * @return 위치 기반 게시글 목록
    */
   List<LocationResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId);
+
+  /**
+   * 특정 지역의 최고 할인율 게시글 조회
+   * @param locationInfoId 위치 정보 ID
+   * @return 할인율 상위 2개 게시글 목록
+   */
+  List<LocationDealResponseDto> getTopDiscountedPosts(Long locationInfoId);
 }
