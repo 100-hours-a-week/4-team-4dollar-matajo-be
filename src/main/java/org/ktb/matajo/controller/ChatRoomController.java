@@ -8,6 +8,7 @@ import org.ktb.matajo.dto.chat.ChatRoomCreateResponseDto;
 import org.ktb.matajo.dto.chat.ChatRoomDetailResponseDto;
 import org.ktb.matajo.dto.chat.ChatRoomResponseDto;
 import org.ktb.matajo.global.common.CommonResponse;
+import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.chat.ChatRoomService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/api/chats")
 @RequiredArgsConstructor
 @Slf4j
 public class ChatRoomController {
@@ -26,12 +27,12 @@ public class ChatRoomController {
     // 채팅방 생성
     @PostMapping
     public ResponseEntity<CommonResponse<ChatRoomCreateResponseDto>> createChatRoom(
-            @Valid @RequestBody ChatRoomCreateRequestDto chatRoomRequestDto,
-            @RequestHeader(value = "userId", required = false) Long userId) {
+            @Valid @RequestBody ChatRoomCreateRequestDto chatRoomRequestDto) {
 
         log.info("채팅방 생성: postId={}", chatRoomRequestDto.getPostId());
 
-        // userId 로직은 나중에 로그인 구현되면 수정할 부분!
+        Long userId = SecurityUtil.getCurrentUserId();
+
         ChatRoomCreateResponseDto chatRoom = chatRoomService.createChatRoom(chatRoomRequestDto, userId);
 
         return ResponseEntity
@@ -41,7 +42,9 @@ public class ChatRoomController {
 
     // 채팅 리스트 조회
     @GetMapping
-    public ResponseEntity<CommonResponse<List<ChatRoomResponseDto>>> getChatRoom(@RequestHeader(value = "userId", required = false) Long userId) {
+    public ResponseEntity<CommonResponse<List<ChatRoomResponseDto>>> getChatRoom() {
+
+        Long userId = SecurityUtil.getCurrentUserId();
 
         log.info("채팅 리스트 조회: userId={}", userId);
 
@@ -55,8 +58,9 @@ public class ChatRoomController {
     // 채팅방 상세 정보 조회
     @GetMapping("/{roomId}")
     public ResponseEntity<CommonResponse<ChatRoomDetailResponseDto>> getChatRoomDetail(
-            @PathVariable Long roomId,
-            @RequestHeader(value = "userId", required = false) Long userId) {
+            @PathVariable Long roomId) {
+
+        Long userId = SecurityUtil.getCurrentUserId();
 
         log.info("채팅방 상세 조회: roomId={}, userId={}", roomId, userId);
 
@@ -69,8 +73,9 @@ public class ChatRoomController {
 
     // 채팅방 나가기
     @DeleteMapping("/{roomId}")
-    public ResponseEntity<CommonResponse<Void>> leaveChatRoom(@PathVariable Long roomId,
-                                                              @RequestHeader(value = "userId", required = false) Long userId) {
+    public ResponseEntity<CommonResponse<Void>> leaveChatRoom(@PathVariable Long roomId) {
+
+        Long userId = SecurityUtil.getCurrentUserId();
 
         chatRoomService.leaveChatRoom(userId, roomId);
         log.info("채팅방 나가기: userId={}, roomId={}", userId, roomId);

@@ -27,7 +27,7 @@ public interface PostService {
    * @param detailImages 상세 이미지 파일들
    * @return 생성된 게시글 정보
    */
-  PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages);
+  PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages, Long userId);
 
   /**
    * 게시글 상세 조회
@@ -45,19 +45,19 @@ public interface PostService {
    * @return 수정된 게시글 정보
    */
   PostCreateResponseDto updatePost(Long postId, PostCreateRequestDto requestDto,
-      MultipartFile mainImage, List<MultipartFile> detailImages);
+      MultipartFile mainImage, List<MultipartFile> detailImages, Long userId);
 
   /**
    * 게시글 삭제 (소프트 딜리트)
    * @param postId 삭제할 게시글 ID
    */
-  void deletePost(Long postId);
+  void deletePost(Long postId, Long userId);
 
   /**
    * 게시글 공개/비공개 상태 전환
    * @param postId 상태를 변경할 게시글 ID
    */
-  void togglePostVisibility(Long postId);
+  void togglePostVisibility(Long postId, Long userId);
 
   /**
    * 위치 ID 기반 게시글 목록 조회
