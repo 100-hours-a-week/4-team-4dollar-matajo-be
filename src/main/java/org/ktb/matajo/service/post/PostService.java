@@ -1,7 +1,10 @@
 package org.ktb.matajo.service.post;
 
 import org.ktb.matajo.dto.location.LocationResponseDto;
-import org.ktb.matajo.dto.post.*;
+import org.ktb.matajo.dto.post.PostCreateRequestDto;
+import org.ktb.matajo.dto.post.PostCreateResponseDto;
+import org.ktb.matajo.dto.post.PostDetailResponseDto;
+import org.ktb.matajo.dto.post.PostListResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -64,4 +67,7 @@ public interface PostService {
    * @return 위치 기반 게시글 목록
    */
   List<LocationResponseDto> getPostsIdsByLocationInfoId(Long locationInfoId);
+  
+  // 내 보관소 조회
+  List<MyPostResponseDto> getMyPosts(Long userId, int offset, int limit);
 }
