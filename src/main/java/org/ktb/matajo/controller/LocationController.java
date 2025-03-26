@@ -27,7 +27,7 @@ public class LocationController {
     private final LocationInfoService locationInfoService;
 
     // 동 검색
-    @GetMapping("/search")
+    @GetMapping("/autocomplete")
     public ResponseEntity<CommonResponse<List<String>>> searchLocations(
             @RequestParam String dong) {
         
@@ -47,7 +47,7 @@ public class LocationController {
      * @param formattedAddress 형식화된 주소
      * @return 위치 정보 응답
      */
-    @GetMapping("/find")
+    @GetMapping("/info")
     public ResponseEntity<CommonResponse<List<LocationIdResponseDto>>> findLocationByAddress(
             @RequestParam("formattedAddress") String formattedAddress) {
         
