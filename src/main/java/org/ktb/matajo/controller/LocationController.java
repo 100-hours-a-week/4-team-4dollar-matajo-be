@@ -35,7 +35,7 @@ public class LocationController {
      */
     @GetMapping
     public ResponseEntity<CommonResponse<List<LocationPostResponseDto>>> getPostsByLocation(
-            @RequestParam Long locationInfoId) {
+            @RequestParam("locationInfoId") Long locationInfoId) {
 
         log.info("위치 기반 게시글 목록 조회 요청: locationInfoId={}", locationInfoId);
 
@@ -63,14 +63,14 @@ public class LocationController {
     //지역 특가 조회
     @GetMapping("/deal")
     public ResponseEntity<CommonResponse<Map<String, Object>>> getDeals(
-            @RequestParam("location_info_id") Long locationInfoId) {
+            @RequestParam("locationInfoId") Long locationInfoId) {
       
         log.info("지역 특가 조회 요청: locationInfoId={}", locationInfoId);
       
         List<LocationDealResponseDto> deals = postService.getTopDiscountedPosts(locationInfoId);
       
         Map<String, Object> responseData = Map.of(
-            "local_info_id", locationInfoId,
+            "locationInfoId", locationInfoId,
             "posts", deals
         );
       
@@ -87,7 +87,7 @@ public class LocationController {
      */
     @GetMapping("/find")
     public ResponseEntity<CommonResponse<List<LocationIdResponseDto>>> findLocationByAddress(
-            @RequestParam("formatted_address") String formattedAddress) {
+            @RequestParam("formattedAddress") String formattedAddress) {
         
         log.info("주소로 위치 정보 조회 요청: formattedAddress={}", formattedAddress);
         
