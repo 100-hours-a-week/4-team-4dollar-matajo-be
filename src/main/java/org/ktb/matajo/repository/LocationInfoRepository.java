@@ -18,6 +18,7 @@ public interface LocationInfoRepository extends JpaRepository<LocationInfo, Long
     Optional<LocationInfo> findFirstByCityDistrictContaining(String cityDistrict);
 
     //검색어로 동 검색
+    //limit을 여기에?
     @Query(value = """
             SELECT l FROM LocationInfo l
             WHERE l.displayName LIKE CONCAT('%', :searchTerm, '%')
@@ -32,5 +33,10 @@ public interface LocationInfoRepository extends JpaRepository<LocationInfo, Long
             @Param("searchTerm") String searchTerm,
             Pageable pageable
     );
+
+    @Query("SELECT l FROM LocationInfo l " +
+        "WHERE l.formattedAddress LIKE CONCAT('%', :formattedAddress, '%') " +
+        "ORDER BY LENGTH(l.formattedAddress) ASC ")
+    List<LocationInfo> findByFormattedAddressContaining(@Param("formattedAddress") String formattedAddress);
 
 }

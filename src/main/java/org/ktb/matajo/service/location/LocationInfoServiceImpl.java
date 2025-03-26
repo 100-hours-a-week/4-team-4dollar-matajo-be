@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.entity.LocationInfo;
 import org.ktb.matajo.repository.LocationInfoRepository;
+import org.ktb.matajo.dto.location.LocationIdResponseDto;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -75,6 +76,25 @@ public class LocationInfoServiceImpl implements LocationInfoService{
     return locationInfoRepository.searchByDisplayNameOrderByPriority(searchTerm, limit)
         .stream()
         .map(LocationInfo::getFormattedAddress)
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<LocationIdResponseDto> findLocationByAddress(String formattedAddress) {
+    log.debug("주소로 위치 ID 정보 조회 시작: formattedAddress={}", formattedAddress);
+  
+    if (formattedAddress == null || formattedAddress.isBlank()) {
+        log.debug("주소가 비어있어 빈 결과 반환");
+        return Collections.emptyList();
+    }
+  
+    return locationInfoRepository.findByFormattedAddressContaining(formattedAddress)
+        .stream()
+        .map(locationInfo -> LocationIdResponseDto.builder()
+            .id(locationInfo.getId())
+            .latitude(locationInfo.getLatitude())
+            .longitude(locationInfo.getLongitude())
+            .build())
         .collect(Collectors.toList());
   }
 

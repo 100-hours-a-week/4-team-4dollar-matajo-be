@@ -1,8 +1,10 @@
 package org.ktb.matajo.controller;
 
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.location.LocationDealResponseDto;
+import org.ktb.matajo.dto.location.LocationIdResponseDto;
 import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.service.post.PostService;
@@ -59,7 +61,7 @@ public class LocationController {
     }
 
     //지역 특가 조회
-    @GetMapping("/deals")
+    @GetMapping("/deal")
     public ResponseEntity<CommonResponse<Map<String, Object>>> getDeals(
             @RequestParam("location_info_id") Long locationInfoId) {
       
@@ -75,6 +77,28 @@ public class LocationController {
         String message = deals.isEmpty() ? "no_deals_found" : "get_deals_success";
       
         return ResponseEntity.ok(CommonResponse.success(message, responseData));
+    }
+
+    /**
+     * 주소로 위치 정보 조회
+     *
+     * @param formattedAddress 형식화된 주소
+     * @return 위치 정보 응답
+     */
+    @GetMapping("/find")
+    public ResponseEntity<CommonResponse<List<LocationIdResponseDto>>> findLocationByAddress(
+            @RequestParam("formatted_address") String formattedAddress) {
+        
+        log.info("주소로 위치 정보 조회 요청: formattedAddress={}", formattedAddress);
+        
+        List<LocationIdResponseDto> locations = locationInfoService.findLocationByAddress(formattedAddress);
+        
+        if (locations.isEmpty()) {
+            return ResponseEntity.status(404).body(CommonResponse.error(
+                "location_not_found", Collections.emptyList()));
+        }
+        
+        return ResponseEntity.ok(CommonResponse.success("location_find_success", locations));
     }
 
 }
