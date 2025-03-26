@@ -1,5 +1,6 @@
 package org.ktb.matajo.service.user;
 
+import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
 import org.ktb.matajo.dto.user.KeeperRegisterResponseDto;
@@ -80,6 +81,44 @@ public class UserServiceImpl implements UserService {
 
         return nickname;
     }
+
+
+    @Transactional
+    public Map<String, String> reissueAccessToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+        }
+
+        Claims claims;
+        try {
+            claims = jwtUtil.parseToken(refreshToken);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        Long userId = Long.valueOf(claims.getSubject());
+
+        RefreshToken savedToken = refreshTokenRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN));
+
+        if (!savedToken.getToken().equals(refreshToken)) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        String newAccessToken = jwtUtil.createAccessToken(user.getId(), user.getRole().toString(), user.getNickname(), user.getDeletedAt());
+        String newRefreshToken = jwtUtil.createRefreshToken(user.getId());
+
+        savedToken.updateToken(newRefreshToken);
+
+        return Map.of(
+                "accessToken", newAccessToken,
+                "refreshToken", newRefreshToken
+        );
+    }
+
 
     @Override
     public boolean isNicknameAvailable(String nickname) {

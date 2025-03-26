@@ -5,6 +5,7 @@ import org.ktb.matajo.dto.user.KeeperRegisterResponseDto;
 
 import java.util.Map;
 
+
 public interface UserService {
 
     // 닉네임이 사용 가능한지 여부를 확인합니다.
@@ -18,4 +19,6 @@ public interface UserService {
 
     // 카카오 사용자 정보를 처리하고 JWT 토큰(access, refresh)을 반환합니다.
     Map<String, String> processKakaoUser(KakaoUserInfo userInfo);
+
+    Map<String, String> reissueAccessToken(String refreshToken);
 }

@@ -48,6 +48,19 @@ public class AuthController {
         return ResponseEntity.ok(CommonResponse.success("login_success", responseData));
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<CommonResponse<?>> refreshAccessToken(
+            @CookieValue(value = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response) {
+
+        Map<String, String> tokens = userService.reissueAccessToken(refreshToken);
+
+        response.addHeader("Set-Cookie", "refreshToken=" + tokens.get("refreshToken") + "; HttpOnly; Path=/; Max-Age=1209600");
+
+        return ResponseEntity.ok(CommonResponse.success("accesstoken_reissue_success", tokens));
+    }
+
+
     @GetMapping("/test")
     public ResponseEntity<?> getCurrentUserId() {
         try {

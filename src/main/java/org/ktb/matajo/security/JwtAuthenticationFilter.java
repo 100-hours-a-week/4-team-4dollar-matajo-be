@@ -22,6 +22,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.equals("/auth/refresh"); // refresh는 필터 제외
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         
@@ -37,17 +43,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authorizationHeader.substring(7);
         Claims claims = jwtUtil.parseToken(token);
 
-        if (claims != null) {
-            Long userId = ((Number) claims.get("userId")).longValue();
-            String nickname = (String) claims.get("nickname");
-            String role = (String) claims.get("role");
-
-            CustomUserDetails userDetails = new CustomUserDetails(userId, nickname, role);
-
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        // claims가 null이면 인증 없이 통과만 시킴
+        if (claims == null || claims.get("userId") == null) {
+            chain.doFilter(request, response);
+            return;
         }
+
+        Long userId = ((Number) claims.get("userId")).longValue();
+        String nickname = (String) claims.get("nickname");
+        String role = (String) claims.get("role");
+
+        CustomUserDetails userDetails = new CustomUserDetails(userId, nickname, role);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         chain.doFilter(request, response);
     }
