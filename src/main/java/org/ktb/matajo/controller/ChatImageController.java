@@ -27,6 +27,6 @@ public class ChatImageController {
         
         log.info("이미지 업로드 완료: {}", imageUrl);
         
-        return ResponseEntity.ok(CommonResponse.success("채팅 이미지 업로드 성공", imageUrl));
+        return ResponseEntity.ok(CommonResponse.success("chat_image_upload_success", imageUrl));
     }
 }
