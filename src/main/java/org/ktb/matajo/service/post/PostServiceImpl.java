@@ -767,7 +767,7 @@ public class PostServiceImpl implements PostService {
                                 .findFirst()
                                 .map(Image::getImageUrl)
                                 .orElse(null))
-                        .postAddress(post.getAddress().getAddress())
+                        .postAddress(post.getAddress().getSigungu() + " " + post.getAddress().getBname())
                         .preferPrice(post.getPreferPrice())
                         .hiddenStatus(post.isHiddenStatus())
                         .createdAt(post.getCreatedAt())

@@ -39,6 +39,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     );
 
     // ✅ [추가] 유저 ID로 게시글 조회 (페이지네이션 포함)
-    @Query("SELECT p FROM Post p WHERE p.user.id = :userId AND p.deletedAt IS NULL ORDER BY p.createdAt DESC")
+    @Query("SELECT p " +
+            "FROM Post p " +
+            "JOIN p.address a " +
+            "WHERE p.user.id = :userId " +
+            "AND p.deletedAt IS NULL " +
+            "ORDER BY p.createdAt DESC")
     List<Post> findByUserId(@Param("userId") Long userId, Pageable pageable);
 }
