@@ -1,5 +1,12 @@
 package org.ktb.matajo.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +35,7 @@ import java.util.Set;
 @RequestMapping("/api/chats")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "채팅 메시지", description = "채팅 메시지 관련 API")
 public class ChatMessageController {
 
     private final ChatMessageService chatMessageService;
@@ -38,6 +46,7 @@ public class ChatMessageController {
     /**
      * 클라이언트 Heartbeat 처리 (연결 상태 확인)
      */
+    @Operation(summary = "WebSocket Heartbeat", description = "WebSocket 연결 상태를 유지하기 위한 Heartbeat 메시지 (WebSocket API)")
     @MessageMapping("/heartbeat")
     public void handleHeartbeat(Map<String, Object> payload, SimpMessageHeaderAccessor headerAccessor) {
         try {
@@ -69,10 +78,16 @@ public class ChatMessageController {
      * WebSocket을 통한 메시지 전송
      * /app/chat/{roomId} 엔드포인트로 메시지가 전송됨
      */
+    @Operation(summary = "WebSocket 메시지 전송", description = "WebSocket을 통해 채팅 메시지를 전송합니다 (WebSocket API)")
     @MessageMapping("/{roomId}/message")
-    public void sendMessage(@DestinationVariable Long roomId,
-                            @Valid @Payload ChatMessageRequestDto messageDto,
-                            SimpMessageHeaderAccessor headerAccessor) {
+    public void sendMessage(
+            @Parameter(description = "채팅방 ID", required = true)
+            @DestinationVariable Long roomId,
+
+            @Parameter(description = "메시지 내용", required = true, schema = @Schema(implementation = ChatMessageRequestDto.class))
+            @Valid @Payload ChatMessageRequestDto messageDto,
+
+            SimpMessageHeaderAccessor headerAccessor) {
         log.info("메시지 전송: roomId={}, senderId={}, type={}", roomId, messageDto.getSenderId(), messageDto.getMessageType());
 
         // 이미지 메시지 처리를 위한 로그 추가
@@ -101,10 +116,23 @@ public class ChatMessageController {
     /**
      * 채팅방의 메시지 목록 조회
      */
+    @Operation(summary = "채팅 메시지 목록 조회", description = "특정 채팅방의 메시지 목록을 페이징하여 조회합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "메시지 목록 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CommonResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "채팅방 없음")
+    })
     @GetMapping("/{roomId}/message")
     public ResponseEntity<CommonResponse<List<ChatMessageResponseDto>>> getChatMessages(
+            @Parameter(description = "채팅방 ID", required = true)
             @PathVariable Long roomId,
+
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "페이지 크기", example = "50")
             @RequestParam(defaultValue = "50") int size) {
 
         log.info("채팅 메시지 조회: roomId={}, page={}, size={}", roomId, page, size);
@@ -119,8 +147,15 @@ public class ChatMessageController {
     /**
      * 메시지 읽음 상태 업데이트
      */
+    @Operation(summary = "메시지 읽음 상태 업데이트", description = "특정 채팅방의 메시지를 모두 읽음 상태로 변경합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "읽음 처리 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "채팅방 없음")
+    })
     @PutMapping("/{roomId}/read")
     public ResponseEntity<CommonResponse<Void>> markMessagesAsRead(
+            @Parameter(description = "채팅방 ID", required = true)
             @PathVariable Long roomId) {
 
         // 토큰에서 userId 추출
