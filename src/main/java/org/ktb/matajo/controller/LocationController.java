@@ -31,7 +31,7 @@ public class LocationController {
     public ResponseEntity<CommonResponse<List<String>>> searchLocations(
             @RequestParam String dong) {
         
-        log.info("위치 검색 요청: query={}", dong);
+        log.info("위치 검색 요청!: query={}", dong);
         
         List<String> searchResults = locationInfoService.searchLocations(dong);
         
