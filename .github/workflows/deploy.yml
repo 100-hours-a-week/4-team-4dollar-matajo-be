@@ -2,9 +2,9 @@ name: Deploy Spring Boot with Docker
 
 on:
   push:
-    branches: ["dev/test"] # 배포 대상 브랜치
+    branches: [ "dev/test" ] # 배포 대상 브랜치
   pull_request_review:
-    types: [submitted] # PR 리뷰가 제출될 때 실행
+    types: [ submitted ] # PR 리뷰가 제출될 때 실행
 
 jobs:
   build-and-deploy:
@@ -98,37 +98,29 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd /home/ubuntu/app
-
             # 기존 파일/디렉토리 삭제 후 압축 해제
             rm -rf app.jar
             mkdir -p temp_extract
             tar -xzf app.tar.gz -C temp_extract
             mv temp_extract/app.jar ./app.jar
             rm -rf temp_extract app.tar.gz
-
             # JAR 파일 검증
             echo "🔍 JAR 파일 크기 확인:"
             ls -lh app.jar
-
             # 설정 파일 디렉토리 확인
             echo "🔍 설정 파일 확인:"
             mkdir -p config
             ls -la config/
-
             # JAR 파일 유효성 확인
             file app.jar
-
             # 기존 컨테이너 종료 및 삭제
             docker stop matajo-app || true
             docker rm matajo-app || true
-
             # 기존 이미지 삭제 (선택사항)
             docker image prune -f
-
             # 새로운 Docker 이미지 빌드
             docker build -t matajo:latest .
-
-            # 컨테이너 실행
+            # 컨테이너 실행 (AWS CloudWatch Logs 설정 추가)
             docker run -d \
               --name matajo-app \
               -p 8080:8080 \
@@ -136,8 +128,11 @@ jobs:
               -e SPRING_CONFIG_LOCATION=file:/app/config/ \
               --restart always \
               -v /home/ubuntu/app/logs:/app/logs \
+              --log-driver=awslogs \
+              --log-opt awslogs-region=ap-northeast-2 \
+              --log-opt awslogs-group=matajo-be-ec2 \
+              --log-opt awslogs-stream=be-log \
               matajo:latest
-
             # 컨테이너 상태 확인
             sleep 10
             if [ "$(docker ps -q -f name=matajo-app)" ]; then
