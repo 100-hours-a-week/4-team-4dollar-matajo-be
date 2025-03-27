@@ -16,6 +16,9 @@ public class PostResponseDto {
     @Schema(description = "게시글 제목", example = "아이패드 보관 맡겨주세요")
     private String postTitle;
 
+    @Schema(description = "게시글 메인 이미지 URL", example = "https://bucket-name.s3.region.amazonaws.com/post/image.jpg")
+    private String postMainImage;
+
     @Schema(description = "게시글 주소", example = "용인시 기흥구")
     private String postAddress;
 
