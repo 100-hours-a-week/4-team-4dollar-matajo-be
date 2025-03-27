@@ -759,6 +759,12 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public List<MyPostResponseDto> getMyPosts(Long userId, int offset, int limit) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getRole() == UserType.USER) {
+            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
+
         Pageable pageable = PageRequest.of(offset / limit, limit);
         List<Post> posts = postRepository.findByUserId(userId, pageable);
 
