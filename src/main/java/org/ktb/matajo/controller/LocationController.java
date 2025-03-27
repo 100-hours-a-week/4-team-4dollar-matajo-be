@@ -82,7 +82,7 @@ public class LocationController {
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "잘못된 요청 - " + ErrorCode.INVALID_POST_ADDRESS.getDescription(),
+            description = "잘못된 요청 - ",
             content = @Content(schema = @Schema(implementation = CommonResponse.class))
         ),
         @ApiResponse(

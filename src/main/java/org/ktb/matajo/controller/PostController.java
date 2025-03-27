@@ -1,6 +1,7 @@
 package org.ktb.matajo.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +14,7 @@ import org.ktb.matajo.dto.location.LocationDealResponseDto;
 import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.global.common.CommonResponse;
+import org.ktb.matajo.global.common.ErrorResponse;
 import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.post.PostService;
 import org.springframework.http.HttpStatus;
@@ -46,7 +48,7 @@ public class PostController {
     })
     @GetMapping
     public ResponseEntity<CommonResponse<List<PostListResponseDto>>> getPostList(
-        @Parameter(description = "조회 시작 위치", example = "0") 
+        @Parameter(description = "조회 시작 위치", example = "0")
         @RequestParam(defaultValue = "0") int offset,
         @Parameter(description = "조회할 게시글 수", example = "10") 
         @RequestParam(defaultValue = "10") int limit) {
