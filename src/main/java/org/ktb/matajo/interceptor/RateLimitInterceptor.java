@@ -35,7 +35,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         ApiType apiType = resolveApiType(request.getRequestURI());
         
         // 클라이언트 식별자 가져오기
-        Long clientId = SecurityUtil.getCurrentUserId();
+        String clientId = rateLimitConfig.getClientIdentifier(request);
         
         // 클라이언트 ID와 API 유형에 따른 버킷 가져오기
         Bucket bucket = rateLimitConfig.resolveBucket(clientId, apiType);
@@ -49,6 +49,9 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         
         if (probe.isConsumed()) {
             //요청 허용
+            long waitTimeSeconds = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
+            log.info("Rate limit exceeded for client: {}, API type: {}, wait time: {}s",
+                clientId, apiType, waitTimeSeconds);
             return true;
         } else {
             // 요청 차단 (429 Too Many Requests)
