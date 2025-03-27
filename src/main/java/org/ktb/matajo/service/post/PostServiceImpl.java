@@ -47,12 +47,8 @@ public class PostServiceImpl implements PostService {
         }
 
         // 페이징 처리된 게시글 목록 조회
-        Pageable pageable = PageRequest.of(offset / limit, limit);
+        Pageable pageable = PageRequest.of(offset, limit);
         List<Post> posts = postRepository.findAllActivePostsOrderByCreatedAtDesc(pageable);
-
-        // if (posts.isEmpty()) {
-        //     throw new BusinessException(ErrorCode.NOT_FOUND_POSTS_PAGE);
-        // }
 
         // 엔티티를 DTO로 변환
         return posts.stream()
@@ -766,6 +762,11 @@ public class PostServiceImpl implements PostService {
                 .map(post -> PostResponseDto.builder()
                         .postId(post.getId())
                         .postTitle(post.getTitle())
+                        .postMainImage(post.getImageList().stream()
+                                .filter(Image::isThumbnailStatus)
+                                .findFirst()
+                                .map(Image::getImageUrl)
+                                .orElse(null))
                         .postAddress(post.getAddress().getAddress())
                         .preferPrice(post.getPreferPrice())
                         .hiddenStatus(post.isHiddenStatus())
