@@ -53,7 +53,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         } else {
             // 요청 차단 (429 Too Many Requests)
             long waitTimeSeconds = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
-            response.addHeader("X-RateLimit-Reset", String.valueOf(waitTimeSeconds));
+            response.addHeader("Retry-After", String.valueOf(waitTimeSeconds));
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
