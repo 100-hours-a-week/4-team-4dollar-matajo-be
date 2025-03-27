@@ -18,10 +18,10 @@ public class SessionCleanupScheduler {
 
     /**
      * 비활성 WebSocket 세션 정리 스케줄러
-     * 5분(300,000ms)마다 실행되어 비활성 상태의 WebSocket 세션을 정리합니다.
+     * 10분(300,000ms)마다 실행되어 비활성 상태의 WebSocket 세션을 정리합니다.
      * 메모리 누수를 방지하고 리소스를 효율적으로 관리합니다.
      */
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 600000)
     public void cleanupInactiveSessions() {
         log.debug("세션 정리 스케줄러 실행 시작");
         webSocketEventListener.cleanupInactiveSessions();

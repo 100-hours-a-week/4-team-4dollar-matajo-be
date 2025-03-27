@@ -1,7 +1,7 @@
 package org.ktb.matajo.service.user;
 
 import io.jsonwebtoken.Claims;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
 import org.ktb.matajo.dto.user.KeeperRegisterResponseDto;
 import org.ktb.matajo.entity.RefreshToken;
@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Random;
 
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -31,8 +32,8 @@ public class UserServiceImpl implements UserService {
         this.jwtUtil = jwtUtil;
     }
 
-    @Transactional
     @Override
+    @Transactional
     public Map<String, String> processKakaoUser(KakaoUserInfo userInfo) {
         // 카카오 ID로 기존 사용자를 찾거나, 새로 등록
         Optional<User> optionalUser = userRepository.findByKakaoId(userInfo.getKakaoId());
@@ -82,7 +83,7 @@ public class UserServiceImpl implements UserService {
         return nickname;
     }
 
-
+    @Override
     @Transactional
     public Map<String, String> reissueAccessToken(String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
@@ -126,6 +127,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public boolean updateNickname(Long userId, String newNickname) {
         Optional<User> optionalUser = userRepository.findById(userId);
         if (optionalUser.isEmpty()) return false;
@@ -139,6 +141,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public KeeperRegisterResponseDto registerKeeper(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() ->
                 new BusinessException(ErrorCode.USER_NOT_FOUND));
