@@ -58,6 +58,9 @@ public enum ErrorCode {
     // 409 CONFLICT
     CHAT_USER_ALREADY_LEFT(HttpStatus.CONFLICT, "chat_user_already_left", "이미 채팅방을 나간 사용자입니다"),
 
+    //429 TOO_MANY_REQUESTS
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS,"too_many_requests", "요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요."),
+
     // 500 INTERNAL SERVER ERROR
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "internal_server_error", "서버 내부 오류가 발생했습니다"),
     FAILED_TO_UPLOAD_IMAGE(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_upload_image", "이미지 업로드에 실패했습니다"),
