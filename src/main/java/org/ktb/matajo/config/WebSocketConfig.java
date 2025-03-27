@@ -45,15 +45,13 @@ import java.util.Map;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final ObjectMapper objectMapper;
-    private final AmazonS3Client amazonS3Client;
     private final JwtUtil jwtUtil;
 
     @Value("${cloud.aws.s3.url}")
     private String s3Url;
 
-    public WebSocketConfig(ObjectMapper objectMapper, AmazonS3Client amazonS3Client, JwtUtil jwtUtil) {
+    public WebSocketConfig(ObjectMapper objectMapper, JwtUtil jwtUtil) {
         this.objectMapper = objectMapper;
-        this.amazonS3Client = amazonS3Client;
         this.jwtUtil = jwtUtil;
     }
 
