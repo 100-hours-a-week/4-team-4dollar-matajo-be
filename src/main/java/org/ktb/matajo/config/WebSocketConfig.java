@@ -35,14 +35,12 @@ import java.nio.charset.StandardCharsets;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final ObjectMapper objectMapper;
-    private final AmazonS3Client amazonS3Client;
 
     @Value("${cloud.aws.s3.url}")
     private String s3Url;
 
     public WebSocketConfig(ObjectMapper objectMapper, AmazonS3Client amazonS3Client) {
         this.objectMapper = objectMapper;
-        this.amazonS3Client = amazonS3Client;
     }
 
     /**
