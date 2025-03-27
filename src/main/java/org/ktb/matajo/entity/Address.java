@@ -2,7 +2,6 @@ package org.ktb.matajo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.ktb.matajo.entity.common.BaseEntity;
 import org.ktb.matajo.dto.post.AddressDto;
 
 @Entity

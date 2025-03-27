@@ -758,12 +758,12 @@ public class PostServiceImpl implements PostService {
     // 내 보관소 조회
     @Override
     @Transactional(readOnly = true)
-    public List<MyPostResponseDto> getMyPosts(Long userId, int offset, int limit) {
+    public List<PostResponseDto> getMyPosts(Long userId, int offset, int limit) {
         Pageable pageable = PageRequest.of(offset / limit, limit);
         List<Post> posts = postRepository.findByUserId(userId, pageable);
 
         return posts.stream()
-                .map(post -> MyPostResponseDto.builder()
+                .map(post -> PostResponseDto.builder()
                         .postId(post.getId())
                         .postTitle(post.getTitle())
                         .postAddress(post.getAddress().getAddress())
