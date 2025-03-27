@@ -27,7 +27,7 @@ public enum ErrorCode {
     INVALID_FILE_NAME(HttpStatus.BAD_REQUEST, "invalid_file_name", "파일 이름이 유효하지 않습니다"),
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "invalid_file_extension", "지원하지 않는 파일 확장자입니다. jpg, jpeg, png, bmp, webp, heic 형식만 업로드 가능합니다"),
     FILE_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "file_count_exceeded", "최대 업로드 가능한 파일 개수(4개)를 초과했습니다"),
-    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "invalid_refeshtoken", "리프레시 토큰이 유효하지 않습니다"),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "invalid_refresh_token", "리프레시 토큰이 유효하지 않습니다"),
     // 일반적인 입력값 검증 오류
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "invalid_input_value", "입력값이 유효하지 않습니다"),
 
@@ -50,7 +50,7 @@ public enum ErrorCode {
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "not_found_chat_message", "채팅 메시지를 찾을 수 없습니다"),
     CHAT_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "not_found_chat_user", "채팅방 사용자를 찾을 수 없습니다"),
     POST_ALREADY_DELETED(HttpStatus.NOT_FOUND, "post_already_deleted", "이미 삭제된 게시글입니다"),
-    REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "refeshtoken_not_found", "리프레시 토큰이 존재하지 않습니다"),
+    REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "refresh_token_not_found", "리프레시 토큰이 존재하지 않습니다"),
 
     // 405 METHOD NOT ALLOWED - 누락된 에러 코드 추가
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "지원하지 않는 HTTP 메소드입니다"),
