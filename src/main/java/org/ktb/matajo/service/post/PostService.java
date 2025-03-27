@@ -74,5 +74,5 @@ public interface PostService {
   List<LocationDealResponseDto> getTopDiscountedPosts(Long locationInfoId);
   
   // 내 보관소 조회
-  List<MyPostResponseDto> getMyPosts(Long userId, int offset, int limit);
+  List<PostResponseDto> getMyPosts(Long userId, int offset, int limit);
 }

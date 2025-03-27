@@ -47,12 +47,8 @@ public class PostServiceImpl implements PostService {
         }
 
         // 페이징 처리된 게시글 목록 조회
-        Pageable pageable = PageRequest.of(offset / limit, limit);
+        Pageable pageable = PageRequest.of(offset, limit);
         List<Post> posts = postRepository.findAllActivePostsOrderByCreatedAtDesc(pageable);
-
-        // if (posts.isEmpty()) {
-        //     throw new BusinessException(ErrorCode.NOT_FOUND_POSTS_PAGE);
-        // }
 
         // 엔티티를 DTO로 변환
         return posts.stream()
@@ -758,21 +754,20 @@ public class PostServiceImpl implements PostService {
     // 내 보관소 조회
     @Override
     @Transactional(readOnly = true)
-    public List<MyPostResponseDto> getMyPosts(Long userId, int offset, int limit) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        if (user.getRole() == UserType.USER) {
-            throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
-        }
-
+    public List<PostResponseDto> getMyPosts(Long userId, int offset, int limit) {
         Pageable pageable = PageRequest.of(offset / limit, limit);
         List<Post> posts = postRepository.findByUserId(userId, pageable);
 
         return posts.stream()
-                .map(post -> MyPostResponseDto.builder()
+                .map(post -> PostResponseDto.builder()
                         .postId(post.getId())
                         .postTitle(post.getTitle())
-                        .postAddress(post.getAddress().getAddress())
+                        .postMainImage(post.getImageList().stream()
+                                .filter(Image::isThumbnailStatus)
+                                .findFirst()
+                                .map(Image::getImageUrl)
+                                .orElse(null))
+                        .postAddress(post.getAddress().getSigungu() + " " + post.getAddress().getBname())
                         .preferPrice(post.getPreferPrice())
                         .hiddenStatus(post.isHiddenStatus())
                         .createdAt(post.getCreatedAt())
