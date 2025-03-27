@@ -1,6 +1,7 @@
 package org.ktb.matajo.service.user;
 
 import io.jsonwebtoken.Claims;
+import org.ktb.matajo.dto.user.KeeperRegisterRequestDto;
 import org.ktb.matajo.security.SecurityUtil;
 import org.springframework.transaction.annotation.Transactional;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
@@ -157,12 +158,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public KeeperRegisterResponseDto registerKeeper(Long userId) {
+    public KeeperRegisterResponseDto registerKeeper(KeeperRegisterRequestDto request ,Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() ->
                 new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getRole() == UserType.KEEPER) {
             throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
+
+        if (request.getPrivacyPolicy() == false || request.getTermsOfService() == false) {
+            throw new BusinessException(ErrorCode.REQUIRED_AGREEMENT_MISSING);
         }
 
         user.promoteToKeeper(); // 보관인으로 승격

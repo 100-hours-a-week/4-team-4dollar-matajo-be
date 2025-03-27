@@ -1,6 +1,7 @@
 package org.ktb.matajo.service.user;
 
 import org.ktb.matajo.dto.user.KakaoUserInfo;
+import org.ktb.matajo.dto.user.KeeperRegisterRequestDto;
 import org.ktb.matajo.dto.user.KeeperRegisterResponseDto;
 
 import java.util.Map;
@@ -15,7 +16,7 @@ public interface UserService {
     boolean updateNickname(Long userId, String newNickname);
 
     // 사용자를 보관인으로 등록하고 응답 DTO를 반환합니다.
-    KeeperRegisterResponseDto registerKeeper(Long userId);
+    KeeperRegisterResponseDto registerKeeper(KeeperRegisterRequestDto request, Long userId);
 
     // 카카오 사용자 정보를 처리하고 JWT 토큰(access, refresh)을 반환합니다.
     Map<String, String> processKakaoUser(KakaoUserInfo userInfo);
