@@ -20,5 +20,9 @@ public interface UserService {
     // 카카오 사용자 정보를 처리하고 JWT 토큰(access, refresh)을 반환합니다.
     Map<String, String> processKakaoUser(KakaoUserInfo userInfo);
 
+    // 리프레시 토큰을 검증하고 새로운 accessToken 및 refreshToken을 발급합니다.
     Map<String, String> reissueAccessToken(String refreshToken);
+
+    // 로그아웃 처리: 현재 로그인 사용자 ID의 refreshToken을 삭제합니다.
+    void logout();
 }

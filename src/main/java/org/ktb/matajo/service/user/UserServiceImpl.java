@@ -1,6 +1,7 @@
 package org.ktb.matajo.service.user;
 
 import io.jsonwebtoken.Claims;
+import org.ktb.matajo.security.SecurityUtil;
 import org.springframework.transaction.annotation.Transactional;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
 import org.ktb.matajo.dto.user.KeeperRegisterResponseDto;
@@ -120,6 +121,20 @@ public class UserServiceImpl implements UserService {
         );
     }
 
+    @Override
+    @Transactional
+    public void logout() {
+        Long userId;
+        try {
+            userId = SecurityUtil.getCurrentUserId();
+        } catch (RuntimeException e) {
+            throw new BusinessException(ErrorCode.REQUIRED_AUTHORIZATION);
+        }
+
+        RefreshToken token = refreshTokenRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
+        refreshTokenRepository.delete(token);
+    }
 
     @Override
     public boolean isNicknameAvailable(String nickname) {

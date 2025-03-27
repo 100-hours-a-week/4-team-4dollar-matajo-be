@@ -60,6 +60,14 @@ public class AuthController {
         return ResponseEntity.ok(CommonResponse.success("accesstoken_reissue_success", tokens));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<CommonResponse<?>> logout(HttpServletResponse response) {
+        userService.logout();
+
+        response.addHeader("Set-Cookie", "refreshToken=; HttpOnly; Path=/; Max-Age=0");
+
+        return ResponseEntity.ok(CommonResponse.success("logout_success", null));
+    }
 
     @GetMapping("/test")
     public ResponseEntity<?> getCurrentUserId() {
