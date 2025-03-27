@@ -81,12 +81,10 @@ public class RateLimitConfig {
             // JWT 토큰에서 파싱된 정보인 경우
             if (authentication.getPrincipal() instanceof Map) {
                 Map<String, Object> principal = (Map<String, Object>) authentication.getPrincipal();
-                if (principal.containsKey("Id")) {
-                    return "user:" + principal.get("Id");
+                if (principal.containsKey("nickname")) {
+                    return "user:" + principal.get("nickname");
                 }
             }
-
-
         }
 
         // 인증되지 않은 경우, IP 주소 사용
