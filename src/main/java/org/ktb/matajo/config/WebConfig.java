@@ -16,13 +16,13 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000", "https://matajo.store")  // 모든 출처 허용
-                .allowedMethods("*")  // 모든 HTTP 메서드 허용
-                .allowedHeaders("*")  // 모든 헤더 허용
-                .allowCredentials(true)
-                .maxAge(3600);        // 브라우저가 preflight 요청 결과를 캐시하는 시간(초)
-
+        registry.addMapping("/**") // 모든 경로에 CORS 설정 적용
+                .allowedOrigins("http://localhost:3000", "https://matajo.store") // 허용할 출처(Origin) 제한
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS") // 허용할 HTTP 메서드 지정
+                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With") // 허용할 요청 헤더 지정
+                .exposedHeaders("Authorization") // 클라이언트에서 접근 가능한 응답 헤더 지정
+                .allowCredentials(true) // 인증 정보(쿠키, 인증 헤더) 포함 허용
+                .maxAge(3600); // Preflight 요청 결과 캐시 유지 시간(초)
     }
 
     @Override
