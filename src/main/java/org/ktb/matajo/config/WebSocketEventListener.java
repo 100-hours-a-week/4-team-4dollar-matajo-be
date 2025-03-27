@@ -57,7 +57,15 @@ public class WebSocketEventListener {
             sessionErrorCounts.remove(sessionId);
             sessionLastActivity.put(sessionId, LocalDateTime.now());
 
-            log.debug("WebSocket 연결 완료: sessionId={}", sessionId);
+            // 핸드셰이크에서 저장한 사용자 정보 확인
+            Map<String, Object> sessionAttributes = headers.getSessionAttributes();
+            if (sessionAttributes != null && sessionAttributes.containsKey("userId") &&
+                    Boolean.TRUE.equals(sessionAttributes.get("authenticated"))) {
+                String userId = (String) sessionAttributes.get("userId");
+                log.info("인증된 사용자 WebSocket 연결 완료: sessionId={}, userId={}", sessionId, userId);
+            } else {
+                log.debug("WebSocket 연결 완료: sessionId={}", sessionId);
+            }
         } catch (Exception e) {
             log.error("WebSocket 연결 처리 중 오류: {}", e.getMessage(), e);
         }
@@ -86,16 +94,29 @@ public class WebSocketEventListener {
                 String roomIdStr = destination.substring(destination.lastIndexOf('/') + 1);
                 Long roomId = Long.parseLong(roomIdStr);
 
-                // userId 파라미터 검증
+                // 세션 속성에서 userId 확인 (핸드셰이크에서 저장한 정보)
+                Map<String, Object> sessionAttributes = headers.getSessionAttributes();
+                Long userId = null;
+
+                // 헤더에서 userId 파라미터 먼저 확인
                 String userIdStr = headers.getFirstNativeHeader("userId");
-                if (userIdStr == null || userIdStr.isEmpty()) {
+                if (userIdStr != null && !userIdStr.isEmpty()) {
+                    userId = Long.parseLong(userIdStr);
+                }
+                // 세션 속성에서도 확인 (핸드셰이크에서 저장된 정보)
+                else if (sessionAttributes != null && sessionAttributes.containsKey("userId")) {
+                    userIdStr = (String) sessionAttributes.get("userId");
+                    if (userIdStr != null) {
+                        userId = Long.parseLong(userIdStr);
+                    }
+                }
+
+                if (userId == null) {
                     log.warn("구독 요청 시 userId 없음: sessionId={}, destination={}",
                             sessionId, destination);
                     incrementErrorCount(sessionId);
                     return;
                 }
-
-                Long userId = Long.parseLong(userIdStr);
 
                 // 세션 구독 정보 저장
                 if (sessionSubscriptions.containsKey(sessionId)) {
@@ -150,11 +171,26 @@ public class WebSocketEventListener {
                 if (subscriptions != null && subscriptions.containsKey(destination)) {
                     Long roomId = subscriptions.get(destination);
 
-                    // userId 헤더 확인
-                    String userIdStr = headers.getFirstNativeHeader("userId");
-                    if (userIdStr != null && !userIdStr.isEmpty()) {
-                        Long userId = Long.parseLong(userIdStr);
+                    // userId 확인 (세션 속성 먼저, 그 다음 헤더)
+                    Long userId = null;
+                    Map<String, Object> sessionAttributes = headers.getSessionAttributes();
 
+                    if (sessionAttributes != null && sessionAttributes.containsKey("userId")) {
+                        String userIdStr = (String) sessionAttributes.get("userId");
+                        if (userIdStr != null && !userIdStr.isEmpty()) {
+                            userId = Long.parseLong(userIdStr);
+                        }
+                    }
+
+                    // 세션 속성에 없으면 헤더에서 확인
+                    if (userId == null) {
+                        String userIdStr = headers.getFirstNativeHeader("userId");
+                        if (userIdStr != null && !userIdStr.isEmpty()) {
+                            userId = Long.parseLong(userIdStr);
+                        }
+                    }
+
+                    if (userId != null) {
                         try {
                             // 채팅방 퇴장 처리
                             chatSessionService.userLeftRoom(roomId, userId);
@@ -199,9 +235,30 @@ public class WebSocketEventListener {
 
             if (subscriptions != null && !subscriptions.isEmpty()) {
                 // 모든 구독 채팅방에서 사용자 퇴장 처리
-                // userId 정보가 없어 처리 불가능하므로 로그만 남김
-                log.info("WebSocket 연결 종료: sessionId={}, 구독 채팅방 수={}",
-                        sessionId, subscriptions.size());
+                // 세션 속성에서 userId 확인
+                Map<String, Object> sessionAttributes = headers.getSessionAttributes();
+                Long userId = null;
+
+                if (sessionAttributes != null && sessionAttributes.containsKey("userId")) {
+                    String userIdStr = (String) sessionAttributes.get("userId");
+                    if (userIdStr != null && !userIdStr.isEmpty()) {
+                        userId = Long.parseLong(userIdStr);
+
+                        // 구독 중이던 모든 채팅방에서 퇴장 처리
+                        for (Map.Entry<String, Long> entry : subscriptions.entrySet()) {
+                            Long roomId = entry.getValue();
+                            try {
+                                chatSessionService.userLeftRoom(roomId, userId);
+                                log.debug("연결 종료로 인한 채팅방 퇴장: roomId={}, userId={}", roomId, userId);
+                            } catch (Exception e) {
+                                log.warn("연결 종료 시 채팅방 퇴장 처리 실패: {}", e.getMessage());
+                            }
+                        }
+                    }
+                }
+
+                log.info("WebSocket 연결 종료: sessionId={}, 구독 채팅방 수={}, userId={}",
+                        sessionId, subscriptions.size(), userId);
             }
 
             // 세션 관련 정보 정리
