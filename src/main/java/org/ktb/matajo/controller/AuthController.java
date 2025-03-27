@@ -28,24 +28,10 @@ public class AuthController {
 
     @PostMapping("/kakao")
     public ResponseEntity<CommonResponse<?>> kakaoLogin(@RequestBody Map<String, String> request, HttpServletResponse response) {
-
         String code = request.get("code");
-        String accessToken = kakaoAuthService.getAccessToken(code);
-        KakaoUserInfo userInfo = kakaoUserService.getUserInfo(accessToken);
+        Map<String, Object> loginData = userService.loginWithKakao(code, response);  // 서비스 위임
 
-        Map<String, String> tokens = userService.processKakaoUser(userInfo);
-        String jwtToken = tokens.get("accessToken");
-        String refreshToken = tokens.get("refreshToken");
-
-        response.addHeader("Set-Cookie", "refreshToken=" + refreshToken + "; HttpOnly; Path=/; Max-Age=1209600"); // 14일
-
-        Map<String, Object> responseData = Map.of(
-                "accessToken", jwtToken,
-                "refreshToken", refreshToken,
-                "nickname", userInfo.getNickname()
-        );
-
-        return ResponseEntity.ok(CommonResponse.success("login_success", responseData));
+        return ResponseEntity.ok(CommonResponse.success("login_success", loginData));
     }
 
     @PostMapping("/refresh")
@@ -57,7 +43,7 @@ public class AuthController {
 
         response.addHeader("Set-Cookie", "refreshToken=" + tokens.get("refreshToken") + "; HttpOnly; Path=/; Max-Age=1209600");
 
-        return ResponseEntity.ok(CommonResponse.success("accesstoken_reissue_success", tokens));
+        return ResponseEntity.ok(CommonResponse.success("access_token_reissue_success", tokens));
     }
 
     @PostMapping("/logout")

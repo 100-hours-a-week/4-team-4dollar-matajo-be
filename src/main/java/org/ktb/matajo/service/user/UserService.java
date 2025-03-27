@@ -1,5 +1,6 @@
 package org.ktb.matajo.service.user;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
 import org.ktb.matajo.dto.user.KeeperRegisterRequestDto;
 import org.ktb.matajo.dto.user.KeeperRegisterResponseDto;
@@ -26,4 +27,7 @@ public interface UserService {
 
     // 로그아웃 처리: 현재 로그인 사용자 ID의 refreshToken을 삭제합니다.
     void logout();
+
+    // 카카오 인가 코드를 이용해 로그인 처리 후, 토큰 및 사용자 정보를 반환합니다.
+    Map<String, Object> loginWithKakao(String code, HttpServletResponse response);
 }

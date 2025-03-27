@@ -1,8 +1,10 @@
 package org.ktb.matajo.service.user;
 
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletResponse;
 import org.ktb.matajo.dto.user.KeeperRegisterRequestDto;
 import org.ktb.matajo.security.SecurityUtil;
+import org.ktb.matajo.service.oauth.KakaoAuthService;
 import org.springframework.transaction.annotation.Transactional;
 import org.ktb.matajo.dto.user.KakaoUserInfo;
 import org.ktb.matajo.dto.user.KeeperRegisterResponseDto;
@@ -27,11 +29,48 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
+    private final KakaoAuthService kakaoAuthService;
+    private final KakaoUserService kakaoUserService;
 
-    public UserServiceImpl(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtUtil jwtUtil) {
+    public UserServiceImpl(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtUtil jwtUtil, KakaoAuthService kakaoAuthService, KakaoUserService kakaoUserService) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.jwtUtil = jwtUtil;
+        this.kakaoAuthService = kakaoAuthService;
+        this.kakaoUserService = kakaoUserService;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> loginWithKakao(String code, HttpServletResponse response) {
+        if (code == null || code.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        String kakaoAccessToken;
+        try {
+            kakaoAccessToken = kakaoAuthService.getAccessToken(code);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.KAKAO_AUTH_FAILED);
+        }
+
+        KakaoUserInfo userInfo;
+        try {
+            userInfo = kakaoUserService.getUserInfo(kakaoAccessToken);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.KAKAO_USERINFO_FETCH_FAILED);
+        }
+
+        Map<String, String> tokens = processKakaoUser(userInfo);
+
+        // 리프레시 토큰 쿠키 설정
+        response.addHeader("Set-Cookie", "refreshToken=" + tokens.get("refreshToken") + "; HttpOnly; Path=/; Max-Age=1209600");
+
+        return Map.of(
+                "accessToken", tokens.get("accessToken"),
+                "refreshToken", tokens.get("refreshToken"),
+                "nickname", userInfo.getNickname()
+        );
     }
 
     @Override

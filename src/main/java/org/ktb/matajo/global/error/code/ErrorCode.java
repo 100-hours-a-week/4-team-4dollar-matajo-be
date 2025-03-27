@@ -68,9 +68,11 @@ public enum ErrorCode {
     FAILED_TO_WRITE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_write_post", "게시글 작성에 실패했습니다"),
     FAILED_TO_DELETE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_delete_post", "게시글 삭제에 실패했습니다"),
     FAILED_TO_GET_POST_DETAIL(HttpStatus.INTERNAL_SERVER_ERROR,  "failed_to_get_post_detail", "게시글 상세 조회에 실패했습니다"),
-    FAILED_TO_UPDATE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_update_post", "게시글 수정에 실패했습니다");
+    FAILED_TO_UPDATE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_update_post", "게시글 수정에 실패했습니다"),
 
-
+    // 502 BAD GATEWAY - 외부 API 통신 실패
+    KAKAO_AUTH_FAILED(HttpStatus.BAD_GATEWAY, "kakao_auth_failed", "카카오 인증에 실패했습니다"),
+    KAKAO_USERINFO_FETCH_FAILED(HttpStatus.BAD_GATEWAY, "kakao_userinfo_failed", "카카오 사용자 정보 조회에 실패했습니다");
 
     private final HttpStatus status;
     private final String errorMessage;
