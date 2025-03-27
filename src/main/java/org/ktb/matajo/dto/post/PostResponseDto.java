@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @Schema(description = "내 게시글 정보 응답 DTO")
-public class MyPostResponseDto {
+public class PostResponseDto {
     @Schema(description = "게시글 ID", example = "1")
     private Long postId;
 

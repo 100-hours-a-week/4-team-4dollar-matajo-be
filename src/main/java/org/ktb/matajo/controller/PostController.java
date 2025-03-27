@@ -1,5 +1,11 @@
 package org.ktb.matajo.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 
-//로깅 기능
+@Tag(name = "게시글 API", description = "게시글 CRUD 및 관련 기능을 제공하는 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/posts")
@@ -27,11 +33,23 @@ public class PostController {
 
     private final PostService postService;
 
-    //게시글 목록 조회
+    @Operation(
+        summary = "게시글 목록 조회",
+        description = "페이지네이션을 적용하여 게시글 목록을 조회합니다."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 페이지네이션 파라미터", 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "해당 페이지에 게시글이 없음", 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
     public ResponseEntity<CommonResponse<List<PostListResponseDto>>> getPostList(
-            @RequestParam(defaultValue = "0") int offset,
-            @RequestParam(defaultValue = "10") int limit) {
+        @Parameter(description = "조회 시작 위치", example = "0") 
+        @RequestParam(defaultValue = "0") int offset,
+        @Parameter(description = "조회할 게시글 수", example = "10") 
+        @RequestParam(defaultValue = "10") int limit) {
 
        log.info("게시글 목록 조회 요청: offset={}, limit={}", offset, limit);
 
@@ -40,13 +58,27 @@ public class PostController {
         return ResponseEntity.ok(CommonResponse.success("get_posts_success", postList));
     }
 
-    /**
-     * 게시글 등록 - FormData로 이미지와 데이터 함께 처리
-     * @param postData 게시글 정보 (JSON 문자열)
-     * @param mainImage 메인 이미지 파일
-     * @param detailImages 상세 이미지 파일들 (선택적)
-     * @return 게시글 생성 결과
-     */
+    @Operation(
+        summary = "게시글 등록",
+        description = "새로운 게시글을 등록합니다. 메인 이미지는 필수이며, 상세 이미지는 선택사항입니다."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "게시글 등록 성공"),
+        @ApiResponse(responseCode = "400", description = """
+            - 게시글 제목이 유효하지 않음
+            - 게시글 내용이 유효하지 않음
+            - 게시글 주소가 유효하지 않음
+            - 이미지 파일이 비어있거나 없음
+            - 파일 형식이 유효하지 않음
+            - 파일 크기가 제한을 초과함
+            - 파일 개수가 제한을 초과함
+            """, 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "게시글 작성 실패 또는 이미지 업로드 실패", 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<PostCreateResponseDto>> createPost(
             @Valid @RequestPart("postData") PostCreateRequestDto postData,
@@ -67,6 +99,13 @@ public class PostController {
                 .body(CommonResponse.success("write_post_success", responseDto));
     }
 
+    @Operation(summary = "게시글 상세 조회", description = "특정 게시글의 상세 정보를 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "게시글 상세 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 게시글 ID"),
+        @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+        @ApiResponse(responseCode = "500", description = "게시글 상세 조회 실패")
+    })
     @GetMapping("/{postId}")
     public ResponseEntity<CommonResponse<PostDetailResponseDto>> getPostDetail(
             @PathVariable Long postId) {
@@ -78,6 +117,29 @@ public class PostController {
         return ResponseEntity.ok(CommonResponse.success("get_post_detail_success", postDetail));
     }
 
+    @Operation(
+        summary = "게시글 수정",
+        description = "기존 게시글의 내용을 수정합니다. 권한이 있는 사용자만 수정할 수 있습니다."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "게시글 수정 성공"),
+        @ApiResponse(responseCode = "400", description = """
+            - 게시글 ID가 유효하지 않음
+            - 게시글 제목이 유효하지 않음
+            - 게시글 내용이 유효하지 않음
+            - 게시글 주소가 유효하지 않음
+            - 이미지 관련 유효성 검증 실패
+            """, 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403", description = "게시글 수정 권한 없음", 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음 또는 이미 삭제된 게시글", 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "게시글 수정 실패", 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<PostCreateResponseDto>> updatePost(
             @PathVariable Long postId,
@@ -97,6 +159,13 @@ public class PostController {
         return ResponseEntity.ok(CommonResponse.success("update_post_success",responseDto));
     }
 
+    @Operation(summary = "게시글 공개 상태 변경", description = "게시글의 공개/비공개 상태를 전환합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "게시글 공개 상태 변경 성공"),
+        @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+        @ApiResponse(responseCode = "403", description = "게시글 상태 변경 권한 없음"),
+        @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
     @PatchMapping("/{postId}/visibility")
     public ResponseEntity<CommonResponse<Void>> togglePostVisibility(
             @PathVariable Long postId) {
@@ -110,6 +179,14 @@ public class PostController {
         return ResponseEntity.ok(CommonResponse.success("toggle_post_visibility_success", null));
     }
 
+    @Operation(summary = "게시글 삭제", description = "특정 게시글을 삭제합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "게시글 삭제 성공"),
+        @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+        @ApiResponse(responseCode = "403", description = "게시글 삭제 권한 없음"),
+        @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없거나 이미 삭제됨"),
+        @ApiResponse(responseCode = "500", description = "게시글 삭제 실패")
+    })
     @DeleteMapping("/{postId}")
     public ResponseEntity<CommonResponse<Void>> deletePost(
             @PathVariable Long postId) {
@@ -129,6 +206,12 @@ public class PostController {
      * @param locationInfoId 위치 정보 ID
      * @return 위치 기반 게시글 목록
      */
+    @Operation(summary = "위치 기반 게시글 조회", description = "특정 동네의 게시글 목록을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "위치 기반 게시글 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 위치 정보 ID"),
+        @ApiResponse(responseCode = "404", description = "해당 위치의 게시글을 찾을 수 없음")
+    })
     @GetMapping("/location")
     public ResponseEntity<CommonResponse<List<LocationPostResponseDto>>> getPostsByLocation(
             @RequestParam("locationInfoId") Long locationInfoId) {
@@ -140,9 +223,20 @@ public class PostController {
         return ResponseEntity.ok(CommonResponse.success("get_posts_by_location_success", postList));
     }
 
-    // 지역 특가 조회
+    @Operation(
+        summary = "지역 특가 조회",
+        description = "특정 지역의 할인율이 높은 게시글을 조회합니다. 상위 2개의 특가 상품이 반환됩니다."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "지역 특가 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "올바르지 않은 위치 정보", 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "해당 위치의 특가 정보를 찾을 수 없음", 
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/promotion")
     public ResponseEntity<CommonResponse<Map<String, Object>>> getDeals(
+            @Parameter(description = "위치 정보 ID", required = true, example = "1") 
             @RequestParam("locationInfoId") Long locationInfoId) {
 
         log.info("지역 특가 조회 요청: locationInfoId={}", locationInfoId);
@@ -163,14 +257,21 @@ public class PostController {
     /**
      * 내 보관소 게시글 목록 조회
      */
+    @Operation(summary = "내 게시글 목록 조회", description = "사용자가 작성한 게시글 목록을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "내 게시글 목록 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 페이지네이션 파라미터"),
+        @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+        @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
     @GetMapping("/my-posts")
-    public ResponseEntity<CommonResponse<List<MyPostResponseDto>>> getMyPosts(
+    public ResponseEntity<CommonResponse<List<PostResponseDto>>> getMyPosts(
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "10") int limit) {
 
         Long userId = SecurityUtil.getCurrentUserId();
         log.info("내 게시글 조회 요청: userId={}, offset={}, limit={}", userId, offset, limit);
-        List<MyPostResponseDto> myPosts = postService.getMyPosts(userId, offset, limit);
+        List<PostResponseDto> myPosts = postService.getMyPosts(userId, offset, limit);
         return ResponseEntity.ok(CommonResponse.success("get_my_posts_success", myPosts));
     }
 
