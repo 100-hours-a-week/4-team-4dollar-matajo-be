@@ -1,9 +1,11 @@
 package org.ktb.matajo.config;
 
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.text.StringEscapeUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
@@ -33,9 +35,14 @@ import java.nio.charset.StandardCharsets;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final ObjectMapper objectMapper;
+    private final AmazonS3Client amazonS3Client;
 
-    public WebSocketConfig(ObjectMapper objectMapper) {
+    @Value("${cloud.aws.s3.url}")
+    private String s3Url;
+
+    public WebSocketConfig(ObjectMapper objectMapper, AmazonS3Client amazonS3Client) {
         this.objectMapper = objectMapper;
+        this.amazonS3Client = amazonS3Client;
     }
 
     /**
@@ -210,10 +217,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         private boolean isValidImageUrl(String url) {
             // S3 URL 등 허용된 이미지 호스트 확인
             // 프로젝트에 맞게 URL 패턴 수정 필요
-            return url != null && (
-                    url.startsWith("https://your-s3-bucket.s3.amazonaws.com/") ||
-                            url.startsWith("https://matajo.store/api/images/")
-            );
+            return url != null && (url.startsWith(s3Url));
         }
     }
 }
