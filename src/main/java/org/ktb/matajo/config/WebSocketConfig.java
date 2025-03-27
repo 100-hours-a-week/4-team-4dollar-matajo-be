@@ -4,10 +4,16 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
+import org.ktb.matajo.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -18,29 +24,37 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
+import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 /**
  * WebSocket 설정 클래스
  * STOMP 프로토콜을 사용한 WebSocket 통신 구성 및 동작 방식을 정의합니다.
  */
+@Slf4j
 @Configuration
 @EnableWebSocketMessageBroker  // WebSocket 메시지 브로커 기능 활성화
 @EnableScheduling              // 스케줄링 기능 활성화 (비활성 세션 정리 등에 사용)
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final ObjectMapper objectMapper;
+    private final AmazonS3Client amazonS3Client;
+    private final JwtUtil jwtUtil;
 
     @Value("${cloud.aws.s3.url}")
     private String s3Url;
 
-    public WebSocketConfig(ObjectMapper objectMapper, AmazonS3Client amazonS3Client) {
+    public WebSocketConfig(ObjectMapper objectMapper, AmazonS3Client amazonS3Client, JwtUtil jwtUtil) {
         this.objectMapper = objectMapper;
+        this.amazonS3Client = amazonS3Client;
+        this.jwtUtil = jwtUtil;
     }
 
     /**
@@ -69,6 +83,50 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-chat")           // WebSocket 연결 엔드포인트 URL
                 .setAllowedOrigins("http://localhost:3000", "https://matajo.store")
+                .addInterceptors(new HandshakeInterceptor() {
+                    @Override
+                    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
+                                                   WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+                        // URI에서 쿼리 파라미터 추출
+                        if (request instanceof ServletServerHttpRequest) {
+                            ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
+                            String userId = servletRequest.getServletRequest().getParameter("userId");
+                            String token = servletRequest.getServletRequest().getParameter("token");
+
+                            if (userId != null && token != null) {
+                                try {
+                                    // 토큰 검증
+                                    Claims claims = jwtUtil.parseToken(token);
+                                    if (claims != null && claims.get("userId") != null) {
+                                        // 클레임에서 userId 추출
+                                        Long userIdFromToken = ((Number) claims.get("userId")).longValue();
+
+                                        // userId가 일치하는지 확인
+                                        if (userIdFromToken.toString().equals(userId)) {
+                                            // 정보를 WebSocket 세션 속성에 저장
+                                            attributes.put("userId", userId);
+                                            attributes.put("authenticated", true);
+                                            log.info("웹소켓 핸드셰이크 인증 성공: userId={}", userId);
+                                            return true;
+                                        }
+                                    }
+                                    log.warn("웹소켓 토큰 검증 실패: userId={}", userId);
+                                } catch (Exception e) {
+                                    // 토큰 검증 중 오류 발생
+                                    log.error("웹소켓 토큰 검증 중 오류: {}", e.getMessage());
+                                    return false;
+                                }
+                            }
+                        }
+                        return true; // 인증 실패해도 일단 연결은 허용 (나중에 메시지 거부)
+                    }
+
+                    @Override
+                    public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
+                                               WebSocketHandler wsHandler, Exception exception) {
+                        // 핸드셰이크 후 추가 처리 (필요 시)
+                    }
+                })
                 .withSockJS()                       // SockJS 지원 (WebSocket을 지원하지 않는 브라우저를 위한 폴백)
                 .setSessionCookieNeeded(false)      // 세션 쿠키 사용 안 함
                 .setHeartbeatTime(25000)            // 하트비트 시간 설정 (ms) - 연결 유지 확인
@@ -155,7 +213,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         }
                     } catch (Exception e) {
                         // 예외 발생 시 로깅하고 원본 메시지 반환
-                        System.err.println("메시지 처리 중 예외 발생: " + e.getMessage());
+                        log.error("메시지 처리 중 예외 발생: " + e.getMessage());
                         e.printStackTrace();
                         return message;
                     }
@@ -203,7 +261,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 );
             } catch (Exception e) {
                 // 예외 발생 시 상세 로깅 및 원본 메시지 반환
-                System.err.println("채팅 메시지 필터링 중 오류 발생: " + e.getMessage());
+                log.error("채팅 메시지 필터링 중 오류 발생: " + e.getMessage());
                 e.printStackTrace();
                 return originalMessage;
             }
