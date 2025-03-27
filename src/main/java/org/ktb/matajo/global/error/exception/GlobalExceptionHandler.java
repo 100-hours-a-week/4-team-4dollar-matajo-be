@@ -40,7 +40,7 @@ public class GlobalExceptionHandler {
         // 응답 생성 및 반환 (data 필드 없음)
         return ResponseEntity
                 .status(errorCode.getStatus())
-                .body(CommonResponse.error(errorCode.getDescription(),null));
+                .body(CommonResponse.error(errorCode.getErrorMessage(),null));
     }
 
     /**
