@@ -48,9 +48,7 @@ dependencies {
 
     // rate-limit
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
-
-    // xss-protection
-    implementation 'com.navercorp.lucy:lucy-xss-servlet:2.0.1'
+    implementation 'com.bucket4j:bucket4j-redis:8.10.1'
 
     // 유틸리티
     implementation 'org.springframework.boot:spring-boot-starter-validation'
