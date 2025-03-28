@@ -1,10 +1,11 @@
 package org.ktb.matajo.service.user;
 
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletResponse;
+import org.ktb.matajo.dto.user.*;
 import org.ktb.matajo.security.SecurityUtil;
+import org.ktb.matajo.service.oauth.KakaoAuthService;
 import org.springframework.transaction.annotation.Transactional;
-import org.ktb.matajo.dto.user.KakaoUserInfo;
-import org.ktb.matajo.dto.user.KeeperRegisterResponseDto;
 import org.ktb.matajo.entity.RefreshToken;
 import org.ktb.matajo.entity.User;
 import org.ktb.matajo.entity.UserType;
@@ -15,7 +16,6 @@ import org.ktb.matajo.repository.UserRepository;
 import org.ktb.matajo.security.JwtUtil;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
@@ -26,16 +26,55 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
+    private final KakaoAuthService kakaoAuthService;
+    private final KakaoUserService kakaoUserService;
 
-    public UserServiceImpl(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtUtil jwtUtil) {
+    public UserServiceImpl(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, JwtUtil jwtUtil, KakaoAuthService kakaoAuthService, KakaoUserService kakaoUserService) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.jwtUtil = jwtUtil;
+        this.kakaoAuthService = kakaoAuthService;
+        this.kakaoUserService = kakaoUserService;
     }
 
     @Override
     @Transactional
-    public Map<String, String> processKakaoUser(KakaoUserInfo userInfo) {
+    public LoginResponseDto loginWithKakao(String code, HttpServletResponse response) {
+        if (code == null || code.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        String kakaoAccessToken;
+        try {
+            kakaoAccessToken = kakaoAuthService.getAccessToken(code);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.KAKAO_AUTH_FAILED);
+        }
+
+        KakaoUserInfo userInfo;
+        try {
+            userInfo = kakaoUserService.getUserInfo(kakaoAccessToken);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.KAKAO_USERINFO_FETCH_FAILED);
+        }
+
+        TokenResponseDto tokens = processKakaoUser(userInfo);
+
+        // 리프레시 토큰 쿠키 설정
+        response.addHeader("Set-Cookie", "refreshToken=" + tokens.getRefreshToken()
+                + "; HttpOnly; Path=/; Max-Age=1209600");
+
+        return new LoginResponseDto(
+                tokens.getAccessToken(),
+                tokens.getRefreshToken(),
+                userInfo.getNickname()
+        );
+
+    }
+
+    @Override
+    @Transactional
+    public TokenResponseDto processKakaoUser(KakaoUserInfo userInfo) {
         // 카카오 ID로 기존 사용자를 찾거나, 새로 등록
         Optional<User> optionalUser = userRepository.findByKakaoId(userInfo.getKakaoId());
 
@@ -66,10 +105,7 @@ public class UserServiceImpl implements UserService {
                         () -> refreshTokenRepository.save(new RefreshToken(user.getId(), refreshToken))
                 );
 
-        return Map.of(
-                "accessToken", accessToken,
-                "refreshToken", refreshToken
-        );
+        return new TokenResponseDto(accessToken, refreshToken);
     }
 
     // 고유한 닉네임을 생성하는 메서드
@@ -86,7 +122,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public Map<String, String> reissueAccessToken(String refreshToken) {
+    public TokenResponseDto reissueAccessToken(String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
@@ -110,15 +146,15 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        String newAccessToken = jwtUtil.createAccessToken(user.getId(), user.getRole().toString(), user.getNickname(), user.getDeletedAt());
+        String newAccessToken = jwtUtil.createAccessToken(user.getId(),
+                user.getRole().toString(),
+                user.getNickname(),
+                user.getDeletedAt());
         String newRefreshToken = jwtUtil.createRefreshToken(user.getId());
 
         savedToken.updateToken(newRefreshToken);
 
-        return Map.of(
-                "accessToken", newAccessToken,
-                "refreshToken", newRefreshToken
-        );
+        return new TokenResponseDto(newAccessToken, newRefreshToken);
     }
 
     @Override
@@ -157,12 +193,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public KeeperRegisterResponseDto registerKeeper(Long userId) {
+    public KeeperRegisterResponseDto registerKeeper(KeeperRegisterRequestDto request ,Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() ->
                 new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getRole() == UserType.KEEPER) {
             throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
+        }
+
+        if (request.getPrivacyPolicy() == false || request.getTermsOfService() == false) {
+            throw new BusinessException(ErrorCode.REQUIRED_AGREEMENT_MISSING);
         }
 
         user.promoteToKeeper(); // 보관인으로 승격

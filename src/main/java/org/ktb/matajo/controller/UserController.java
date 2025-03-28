@@ -55,7 +55,7 @@ public class UserController {
             @Valid @RequestBody KeeperRegisterRequestDto request
     ) {
         Long userId = SecurityUtil.getCurrentUserId(); // 인증된 사용자 ID 추출
-        KeeperRegisterResponseDto response = userService.registerKeeper(userId);
+        KeeperRegisterResponseDto response = userService.registerKeeper(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success("keeper_register_success", response));
     }
