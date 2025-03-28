@@ -1,6 +1,8 @@
 package org.ktb.matajo.config;
 
 import lombok.RequiredArgsConstructor;
+import org.ktb.matajo.security.CustomAccessDeniedHandler;
+import org.ktb.matajo.security.CustomAuthenticationEntryPoint;
 import org.ktb.matajo.security.JwtAuthenticationFilter;
 import org.ktb.matajo.security.JwtUtil;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +21,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -39,6 +43,10 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-resources/**").permitAll()
                         .requestMatchers("/webjars/**").permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(handler -> handler
+                        .authenticationEntryPoint(authenticationEntryPoint)  // 401 처리
+                        .accessDeniedHandler(accessDeniedHandler)            // 403 처리
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 

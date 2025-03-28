@@ -28,6 +28,7 @@ public enum ErrorCode {
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "invalid_file_extension", "지원하지 않는 파일 확장자입니다. jpg, jpeg, png, bmp, webp, heic 형식만 업로드 가능합니다"),
     FILE_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "file_count_exceeded", "최대 업로드 가능한 파일 개수(4개)를 초과했습니다"),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "invalid_refresh_token", "리프레시 토큰이 유효하지 않습니다"),
+    REQUIRED_AGREEMENT_MISSING(HttpStatus.BAD_REQUEST, "required_agreement_missing", "필수 약관에 동의하지 않았습니다"),
     // 일반적인 입력값 검증 오류
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "invalid_input_value", "입력값이 유효하지 않습니다"),
 
@@ -67,9 +68,11 @@ public enum ErrorCode {
     FAILED_TO_WRITE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_write_post", "게시글 작성에 실패했습니다"),
     FAILED_TO_DELETE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_delete_post", "게시글 삭제에 실패했습니다"),
     FAILED_TO_GET_POST_DETAIL(HttpStatus.INTERNAL_SERVER_ERROR,  "failed_to_get_post_detail", "게시글 상세 조회에 실패했습니다"),
-    FAILED_TO_UPDATE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_update_post", "게시글 수정에 실패했습니다");
+    FAILED_TO_UPDATE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_update_post", "게시글 수정에 실패했습니다"),
 
-
+    // 502 BAD GATEWAY - 외부 API 통신 실패
+    KAKAO_AUTH_FAILED(HttpStatus.BAD_GATEWAY, "kakao_auth_failed", "카카오 인증에 실패했습니다"),
+    KAKAO_USERINFO_FETCH_FAILED(HttpStatus.BAD_GATEWAY, "kakao_userinfo_failed", "카카오 사용자 정보 조회에 실패했습니다");
 
     private final HttpStatus status;
     private final String errorMessage;
