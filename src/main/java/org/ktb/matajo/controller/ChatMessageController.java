@@ -76,7 +76,7 @@ public class ChatMessageController {
 
     /**
      * WebSocket을 통한 메시지 전송
-     * /app/chat/{roomId} 엔드포인트로 메시지가 전송됨
+     * /app/{roomId} 엔드포인트로 메시지가 전송됨
      */
     @Operation(summary = "WebSocket 메시지 전송", description = "WebSocket을 통해 채팅 메시지를 전송합니다 (WebSocket API)")
     @MessageMapping("/{roomId}/message")

@@ -80,7 +80,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-chat")           // WebSocket 연결 엔드포인트 URL
-                .setAllowedOrigins("http://localhost:3000", "https://matajo.store")
+                .setAllowedOrigins("http://localhost:3000",
+                        "https://matajo.store",
+                        "http://43.201.83.7:8080")
                 .addInterceptors(new HandshakeInterceptor() {
                     @Override
                     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
