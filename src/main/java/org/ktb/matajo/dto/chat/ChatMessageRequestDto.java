@@ -16,17 +16,17 @@ import org.ktb.matajo.entity.MessageType;
 public class ChatMessageRequestDto {
 
     @Schema(description = "발신자 ID", example = "1", required = true)
-    @NotNull(message = "Sender ID is required.")
-    @Positive(message = "Sender ID must be a positive number.")
+    @NotNull(message = "required_sender_id")
+    @Positive(message = "positive_sender_id")
     private Long senderId;
 
     @Schema(description = "메시지 내용", example = "안녕하세요!", required = true, maxLength = 500)
-    @NotBlank(message = "Message content must not be blank.")
-    @Size(min = 1, max = 500, message = "Message content must be between 1 and 500 characters.")
+    @NotBlank(message = "required_message_content")
+    @Size(min = 1, max = 500, message = "length_message_content")
     private String content;
 
     @Schema(description = "메시지 타입 (TEXT, IMAGE, SYSTEM)", example = "TEXT", required = true, defaultValue = "TEXT")
-    @NotNull(message = "Message type is required.")
+    @NotNull(message = "required_message_type")
     @Builder.Default
     private MessageType messageType = MessageType.TEXT;
 
