@@ -13,7 +13,7 @@ import lombok.*;
 public class ChatRoomCreateRequestDto {
 
     @Schema(description = "게시글 ID", example = "1", required = true)
-    @NotNull(message = "Post ID is required.")
-    @Positive(message = "Post ID must be a positive number.")
+    @NotNull(message = "required_post_id")
+    @Positive(message = "positive_post_id")
     private Long postId;
 }
