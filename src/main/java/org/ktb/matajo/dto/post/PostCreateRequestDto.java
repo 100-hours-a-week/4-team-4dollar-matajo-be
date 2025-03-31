@@ -21,29 +21,29 @@ import java.util.List;
 public class PostCreateRequestDto {
 
     @Schema(description = "게시글 주소 데이터 (다음 주소 API 응답)", required = true)
-    @NotNull(message = "Post address data is required.")
+    @NotNull(message = "required_post_address")
     private AddressDto postAddressData;
 
     @Schema(description = "게시글 제목", example = "아이패드 보관 맡겨주세요", required = true)
-    @NotBlank(message = "Post title must not be blank.")
+    @NotBlank(message = "required_post_title")
     private String postTitle;
 
     @Schema(description = "게시글 내용", example = "1개월 동안 아이패드 보관 맡기고 싶습니다. 소중히 보관해주실 분 찾습니다.", required = true)
-    @NotBlank(message = "Post content must not be blank.")
+    @NotBlank(message = "required_post_content")
     private String postContent;
 
     @Schema(description = "선호 가격 (1원 ~ 9,999,999원)", example = "30000", minimum = "1", maximum = "9999999", required = true)
-    @Min(value = 1, message = "Preferred price must be at least 1 KRW.")
-    @Max(value = 9999999, message = "Preferred price must not exceed 9,999,999 KRW.")
+    @Min(value = 1, message = "min_prefer_price")
+    @Max(value = 9999999, message = "max_prefer_price")
     private int preferPrice;
 
     @Schema(description = "게시글 태그", example = "[\"실내\", \"가구\", \"일주일 이내\"]", required = true)
-    @NotNull(message = "Post tags are required.")
+    @NotNull(message = "required_post_tags")
     private List<String> postTags;
 
     @Schema(description = "할인율 (0% ~ 100%)", example = "10", minimum = "0", maximum = "100", required = true)
-    @Min(value = 0, message = "Discount rate must be at least 0%.")
-    @Max(value = 100, message = "Discount rate must not exceed 100%.")
+    @Min(value = 0, message = "min_discount_rate")
+    @Max(value = 100, message = "max_discount_rate")
     private int discountRate;
 
     @Schema(description = "숨김 상태 여부", example = "false", defaultValue = "false")
