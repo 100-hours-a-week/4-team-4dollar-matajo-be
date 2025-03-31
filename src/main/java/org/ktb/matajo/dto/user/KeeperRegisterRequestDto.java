@@ -6,9 +6,9 @@ import lombok.Getter;
 @Getter
 public class KeeperRegisterRequestDto {
 
-    @NotNull(message = "Agreement to the Terms of Service is required.")
+    @NotNull(message = "required_terms_of_service")
     private Boolean termsOfService;
 
-    @NotNull(message = "Agreement to the Privacy Policy is required.")
+    @NotNull(message = "required_privacy_policy")
     private Boolean privacyPolicy;
 }
