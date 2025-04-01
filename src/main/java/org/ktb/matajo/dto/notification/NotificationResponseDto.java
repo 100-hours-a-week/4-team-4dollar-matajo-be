@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 @Builder
 @Schema(description = "알림 응답 DTO")
 public class NotificationResponseDto {
-    @Schema(description = "알림 타입")
-    private NotificationType type;
+    @Schema(description = "알림 ID")
+    private Long id;
 
     @Schema(description = "채팅방 ID")
-    private Long roomId;
+    private Long chatRoomId;
 
     @Schema(description = "발신자 ID")
     private Long senderId;
@@ -29,4 +29,7 @@ public class NotificationResponseDto {
 
     @Schema(description = "알림 시간")
     private LocalDateTime createdAt;
+
+    @Schema(description = "읽음 상태")
+    private boolean readStatus;
 }

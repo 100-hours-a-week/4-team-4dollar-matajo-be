@@ -11,17 +11,13 @@ import org.ktb.matajo.util.UserTypeConverter;
 @AllArgsConstructor
 @Builder
 @Table(indexes = {
-    @Index(name = "idx_notification_user_id", columnList = "user_id"),
-    @Index(name = "idx_notification_read_status", columnList = "read_status")
+        @Index(name = "idx_notification_user_id", columnList = "user_id"),
+        @Index(name = "idx_notification_read_status", columnList = "read_status")
 })
 public class Notification extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
-    @Convert(converter = UserTypeConverter.class)
-    private NotificationType type;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -34,7 +30,7 @@ public class Notification extends BaseEntity {
     private String senderNickname;
 
     @Column(nullable = false)
-    private Long resourceId; // 채팅방 ID 등
+    private Long chatRoomId; // resourceId 대신 명확하게 chatRoomId로 변경
 
     @Column(nullable = false, length = 500)
     private String content;
