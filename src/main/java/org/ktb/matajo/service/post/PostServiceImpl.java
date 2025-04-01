@@ -741,6 +741,7 @@ public class PostServiceImpl implements PostService {
         // DTO 변환
         List<LocationDealResponseDto> dealResponses = topDiscountedPosts.stream()
             .map(post -> LocationDealResponseDto.builder()
+                .id(post.getId())
                 .title(post.getTitle())
                 .discount(String.format("-%d%%", Math.round(post.getDiscountRate())))
                 .imageUrl(post.getImageList().stream()

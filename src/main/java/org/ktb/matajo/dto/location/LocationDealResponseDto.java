@@ -13,6 +13,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @Schema(description = "위치 기반 할인 정보 응답 DTO")
 public class LocationDealResponseDto {
+
+    @Schema(description = "게시글 id")
+    private Long id;
+
     @Schema(description = "게시글 제목", example = "아이패드 보관 맡겨주세요")
     private String title;
 
