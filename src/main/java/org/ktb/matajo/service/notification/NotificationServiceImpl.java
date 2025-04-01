@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class NotificationServiceImpl implements NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatRoomService chatRoomService;
@@ -60,8 +61,13 @@ public class NotificationServiceImpl implements NotificationService {
 
             notificationRepository.save(notification);
 
+            // 읽지 않은 알림 개수 계산
+            long unreadCount = notificationRepository.countByReceiverIdAndReadStatus(receiverId, false);
+
             // 웹소켓 알림 전송
             NotificationResponseDto notificationDto = convertToDto(notification);
+            notificationDto.setUnreadCount(unreadCount);
+
             messagingTemplate.convertAndSendToUser(
                     receiverId.toString(),
                     "/queue/notifications",
@@ -76,7 +82,26 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-    // 나머지 메서드들은 그대로 유지하되, convertToDto 메서드만 수정
+    @Override
+    public List<NotificationResponseDto> getNotificationsForUser(Long userId) {
+        List<Notification> notifications = notificationRepository
+                .findByReceiverIdAndReadStatusOrderByCreatedAtDesc(userId, false);
+
+        return notifications.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void markNotificationsAsRead(Long userId) {
+        List<Notification> unreadNotifications = notificationRepository
+                .findByReceiverIdAndReadStatusOrderByCreatedAtDesc(userId, false);
+
+        unreadNotifications.forEach(Notification::markAsRead);
+        notificationRepository.saveAll(unreadNotifications);
+    }
+
     private NotificationResponseDto convertToDto(Notification notification) {
         return NotificationResponseDto.builder()
                 .id(notification.getId())

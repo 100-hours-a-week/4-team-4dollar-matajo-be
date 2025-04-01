@@ -7,6 +7,7 @@ import org.ktb.matajo.entity.NotificationType;
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -32,4 +33,8 @@ public class NotificationResponseDto {
 
     @Schema(description = "읽음 상태")
     private boolean readStatus;
+
+    // 추가: 총 읽지 않은 알림 개수
+    @Schema(description = "읽지 않은 알림 총 개수")
+    private long unreadCount;
 }
