@@ -11,7 +11,6 @@ import org.ktb.matajo.global.error.exception.BusinessException;
 import org.ktb.matajo.repository.PostRepository;
 import org.ktb.matajo.repository.TagRepository;
 import org.ktb.matajo.repository.UserRepository;
-import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.s3.S3Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -71,11 +70,17 @@ public class PostServiceImpl implements PostService {
                 .map(tag -> tag.getTagName())
                 .collect(Collectors.toList());
 
+        // 주소 가공: 시군구 + 법정동 이름
+        Address address = post.getAddress();
+        String formattedAddress = String.format("%s %s",
+                address.getSigungu() != null ? address.getSigungu() : "",
+                address.getBname2() != null ? address.getBname2() : "").trim();
+
         return PostListResponseDto.builder()
                 .postId(post.getId())
                 .postTitle(post.getTitle())
                 .postMainImage(mainImageUrl)
-                .postAddress(post.getAddress().getAddress())
+                .postAddress(formattedAddress)
                 .preferPrice(post.getPreferPrice())
                 .postTags(tags)
                 .build();
@@ -297,9 +302,6 @@ public class PostServiceImpl implements PostService {
                 .map(Tag::getTagName)
                 .collect(Collectors.toList());
 
-        // 현재 사용자 정보
-        Long userId = SecurityUtil.getCurrentUserId();
-
         // DTO 생성 및 반환
         try {
             // DTO 생성 및 반환
@@ -313,7 +315,6 @@ public class PostServiceImpl implements PostService {
                     .postAddress(post.getAddress() != null ? post.getAddress().getAddress() : null)
                     .nickname(post.getUser() != null ? post.getUser().getNickname() : "알 수 없음")
                     .hiddenStatus(post.isHiddenStatus())
-                    .editable(post.getUser().getId().equals(userId))
                     .build();
         } catch (Exception e) {
             log.error("게시글 상세 정보 DTO 생성 중 오류 발생: {}", e.getMessage(), e);
@@ -393,7 +394,7 @@ public class PostServiceImpl implements PostService {
             float discountRate = requestDto.getDiscountRate();
             int currentPrice = post.getPreferPrice();
             int newPrice = requestDto.getPreferPrice();
-        
+
             if (newPrice < currentPrice) {
                 // 할인율 = (기존 가격 - 수정된 가격) / 기존 가격 * 100
                 discountRate = (float) ((currentPrice - newPrice) / (float) currentPrice) * 100;
@@ -439,20 +440,20 @@ public class PostServiceImpl implements PostService {
                 post.updateAddress(newAddress);
                 return newAddress;
             }
-            
+
             // 2. 주소 변경 여부 확인 (최적화 - 불필요한 업데이트 방지)
-            if (currentAddress.getAddress().equals(addressDto.getAddress()) && 
-                currentAddress.getZonecode().equals(addressDto.getZonecode())) {
+            if (currentAddress.getAddress().equals(addressDto.getAddress()) &&
+                    currentAddress.getZonecode().equals(addressDto.getZonecode())) {
                 log.info("주소 정보가 동일하여 업데이트 생략: postId={}", post.getId());
                 return currentAddress;
             }
-            
+
             // 3. 기존 주소 엔티티 직접 업데이트
-            log.info("게시글 주소 업데이트 시작: postId={}, 기존 주소={}, 새 주소={}", 
+            log.info("게시글 주소 업데이트 시작: postId={}, 기존 주소={}, 새 주소={}",
                     post.getId(), currentAddress.getAddress(), addressDto.getAddress());
-            
+
             return addressService.updateAddress(currentAddress, addressDto);
-            
+
         } catch (Exception e) {
             log.error("게시글 주소 업데이트 중 오류 발생: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.FAILED_TO_UPDATE_POST);
@@ -487,7 +488,7 @@ public class PostServiceImpl implements PostService {
 
     /**
      * 게시글 이미지 업데이트 - 새 이미지가 있는 경우만 해당 이미지 교체
-     * 
+     *
      * @param post 게시글 엔티티
      * @param newMainImage 새 메인 이미지 (없으면 기존 유지)
      * @param newDetailImages 새 상세 이미지 목록 (없으면 기존 유지)
@@ -496,12 +497,12 @@ public class PostServiceImpl implements PostService {
         // 새 이미지가 없으면 아무 작업 안 함
         boolean hasNewMainImage = newMainImage != null && !newMainImage.isEmpty();
         boolean hasNewDetailImages = newDetailImages != null && !newDetailImages.isEmpty();
-        
+
         if (!hasNewMainImage && !hasNewDetailImages) {
             log.debug("새 이미지가 없어 이미지 업데이트를 건너뜁니다: postId={}", post.getId());
             return;
         }
-        
+
         try {
             // 메인 이미지 업데이트 (새 이미지가 있는 경우만)
             if (hasNewMainImage) {
@@ -513,27 +514,27 @@ public class PostServiceImpl implements PostService {
                         break;
                     }
                 }
-                
+
                 if (oldMainImage != null) {
                     // S3에서 기존 이미지 삭제
                     s3Service.deleteImage(oldMainImage.getImageUrl());
                     // 이미지 목록에서 제거
                     post.getImageList().remove(oldMainImage);
                 }
-                
+
                 // 새 메인 이미지 업로드
                 String newImageUrl = s3Service.uploadImage(newMainImage, "post");
-                
+
                 Image thumbnailImage = Image.builder()
                         .post(post)
                         .imageUrl(newImageUrl)
                         .thumbnailStatus(true)
                         .build();
-                
+
                 post.getImageList().add(thumbnailImage);
                 log.debug("새 메인 이미지 업로드 완료: {}", newImageUrl);
             }
-            
+
             // 상세 이미지 업데이트 (새 이미지가 있는 경우만)
             if (hasNewDetailImages) {
                 // 기존 상세 이미지들 찾아서 삭제
@@ -543,30 +544,30 @@ public class PostServiceImpl implements PostService {
                         oldDetailImages.add(image);
                     }
                 }
-                
+
                 // S3에서 기존 상세 이미지들 삭제
                 for (Image oldImage : oldDetailImages) {
                     s3Service.deleteImage(oldImage.getImageUrl());
                     post.getImageList().remove(oldImage);
                 }
-                
+
                 // 새 상세 이미지 업로드
                 List<String> newImageUrls = s3Service.uploadImages(newDetailImages);
-                
+
                 for (String imageUrl : newImageUrls) {
                     Image detailImage = Image.builder()
                             .post(post)
                             .imageUrl(imageUrl)
                             .thumbnailStatus(false)
                             .build();
-                    
+
                     post.getImageList().add(detailImage);
                 }
                 log.debug("{}개의 새 상세 이미지 업로드 완료", newDetailImages.size());
             }
-            
-            log.info("게시글 이미지 업데이트 완료: postId={}, 메인 이미지={}, 상세 이미지={}개", 
-                   post.getId(), hasNewMainImage, hasNewDetailImages ? newDetailImages.size() : 0);
+
+            log.info("게시글 이미지 업데이트 완료: postId={}, 메인 이미지={}, 상세 이미지={}개",
+                    post.getId(), hasNewMainImage, hasNewDetailImages ? newDetailImages.size() : 0);
         } catch (BusinessException e) {
             log.error("이미지 업데이트 중 비즈니스 예외 발생: {}", e.getMessage(), e);
             throw e;
@@ -732,28 +733,27 @@ public class PostServiceImpl implements PostService {
 
         List<Post> topDiscountedPosts = postRepository.findTopDiscountedPostsByLocationInfoId(locationInfoId);
 
-        if (topDiscountedPosts.isEmpty() || 
-            topDiscountedPosts.stream().allMatch(post -> post.getDiscountRate() == 0)) {
+        if (topDiscountedPosts.isEmpty() ||
+                topDiscountedPosts.stream().allMatch(post -> post.getDiscountRate() == 0)) {
             log.info("해당 지역의 할인 게시글이 없거나 모두 할인율이 0입니다: locationInfoId={}", locationInfoId);
             return Collections.emptyList();
         }
 
         // DTO 변환
         List<LocationDealResponseDto> dealResponses = topDiscountedPosts.stream()
-            .map(post -> LocationDealResponseDto.builder()
-                .id(post.getId())
-                .title(post.getTitle())
-                .discount(String.format("-%d%%", Math.round(post.getDiscountRate())))
-                .imageUrl(post.getImageList().stream()
-                    .filter(Image::isThumbnailStatus)
-                    .findFirst()
-                    .map(Image::getImageUrl)
-                    .orElse(null))
-                .build())
-            .collect(Collectors.toList());
+                .map(post -> LocationDealResponseDto.builder()
+                        .title(post.getTitle())
+                        .discount(String.format("-%d%%", Math.round(post.getDiscountRate())))
+                        .imageUrl(post.getImageList().stream()
+                                .filter(Image::isThumbnailStatus)
+                                .findFirst()
+                                .map(Image::getImageUrl)
+                                .orElse(null))
+                        .build())
+                .collect(Collectors.toList());
 
-        log.info("지역 특가 게시글 조회 완료: locationInfoId={}, 조회된 게시글 수={}", 
-            locationInfoId, dealResponses.size());
+        log.info("지역 특가 게시글 조회 완료: locationInfoId={}, 조회된 게시글 수={}",
+                locationInfoId, dealResponses.size());
 
         return dealResponses;
     }
