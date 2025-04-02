@@ -1,13 +1,13 @@
 name: Deploy Spring Boot with Docker
 
 on:
-  pull_request:
-    branches: ["develop"]
-    types: [closed] # PR이 닫힐 때 (merge 포함)
+  push:
+    branches:
+      - fix/test-fe-deploy
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
-    if: github.event.pull_request.merged == true # 실제로 merge된 경우만 실행
     runs-on: ubuntu-latest
 
     steps:
@@ -53,7 +53,7 @@ jobs:
         run: |
           mkdir -p config
           # 설정 파일을 동적으로 생성
-          echo "${{ secrets.APPLICATION_DEV_YML }}" > config/application-dev.yml
+          echo "${{ secrets.TEST_YML }}" > config/application-dev.yml
           echo "${{ secrets.APPLICATION_AWS_YML }}" > config/application-aws.yml
           echo "설정 파일 준비 완료:"
           ls -la config/
@@ -62,9 +62,9 @@ jobs:
       - name: Upload compressed JAR
         uses: appleboy/scp-action@v0.1.3
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_FE }}
           username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
+          key: ${{ secrets.EC2_FE_KEY }}
           source: "app.tar.gz"
           target: "/home/ubuntu/app"
           timeout: 30m
@@ -72,18 +72,18 @@ jobs:
       - name: Upload Docker config files to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_FE }}
           username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
+          key: ${{ secrets.EC2_FE_KEY }}
           source: "Dockerfile,.dockerignore"
           target: "/home/ubuntu/app"
 
       - name: Upload application config files to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_FE }}
           username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
+          key: ${{ secrets.EC2_FE_KEY }}
           source: "config/*"
           target: "/home/ubuntu/app"
           timeout: 5m
@@ -92,9 +92,9 @@ jobs:
       - name: Deploy with Docker
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_FE }}
           username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
+          key: ${{ secrets.EC2_FE_KEY }}
           script: |
             cd /home/ubuntu/app
             # 기존 파일/디렉토리 삭제 후 압축 해제
@@ -129,8 +129,8 @@ jobs:
               -v /home/ubuntu/app/logs:/app/logs \
               --log-driver=awslogs \
               --log-opt awslogs-region=ap-northeast-2 \
-              --log-opt awslogs-group=matajo-be-ec2 \
-              --log-opt awslogs-stream=be-log \
+              --log-opt awslogs-group=matajo-fe-ec2 \
+              --log-opt awslogs-stream=fe-log \
               matajo:latest
             # 컨테이너 상태 확인
             sleep 10

@@ -21,7 +21,7 @@ public class KakaoAuthService {
             @Value("${kakao.redirect-uri}") String redirectUri,
             @Value("${kakao.token-uri}") String tokenUri) {
         this.clientId = clientId;
-        this.redirectUri = redirectUri;
+        this.redirectUri = "https://matajo.store/auth/kakao";
         this.tokenUri = tokenUri;
     }
 
