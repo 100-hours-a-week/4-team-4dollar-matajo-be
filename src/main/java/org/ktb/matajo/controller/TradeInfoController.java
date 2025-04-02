@@ -70,7 +70,7 @@ public class TradeInfoController {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "500", description = "서버 오류 또는 거래 내역 없음")
     })
-    @GetMapping("/my-trade")
+    @GetMapping("/my-trades")
     public ResponseEntity<CommonResponse<List<TradeInfoListResponseDto>>> getMyTrades() {
 
         Long userId = SecurityUtil.getCurrentUserId();
