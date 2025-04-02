@@ -11,6 +11,7 @@ import org.ktb.matajo.global.error.exception.BusinessException;
 import org.ktb.matajo.repository.PostRepository;
 import org.ktb.matajo.repository.TagRepository;
 import org.ktb.matajo.repository.UserRepository;
+import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.s3.S3Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -296,6 +297,9 @@ public class PostServiceImpl implements PostService {
                 .map(Tag::getTagName)
                 .collect(Collectors.toList());
 
+        // 현재 사용자 정보
+        Long userId = SecurityUtil.getCurrentUserId();
+
         // DTO 생성 및 반환
         try {
             // DTO 생성 및 반환
@@ -309,6 +313,7 @@ public class PostServiceImpl implements PostService {
                     .postAddress(post.getAddress() != null ? post.getAddress().getAddress() : null)
                     .nickname(post.getUser() != null ? post.getUser().getNickname() : "알 수 없음")
                     .hiddenStatus(post.isHiddenStatus())
+                    .editable(post.getUser().getId().equals(userId))
                     .build();
         } catch (Exception e) {
             log.error("게시글 상세 정보 DTO 생성 중 오류 발생: {}", e.getMessage(), e);
@@ -736,6 +741,7 @@ public class PostServiceImpl implements PostService {
         // DTO 변환
         List<LocationDealResponseDto> dealResponses = topDiscountedPosts.stream()
             .map(post -> LocationDealResponseDto.builder()
+                .id(post.getId())
                 .title(post.getTitle())
                 .discount(String.format("-%d%%", Math.round(post.getDiscountRate())))
                 .imageUrl(post.getImageList().stream()
