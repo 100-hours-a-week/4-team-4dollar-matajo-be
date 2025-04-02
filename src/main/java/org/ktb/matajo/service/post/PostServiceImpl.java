@@ -68,11 +68,17 @@ public class PostServiceImpl implements PostService {
                 .map(tag -> tag.getTagName())
                 .collect(Collectors.toList());
 
+        // 주소 가공: 시군구 + 법정동 이름
+        Address address = post.getAddress();
+        String formattedAddress = String.format("%s %s",
+                address.getSigungu() != null ? address.getSigungu() : "",
+                address.getBname2() != null ? address.getBname2() : "").trim();
+
         return PostListResponseDto.builder()
                 .postId(post.getId())
                 .postTitle(post.getTitle())
                 .postMainImage(mainImageUrl)
-                .postAddress(post.getAddress().getAddress())
+                .postAddress(formattedAddress)
                 .preferPrice(post.getPreferPrice())
                 .postTags(tags)
                 .build();
@@ -380,7 +386,7 @@ public class PostServiceImpl implements PostService {
             float discountRate = requestDto.getDiscountRate();
             int currentPrice = post.getPreferPrice();
             int newPrice = requestDto.getPreferPrice();
-        
+
             if (newPrice < currentPrice) {
                 // 할인율 = (기존 가격 - 수정된 가격) / 기존 가격 * 100
                 discountRate = (float) ((currentPrice - newPrice) / (float) currentPrice) * 100;
@@ -474,7 +480,7 @@ public class PostServiceImpl implements PostService {
 
     /**
      * 게시글 이미지 업데이트 - 새 이미지가 있는 경우만 해당 이미지 교체
-     * 
+     *
      * @param post 게시글 엔티티
      * @param newMainImageUrl 새 메인 이미지 (없으면 기존 유지)
      * @param newDetailImageUrls 새 상세 이미지 목록 (없으면 기존 유지)
