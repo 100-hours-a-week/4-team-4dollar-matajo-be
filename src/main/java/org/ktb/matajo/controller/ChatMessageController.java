@@ -85,9 +85,7 @@ public class ChatMessageController {
             @DestinationVariable Long roomId,
 
             @Parameter(description = "메시지 내용", required = true, schema = @Schema(implementation = ChatMessageRequestDto.class))
-            @Valid @Payload ChatMessageRequestDto messageDto,
-
-            SimpMessageHeaderAccessor headerAccessor) {
+            @Valid @Payload ChatMessageRequestDto messageDto) {
         log.info("메시지 전송: roomId={}, senderId={}, type={}", roomId, messageDto.getSenderId(), messageDto.getMessageType(), messageDto.getMessageType().getValue());
 
         // 이미지 메시지 처리를 위한 로그 추가
