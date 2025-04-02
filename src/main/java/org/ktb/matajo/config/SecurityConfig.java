@@ -38,7 +38,7 @@ public class SecurityConfig {
         config.setAllowCredentials(true);
         config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedOrigin("https://matajo.store");
-        config.addAllowedOrigin("https://api.matajo.store");  // For production, you might want to be more specific
+        config.addAllowedOrigin("https://api.matajo.store"); // For production, you might want to be more specific
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         config.setMaxAge(3600L); // 1 hour cache for preflight requests
@@ -62,6 +62,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-resources/**").permitAll()
                         .requestMatchers("/webjars/**").permitAll()
                         .requestMatchers("/ws-chat/**").permitAll()
+                        .requestMatchers("/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handler -> handler
