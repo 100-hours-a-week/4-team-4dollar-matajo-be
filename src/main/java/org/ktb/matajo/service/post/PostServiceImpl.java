@@ -12,12 +12,10 @@ import org.ktb.matajo.repository.PostRepository;
 import org.ktb.matajo.repository.TagRepository;
 import org.ktb.matajo.repository.UserRepository;
 import org.ktb.matajo.security.SecurityUtil;
-import org.ktb.matajo.service.s3.S3Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +31,6 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
     private final AddressService addressService;
-    private final S3Service s3Service;
 
     private final UserRepository userRepository;
 
@@ -85,15 +82,13 @@ public class PostServiceImpl implements PostService {
     /**
      * 게시글 등록 메소드 - MultipartFile로 이미지 처리
      * @param requestDto 게시글 정보
-     * @param mainImage 메인 이미지 파일
-     * @param detailImages 상세 이미지 파일들
      * @return 생성된 게시글 ID를 담은 응답 DTO
      */
     @Override
     @Transactional
-    public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages, Long userId) {
+    public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, Long userId) {
         // 요청 데이터 유효성 검증
-        validatePostRequest(requestDto, mainImage);
+        validatePostRequest(requestDto);
 
         // 유저 정보 가져오기
         User user = userRepository.findById(userId)
@@ -132,14 +127,14 @@ public class PostServiceImpl implements PostService {
 
         Post savedPost = postRepository.save(post);
 
-        log.info("사용자 정보: tagName={}", requestDto.getPostTags());
+        log.info("게시글 생성 완료: ID={}, 제목={}", savedPost.getId(), savedPost.getTitle());
         // 태그 처리
         if (requestDto.getPostTags() != null && !requestDto.getPostTags().isEmpty()) {
             processPostTags(savedPost, requestDto.getPostTags());
         }
 
         // 이미지 처리
-        processMultipartImages(savedPost, mainImage, detailImages);
+        processMultipartImages(savedPost, requestDto.getMainImage(), requestDto.getDetailImages());
 
         return PostCreateResponseDto.builder()
                 .postId(savedPost.getId())
@@ -149,7 +144,7 @@ public class PostServiceImpl implements PostService {
     /**
      * 게시글 요청 데이터 유효성 검증 (MultipartFile 버전)
      */
-    private void validatePostRequest(PostCreateRequestDto postData, MultipartFile mainImage) {
+    private void validatePostRequest(PostCreateRequestDto postData) {
         // 제목 검증
         if (postData.getPostTitle() == null || postData.getPostTitle().isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_POST_TITLE);
@@ -171,7 +166,7 @@ public class PostServiceImpl implements PostService {
         }
 
         // 메인 이미지 검증
-        if (mainImage == null || mainImage.isEmpty()) {
+        if (postData.getMainImage() == null || postData.getMainImage().isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_POST_IMAGES);
         }
     }
@@ -216,12 +211,10 @@ public class PostServiceImpl implements PostService {
     /**
      * 게시글 MultipartFile 이미지 처리 메소드
      */
-    private void processMultipartImages(Post post, MultipartFile mainImage, List<MultipartFile> detailImages) {
+    private void processMultipartImages(Post post, String mainImageUrl, List<String> detailImageUrls) {
         try {
             // 메인 이미지 처리 (썸네일로 설정)
-            if (mainImage != null && !mainImage.isEmpty()) {
-                String mainImageUrl = s3Service.uploadImage(mainImage, "post");
-
+            if (mainImageUrl != null && !mainImageUrl.isBlank()) {
                 Image thumbnailImage = Image.builder()
                         .post(post)
                         .imageUrl(mainImageUrl)
@@ -233,10 +226,8 @@ public class PostServiceImpl implements PostService {
             }
 
             // 상세 이미지 처리
-            if (detailImages != null && !detailImages.isEmpty()) {
-                List<String> imageUrls = s3Service.uploadImages(detailImages);
-
-                for (String imageUrl : imageUrls) {
+            if (detailImageUrls != null && !detailImageUrls.isEmpty()) {
+                for (String imageUrl : detailImageUrls) {
                     Image image = Image.builder()
                             .post(post)
                             .imageUrl(imageUrl)
@@ -245,7 +236,7 @@ public class PostServiceImpl implements PostService {
 
                     post.getImageList().add(image);
                 }
-                log.info("{}개의 상세 이미지 처리 완료", detailImages.size());
+                log.info("{}개의 상세 이미지 처리 완료", detailImageUrls.size());
             }
         } catch (BusinessException e) {
             log.error("이미지 처리 중 비즈니스 예외 발생: {}", e.getMessage(), e);
@@ -327,15 +318,11 @@ public class PostServiceImpl implements PostService {
      * 게시글 수정 메서드
      * @param postId 수정할 게시글 ID
      * @param requestDto 수정 정보 DTO
-     * @param mainImage 새 메인 이미지 (선택적)
-     * @param detailImages 새 상세 이미지들 (선택적)
      * @return 수정된 게시글 ID 응답 DTO
      */
     @Override
     @Transactional
-    public PostCreateResponseDto updatePost(Long postId,PostCreateRequestDto requestDto,
-                                            MultipartFile mainImage,List<MultipartFile> detailImages,
-                                            Long userId){
+    public PostCreateResponseDto updatePost(Long postId,PostCreateRequestDto requestDto, Long userId){
 
         //게시글 id 검증
         if (postId == null) {
@@ -375,7 +362,7 @@ public class PostServiceImpl implements PostService {
         }
 
         //요청 데이터 유효성 검사
-        validatePostRequest(requestDto,mainImage);
+        validatePostRequest(requestDto);
 
 
         try{
@@ -386,7 +373,7 @@ public class PostServiceImpl implements PostService {
             updatePostTags(post, requestDto.getPostTags());
 
             // 이미지 업데이트
-            updatePostImages(post, mainImage, detailImages);
+            updatePostImages(post, requestDto.getMainImage(), requestDto.getDetailImages());
 
 
             // 할인율 계산 - 수정된 가격이 기존 가격보다 작을 경우에만
@@ -489,87 +476,76 @@ public class PostServiceImpl implements PostService {
      * 게시글 이미지 업데이트 - 새 이미지가 있는 경우만 해당 이미지 교체
      * 
      * @param post 게시글 엔티티
-     * @param newMainImage 새 메인 이미지 (없으면 기존 유지)
-     * @param newDetailImages 새 상세 이미지 목록 (없으면 기존 유지)
+     * @param newMainImageUrl 새 메인 이미지 (없으면 기존 유지)
+     * @param newDetailImageUrls 새 상세 이미지 목록 (없으면 기존 유지)
      */
-    private void updatePostImages(Post post, MultipartFile newMainImage, List<MultipartFile> newDetailImages) {
+    private void updatePostImages(Post post, String newMainImageUrl, List<String> newDetailImageUrls) {
         // 새 이미지가 없으면 아무 작업 안 함
-        boolean hasNewMainImage = newMainImage != null && !newMainImage.isEmpty();
-        boolean hasNewDetailImages = newDetailImages != null && !newDetailImages.isEmpty();
-        
+        boolean hasNewMainImage = newMainImageUrl != null && !newMainImageUrl.isBlank();
+        boolean hasNewDetailImages = newDetailImageUrls != null && !newDetailImageUrls.isEmpty();
+
         if (!hasNewMainImage && !hasNewDetailImages) {
             log.debug("새 이미지가 없어 이미지 업데이트를 건너뜁니다: postId={}", post.getId());
             return;
         }
-        
+
         try {
+            // 이미지 엔티티 목록 클리어를 위한 복사본 생성
+            List<Image> imagesToRemove = new ArrayList<>();
+
             // 메인 이미지 업데이트 (새 이미지가 있는 경우만)
             if (hasNewMainImage) {
-                // 기존 메인 이미지(썸네일) 찾아서 삭제
-                Image oldMainImage = null;
+                // 기존 메인 이미지(썸네일) 찾기
                 for (Image image : post.getImageList()) {
                     if (image.isThumbnailStatus()) {
-                        oldMainImage = image;
-                        break;
+                        imagesToRemove.add(image);
                     }
                 }
-                
-                if (oldMainImage != null) {
-                    // S3에서 기존 이미지 삭제
-                    s3Service.deleteImage(oldMainImage.getImageUrl());
-                    // 이미지 목록에서 제거
-                    post.getImageList().remove(oldMainImage);
-                }
-                
-                // 새 메인 이미지 업로드
-                String newImageUrl = s3Service.uploadImage(newMainImage, "post");
-                
+
+                // 기존 메인 이미지 제거
+                post.getImageList().removeAll(imagesToRemove);
+
+                // 새 메인 이미지 추가
                 Image thumbnailImage = Image.builder()
                         .post(post)
-                        .imageUrl(newImageUrl)
+                        .imageUrl(newMainImageUrl)
                         .thumbnailStatus(true)
                         .build();
-                
+
                 post.getImageList().add(thumbnailImage);
-                log.debug("새 메인 이미지 업로드 완료: {}", newImageUrl);
+                log.debug("새 메인 이미지 업데이트 완료: {}", newMainImageUrl);
             }
-            
+
             // 상세 이미지 업데이트 (새 이미지가 있는 경우만)
             if (hasNewDetailImages) {
-                // 기존 상세 이미지들 찾아서 삭제
-                List<Image> oldDetailImages = new ArrayList<>();
+                // 기존 상세 이미지들 찾기
+                imagesToRemove.clear();
                 for (Image image : post.getImageList()) {
                     if (!image.isThumbnailStatus()) {
-                        oldDetailImages.add(image);
+                        imagesToRemove.add(image);
                     }
                 }
-                
-                // S3에서 기존 상세 이미지들 삭제
-                for (Image oldImage : oldDetailImages) {
-                    s3Service.deleteImage(oldImage.getImageUrl());
-                    post.getImageList().remove(oldImage);
+
+                // 기존 상세 이미지 제거
+                post.getImageList().removeAll(imagesToRemove);
+
+                // 새 상세 이미지 추가
+                for (String imageUrl : newDetailImageUrls) {
+                    if (imageUrl != null && !imageUrl.isBlank()) {
+                        Image detailImage = Image.builder()
+                                .post(post)
+                                .imageUrl(imageUrl)
+                                .thumbnailStatus(false)
+                                .build();
+
+                        post.getImageList().add(detailImage);
+                    }
                 }
-                
-                // 새 상세 이미지 업로드
-                List<String> newImageUrls = s3Service.uploadImages(newDetailImages);
-                
-                for (String imageUrl : newImageUrls) {
-                    Image detailImage = Image.builder()
-                            .post(post)
-                            .imageUrl(imageUrl)
-                            .thumbnailStatus(false)
-                            .build();
-                    
-                    post.getImageList().add(detailImage);
-                }
-                log.debug("{}개의 새 상세 이미지 업로드 완료", newDetailImages.size());
+                log.debug("{}개의 새 상세 이미지 업데이트 완료", newDetailImageUrls.size());
             }
-            
-            log.info("게시글 이미지 업데이트 완료: postId={}, 메인 이미지={}, 상세 이미지={}개", 
-                   post.getId(), hasNewMainImage, hasNewDetailImages ? newDetailImages.size() : 0);
-        } catch (BusinessException e) {
-            log.error("이미지 업데이트 중 비즈니스 예외 발생: {}", e.getMessage(), e);
-            throw e;
+
+            log.info("게시글 이미지 업데이트 완료: postId={}, 메인 이미지={}, 상세 이미지={}개",
+                    post.getId(), hasNewMainImage, hasNewDetailImages ? newDetailImageUrls.size() : 0);
         } catch (Exception e) {
             log.error("이미지 업데이트 중 오류 발생: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.FAILED_TO_UPDATE_POST);

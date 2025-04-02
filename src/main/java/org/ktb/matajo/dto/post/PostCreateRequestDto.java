@@ -1,16 +1,14 @@
 package org.ktb.matajo.dto.post;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -49,4 +47,12 @@ public class PostCreateRequestDto {
 
     @Schema(description = "숨김 상태 여부", example = "false", defaultValue = "false")
     private boolean hiddenStatus;
+
+    @NotNull
+    @Schema(description = "메인 이미지 URL 또는 경로", example = "https://example.com/images/main.jpg", required = true)
+    private String mainImage;
+
+    @Size(max = 4) // 상세 이미지 최대 4개로 제한
+    @Schema(description = "상세 이미지 URL 또는 경로 목록 (최대 10개)", example = "[\"https://example.com/images/detail1.jpg\", \"https://example.com/images/detail2.jpg\"]")
+    private List<String> detailImages = new ArrayList<>();
 }
