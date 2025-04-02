@@ -2,8 +2,6 @@ package org.ktb.matajo.dto.notification;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
-import org.ktb.matajo.entity.NotificationType;
-
 import java.time.LocalDateTime;
 
 @Getter

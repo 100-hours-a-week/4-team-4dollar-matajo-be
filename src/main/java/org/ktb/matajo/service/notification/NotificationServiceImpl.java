@@ -7,7 +7,6 @@ import org.ktb.matajo.dto.notification.NotificationResponseDto;
 import org.ktb.matajo.entity.ChatMessage;
 import org.ktb.matajo.entity.MessageType;
 import org.ktb.matajo.entity.Notification;
-import org.ktb.matajo.entity.NotificationType;
 import org.ktb.matajo.entity.User;
 import org.ktb.matajo.global.error.code.ErrorCode;
 import org.ktb.matajo.global.error.exception.BusinessException;
@@ -117,7 +116,7 @@ public class NotificationServiceImpl implements NotificationService {
     // 메시지 포맷팅 메서드
     private String formatNotificationContent(ChatMessage message) {
         if (message.getMessageType() == MessageType.IMAGE) {
-            return "📸 이미지를 보냈습니다.";
+            return "이미지를 보냈습니다.";
         }
 
         String content = message.getContent();
