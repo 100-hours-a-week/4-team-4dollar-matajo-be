@@ -321,107 +321,113 @@ public class PostServiceImpl implements PostService {
 
 
     /**
-     * 게시글 수정 메서드
+     * 게시글 수정 메서드 - 선택적 필드 업데이트
      * @param postId 수정할 게시글 ID
-     * @param requestDto 수정 정보 DTO
+     * @param requestDto 선택적 수정 정보 DTO
      * @return 수정된 게시글 ID 응답 DTO
      */
     @Override
     @Transactional
-    public PostCreateResponseDto updatePost(Long postId,PostCreateRequestDto requestDto, Long userId){
-
-        //게시글 id 검증
+    public PostEditResponseDto updatePost(Long postId, PostEditRequestDto requestDto, Long userId) {
+        // 게시글 ID 검증
         if (postId == null) {
             log.error("게시글 ID가 null입니다");
             throw new BusinessException(ErrorCode.INVALID_POST_ID);
         }
 
-        //게시글 조회
+        // 게시글 조회
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
                     return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
 
-        //삭제된 게시글인지 확인
+        // 삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
             throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
-
         // 사용자 정보 가져오기
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("사용자를 찾을 수 없습니다");
-                    return new BusinessException(ErrorCode.USER_NOT_FOUND);});
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND);
+                });
 
         if (user.getRole() == UserType.USER) {
             throw new BusinessException(ErrorCode.REQUIRED_PERMISSION);
         }
 
-        //게시글 작성자- 현재 사용자 비교
-        // 게시글 작성자와 현재 사용자가 다를 경우 권한 오류
+        // 게시글 작성자 - 현재 사용자 비교
         if (!post.getUser().getId().equals(user.getId())) {
             log.error("게시글 수정 권한이 없습니다: postId={}, userId={}", postId, user.getId());
             throw new BusinessException(ErrorCode.NO_PERMISSION_TO_UPDATE);
         }
 
-        //요청 데이터 유효성 검사
-        validatePostRequest(requestDto);
-
-
-        try{
-            // 주소 업데이트
-            Address address = updatePostAddress(post, requestDto.getPostAddressData());
-
-            // 태그 업데이트
-            updatePostTags(post, requestDto.getPostTags());
-
-            // 이미지 업데이트
-            updatePostImages(post, requestDto.getMainImage(), requestDto.getDetailImages());
-
-
-            // 할인율 계산 - 수정된 가격이 기존 가격보다 작을 경우에만
-            float discountRate = requestDto.getDiscountRate();
-            int currentPrice = post.getPreferPrice();
-            int newPrice = requestDto.getPreferPrice();
-
-            if (newPrice < currentPrice) {
-                // 할인율 = (기존 가격 - 수정된 가격) / 기존 가격 * 100
-                discountRate = (float) ((currentPrice - newPrice) / (float) currentPrice) * 100;
+        try {
+            // 선택적으로 주소 업데이트
+            if (requestDto.getPostAddressData() != null) {
+                updatePostAddress(post, requestDto.getPostAddressData());
             }
 
+            // 선택적으로 태그 업데이트
+            if (requestDto.getPostTags() != null && !requestDto.getPostTags().isEmpty()) {
+                updatePostTags(post, requestDto.getPostTags());
+            }
 
-            //업데이트
-            post.update(
-                    requestDto.getPostTitle(),
-                    requestDto.getPostContent(),
-                    requestDto.getPreferPrice(),
-                    discountRate,
-                    requestDto.isHiddenStatus()
-            );
+            // 선택적으로 이미지 업데이트
+            if ((requestDto.getMainImage() != null && !requestDto.getMainImage().isBlank()) || 
+                (requestDto.getDetailImages() != null && !requestDto.getDetailImages().isEmpty())) {
+                updatePostImages(post, requestDto.getMainImage(), requestDto.getDetailImages());
+            }
 
-            log.info("게시글 수정 완료: postId={}", postId);
+            // 각 필드 선택적 업데이트
+            if (requestDto.getPostTitle() != null && !requestDto.getPostTitle().isBlank()) {
+                post.updateTitle(requestDto.getPostTitle());
+            }
+            
+            if (requestDto.getPostContent() != null && !requestDto.getPostContent().isBlank()) {
+                post.updateContent(requestDto.getPostContent());
+            }
 
-            return PostCreateResponseDto.builder()
+            // 가격 업데이트 (null이 아니고 0보다 큰 경우에만)
+            if (requestDto.getPreferPrice() != null && requestDto.getPreferPrice() > 0) {
+                int currentPrice = post.getPreferPrice();
+                int newPrice = requestDto.getPreferPrice();
+                post.updatePreferPrice(newPrice);
+    
+                // 할인율 자동 계산 - 수정된 가격이 기존 가격보다 작을 경우
+                if (newPrice < currentPrice) {
+                    float calculatedDiscountRate = (float) ((currentPrice - newPrice) / (float) currentPrice) * 100;
+                    post.updateDiscountRate(calculatedDiscountRate);
+                }
+            }
+
+            // 숨김 상태 업데이트 (null이 아닌 경우에만)
+            if (requestDto.getHiddenStatus() != null) {
+                post.updateHiddenStatus(requestDto.getHiddenStatus());
+            }
+
+            log.info("게시글 선택적 수정 완료: postId={}", postId);
+            
+            return PostEditResponseDto.builder()
                     .postId(post.getId())
                     .build();
-
-        } catch (BusinessException e){
+                    
+        } catch (BusinessException e) {
             log.error("게시글 수정 중 비즈니스 예외 발생: {}", e.getMessage(), e);
             throw e;
-        } catch(Exception e){
+        } catch (Exception e) {
             log.error("게시글 수정 중 오류 발생: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.FAILED_TO_UPDATE_POST);
-
         }
     }
 
     /**
-     * 게시글 주소 업데이트
+     * 게시글 주소 선택적 업데이트
      */
-    private Address updatePostAddress(Post post, AddressDto addressDto) {
+    private void updatePostAddress(Post post, AddressDto addressDto) {
         try {
             // 1. 기존 주소 존재 확인
             Address currentAddress = post.getAddress();
@@ -430,21 +436,21 @@ public class PostServiceImpl implements PostService {
                 log.info("게시글에 기존 주소 정보가 없어 새로 생성합니다: postId={}", post.getId());
                 Address newAddress = addressService.createAddressForPost(addressDto);
                 post.updateAddress(newAddress);
-                return newAddress;
+                return;
             }
             
             // 2. 주소 변경 여부 확인 (최적화 - 불필요한 업데이트 방지)
             if (currentAddress.getAddress().equals(addressDto.getAddress()) && 
                 currentAddress.getZonecode().equals(addressDto.getZonecode())) {
                 log.info("주소 정보가 동일하여 업데이트 생략: postId={}", post.getId());
-                return currentAddress;
+                return;
             }
             
             // 3. 기존 주소 엔티티 직접 업데이트
             log.info("게시글 주소 업데이트 시작: postId={}, 기존 주소={}, 새 주소={}", 
                     post.getId(), currentAddress.getAddress(), addressDto.getAddress());
             
-            return addressService.updateAddress(currentAddress, addressDto);
+            addressService.updateAddress(currentAddress, addressDto);
             
         } catch (Exception e) {
             log.error("게시글 주소 업데이트 중 오류 발생: {}", e.getMessage(), e);
@@ -453,7 +459,7 @@ public class PostServiceImpl implements PostService {
     }
 
     /**
-     * 게시글 태그 업데이트
+     * 게시글 태그 선택적 업데이트
      */
     private void updatePostTags(Post post, List<String> newTagNames) {
         // 기존 태그 연결 정보 모두 제거
@@ -479,7 +485,7 @@ public class PostServiceImpl implements PostService {
     }
 
     /**
-     * 게시글 이미지 업데이트 - 새 이미지가 있는 경우만 해당 이미지 교체
+     * 게시글 이미지 선택적 업데이트
      *
      * @param post 게시글 엔티티
      * @param newMainImageUrl 새 메인 이미지 (없으면 기존 유지)
