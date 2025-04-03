@@ -2,7 +2,7 @@ spring:
   application:
     name: matajo
   profiles:
-    active: dev,aws
+    active: dev
   servlet:
     multipart:
       max-file-size: 10MB
