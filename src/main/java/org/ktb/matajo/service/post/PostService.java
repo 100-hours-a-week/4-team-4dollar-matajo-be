@@ -40,7 +40,7 @@ public interface PostService {
    * @param requestDto 수정 정보
    * @return 수정된 게시글 정보
    */
-  PostCreateResponseDto updatePost(Long postId, PostCreateRequestDto requestDto, Long userId);
+  PostEditResponseDto updatePost(Long postId, PostEditRequestDto requestDto, Long userId);
 
   /**
    * 게시글 삭제 (소프트 딜리트)
