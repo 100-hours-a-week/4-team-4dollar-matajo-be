@@ -79,10 +79,6 @@ public class TradeInfoController {
 
         List<TradeInfoListResponseDto> tradeInfoList = tradeInfoService.getMyTrades(userId);
 
-        if (tradeInfoList.isEmpty()) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(CommonResponse.success("get_my_trades_success", tradeInfoList));
