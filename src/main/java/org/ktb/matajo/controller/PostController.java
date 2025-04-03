@@ -18,10 +18,8 @@ import org.ktb.matajo.global.common.ErrorResponse;
 import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.post.PostService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -81,20 +79,13 @@ public class PostController {
         @ApiResponse(responseCode = "500", description = "게시글 작성 실패 또는 이미지 업로드 실패", 
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping
     public ResponseEntity<CommonResponse<PostCreateResponseDto>> createPost(
-            @Valid @RequestPart("postData") PostCreateRequestDto postData,
-            @RequestPart("mainImage") MultipartFile mainImage,
-            @RequestPart(value = "detailImages", required = false) List<MultipartFile> detailImages) {
-
-        log.info("게시글 등록 요청: 제목={}, 주소={}, 메인 이미지 크기={}bytes",
-                postData.getPostTitle(),
-                postData.getPostAddressData() != null ? postData.getPostAddressData().getAddress() : "정보 없음",
-                mainImage.getSize());
+            @Valid @RequestBody PostCreateRequestDto postData) {
 
         Long userId = SecurityUtil.getCurrentUserId();
 
-        PostCreateResponseDto responseDto = postService.createPost(postData, mainImage, detailImages, userId);
+        PostCreateResponseDto responseDto = postService.createPost(postData, userId);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -142,12 +133,10 @@ public class PostController {
         @ApiResponse(responseCode = "500", description = "게시글 수정 실패", 
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PatchMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping("/{postId}")
     public ResponseEntity<CommonResponse<PostCreateResponseDto>> updatePost(
             @PathVariable Long postId,
-            @Valid @RequestPart("postData") PostCreateRequestDto postData,
-            @RequestPart(value = "mainImage") MultipartFile mainImage,
-            @RequestPart(value = "detailImages", required = false) List<MultipartFile> detailImages){
+            @Valid @RequestBody PostCreateRequestDto postData){
 
         log.info("게시글 수정 요청: ID={}, 제목={}, 주소={}",                                                              
                 postId,
@@ -156,7 +145,7 @@ public class PostController {
 
         Long userId = SecurityUtil.getCurrentUserId();
                               
-        PostCreateResponseDto responseDto = postService.updatePost(postId,postData,mainImage,detailImages, userId);
+        PostCreateResponseDto responseDto = postService.updatePost(postId, postData, userId);
 
         return ResponseEntity.ok(CommonResponse.success("update_post_success",responseDto));
     }

@@ -23,11 +23,9 @@ public interface PostService {
   /**
    * 게시글 등록
    * @param requestDto 게시글 정보
-   * @param mainImage 메인 이미지 파일
-   * @param detailImages 상세 이미지 파일들
    * @return 생성된 게시글 정보
    */
-  PostCreateResponseDto createPost(PostCreateRequestDto requestDto, MultipartFile mainImage, List<MultipartFile> detailImages, Long userId);
+  PostCreateResponseDto createPost(PostCreateRequestDto requestDto, Long userId);
 
   /**
    * 게시글 상세 조회
@@ -40,12 +38,9 @@ public interface PostService {
    * 게시글 수정
    * @param postId 수정할 게시글 ID
    * @param requestDto 수정 정보
-   * @param mainImage 새 메인 이미지
-   * @param detailImages 새 상세 이미지들
    * @return 수정된 게시글 정보
    */
-  PostCreateResponseDto updatePost(Long postId, PostCreateRequestDto requestDto,
-      MultipartFile mainImage, List<MultipartFile> detailImages, Long userId);
+  PostCreateResponseDto updatePost(Long postId, PostCreateRequestDto requestDto, Long userId);
 
   /**
    * 게시글 삭제 (소프트 딜리트)
