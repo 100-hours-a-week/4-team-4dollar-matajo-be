@@ -133,7 +133,7 @@ public class PostController {
         @ApiResponse(responseCode = "500", description = "게시글 수정 실패", 
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PatchMapping(value = "/{postId}")
+    @PatchMapping("/{postId}")
     public ResponseEntity<CommonResponse<PostCreateResponseDto>> updatePost(
             @PathVariable Long postId,
             @Valid @RequestBody PostCreateRequestDto postData){
