@@ -61,10 +61,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      */
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // /topic, /queue 접두사로 시작하는 목적지를 구독 가능하도록 설정
-        // /topic: 일대다 메시지 브로드캐스팅(채팅방 전체 메시지)
-        // /queue: 일대일 메시지 전송(개인 알림, 오류 메시지)
-        registry.enableSimpleBroker("/topic", "/queue");
+        // 채팅용 메시지 브로커
+        registry.enableSimpleBroker("/topic/chat", "/queue/chat");
+        
+        // 알림용 메시지 브로커
+        registry.enableSimpleBroker("/topic/notifications", "/queue/notifications");
 
         // 클라이언트에서 서버로 메시지를 보낼 때 사용할 접두사 설정
         registry.setApplicationDestinationPrefixes("/app");
@@ -79,7 +80,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-chat")           // WebSocket 연결 엔드포인트 URL
+        // 채팅용 엔드포인트
+        registry.addEndpoint("/ws-chat")
                 .setAllowedOrigins("http://localhost:3000",
                         "https://matajo.store",
                         "http://43.201.83.7:8080")
@@ -131,6 +133,55 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setSessionCookieNeeded(false)      // 세션 쿠키 사용 안 함
                 .setHeartbeatTime(25000)            // 하트비트 시간 설정 (ms) - 연결 유지 확인
                 .setDisconnectDelay(5000);          // 연결 해제 지연 시간 (ms)
+
+        // 알림용 엔드포인트
+        registry.addEndpoint("/ws-notifications")
+                .setAllowedOrigins("http://localhost:3000",
+                        "https://matajo.store",
+                        "http://43.201.83.7:8080")
+                .addInterceptors(new HandshakeInterceptor() {
+                    @Override
+                    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
+                                                   WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+                        if (request instanceof ServletServerHttpRequest) {
+                            ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
+                            String userId = servletRequest.getServletRequest().getParameter("userId");
+                            String token = servletRequest.getServletRequest().getParameter("token");
+
+                            if (userId != null && token != null) {
+                                try {
+                                    Claims claims = jwtUtil.parseToken(token);
+                                    if (claims != null && claims.get("userId") != null) {
+                                        Long userIdFromToken = ((Number) claims.get("userId")).longValue();
+                                        if (userIdFromToken.toString().equals(userId)) {
+                                            attributes.put("userId", userId);
+                                            attributes.put("authenticated", true);
+                                            log.info("알림 웹소켓 핸드셰이크 인증 성공: userId={}", userId);
+                                            return true;
+                                        }
+                                    }
+                                    log.warn("알림 웹소켓 토큰 검증 실패: userId={}", userId);
+                                } catch (Exception e) {
+                                    log.error("알림 웹소켓 토큰 검증 중 오류: {}", e.getMessage());
+                                    return false;
+                                }
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
+                                               WebSocketHandler wsHandler, Exception exception) {
+                        if (exception != null) {
+                            log.error("알림 웹소켓 핸드셰이크 후 오류 발생: {}", exception.getMessage());
+                        }
+                    }
+                })
+                .withSockJS()
+                .setSessionCookieNeeded(false)
+                .setHeartbeatTime(25000)
+                .setDisconnectDelay(5000);
     }
 
     /**
@@ -153,11 +204,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.taskExecutor()
-                .corePoolSize(2)       // 기본 스레드 수
-                .maxPoolSize(8)        // 최대 스레드 수
-                .queueCapacity(100);   // 작업 큐 용량
+                .corePoolSize(4)       // 기본 스레드 수
+                .maxPoolSize(16)       // 최대 스레드 수
+                .queueCapacity(200);   // 작업 큐 용량
 
-        // XSS 방지 인터셉터 추가 - JacksonConfig의 ObjectMapper 주입
         registration.interceptors(new XssProtectionChannelInterceptor(objectMapper));
     }
 
@@ -168,9 +218,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureClientOutboundChannel(ChannelRegistration registration) {
         registration.taskExecutor()
-                .corePoolSize(2)       // 기본 스레드 수
-                .maxPoolSize(8)        // 최대 스레드 수
-                .queueCapacity(100);   // 작업 큐 용량
+                .corePoolSize(4)       // 기본 스레드 수
+                .maxPoolSize(16)       // 최대 스레드 수
+                .queueCapacity(200);   // 작업 큐 용량
     }
 
     /**

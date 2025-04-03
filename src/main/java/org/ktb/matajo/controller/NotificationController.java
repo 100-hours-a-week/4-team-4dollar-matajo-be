@@ -9,10 +9,7 @@ import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.notification.NotificationService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -47,6 +44,32 @@ public class NotificationController {
 
         return ResponseEntity.ok(
             CommonResponse.success("notifications_marked_read", null)
+        );
+    }
+
+    @Operation(summary = "특정 알림 읽음 처리", description = "특정 알림을 읽음 상태로 변경합니다.")
+    @PutMapping("/{notificationId}/read")
+    public ResponseEntity<CommonResponse<Void>> markNotificationAsRead(@PathVariable Long notificationId) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        log.info("특정 알림 읽음 처리 요청: userId={}, notificationId={}", userId, notificationId);
+
+        notificationService.markNotificationAsRead(notificationId, userId);
+
+        return ResponseEntity.ok(
+            CommonResponse.success("notification_marked_read", null)
+        );
+    }
+
+    @Operation(summary = "읽지 않은 알림 개수 조회", description = "현재 사용자의 읽지 않은 알림 개수를 조회합니다.")
+    @GetMapping("/unread/count")
+    public ResponseEntity<CommonResponse<Long>> getUnreadNotificationCount() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        log.info("읽지 않은 알림 개수 조회 요청: userId={}", userId);
+
+        long unreadCount = notificationService.getUnreadNotificationCount(userId);
+
+        return ResponseEntity.ok(
+            CommonResponse.success("unread_notification_count_retrieved", unreadCount)
         );
     }
 }

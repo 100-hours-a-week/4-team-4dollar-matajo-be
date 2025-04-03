@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +33,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final UserRepository userRepository;
     private final RedisChatMessageService redisChatMessageService;
     private final NotificationService notificationService;
+    private final ChatSessionService chatSessionService;
 
     /**
      * 채팅 메시지 저장
@@ -90,10 +92,33 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             log.warn("메시지 캐싱 실패 (무시됨): {}", e.getMessage());
         }
 
+
         try {
-            notificationService.sendChatNotification(savedMessage, messageDto.getSenderId());
+            // 1대1 채팅이므로 수신자 ID 결정
+            Long senderId = messageDto.getSenderId();
+            Long receiverId;
+
+            if (chatRoom.getPost().getUser().getId().equals(senderId)) {
+                receiverId = chatRoom.getUser().getId();
+            } else {
+                receiverId = chatRoom.getPost().getUser().getId();
+            }
+
+            log.info("💬 채팅 메시지 전송: senderId={}, receiverId={}, roomId={}", senderId, receiverId, roomId);
+
+            // 채팅방 현재 접속 중인 사용자 목록 확인
+            Set<Long> activeUsersInRoom = chatSessionService.getActiveUsersInRoom(roomId);
+            log.info("📌 현재 접속 중인 사용자: {}", activeUsersInRoom);
+
+            if (!activeUsersInRoom.contains(receiverId)) {
+                log.info("🔔 수신자가 채팅방에 없으므로 알림 발송: receiverId={}", receiverId);
+                notificationService.sendChatNotification(savedMessage, senderId);
+                log.info("✅ 알림 발송 성공: senderId={}, receiverId={}, messageId={}", senderId, receiverId, savedMessage.getId());
+            } else {
+                log.debug("❌ 수신자가 채팅방에 접속 중이므로 알림 발송 생략: receiverId={}", receiverId);
+            }
         } catch (Exception e) {
-            log.warn("알림 발송 중 오류 발생 (무시됨): {}", e.getMessage());
+            log.warn("⚠️ 알림 발송 중 오류 발생: {}", e.getMessage(), e);
         }
 
 

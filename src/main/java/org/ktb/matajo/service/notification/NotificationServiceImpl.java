@@ -67,14 +67,14 @@ public class NotificationServiceImpl implements NotificationService {
             NotificationResponseDto notificationDto = convertToDto(notification);
             notificationDto.setUnreadCount(unreadCount);
 
+            // 웹소켓으로 알림 전송
+            log.info("🔹 WebSocket 알림 전송: receiverId={}", receiverId);
             messagingTemplate.convertAndSendToUser(
                     receiverId.toString(),
-                    "/queue/notifications",
+                    "/queue/notifications/private",
                     notificationDto
             );
-
-            log.debug("채팅 알림 전송 완료: senderId={}, receiverId={}",
-                    message.getUser().getId(), receiverId);
+            log.info("✅ WebSocket 메시지 전송 완료");
 
         } catch (Exception e) {
             log.error("알림 전송 중 오류 발생: {}", e.getMessage(), e);
@@ -101,6 +101,26 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.saveAll(unreadNotifications);
     }
 
+    @Override
+    @Transactional
+    public void markNotificationAsRead(Long notificationId, Long userId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
+
+        // 알림의 소유자 확인
+        if (!notification.getReceiver().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        notification.markAsRead();
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    public long getUnreadNotificationCount(Long userId) {
+        return notificationRepository.countByReceiverIdAndReadStatus(userId, false);
+    }
+
     private NotificationResponseDto convertToDto(Notification notification) {
         return NotificationResponseDto.builder()
                 .id(notification.getId())
@@ -119,7 +139,7 @@ public class NotificationServiceImpl implements NotificationService {
             return "이미지를 보냈습니다.";
         }
 
-        String content = message.getContent();
+        String content = message.getContent(    );
         return content.length() > 30 ?
                 content.substring(0, 27) + "..." : content;
     }

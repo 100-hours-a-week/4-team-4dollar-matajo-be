@@ -52,6 +52,7 @@ public enum ErrorCode {
     CHAT_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "not_found_chat_user", "채팅방 사용자를 찾을 수 없습니다"),
     POST_ALREADY_DELETED(HttpStatus.NOT_FOUND, "post_already_deleted", "이미 삭제된 게시글입니다"),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "refresh_token_not_found", "리프레시 토큰이 존재하지 않습니다"),
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "not_found_notification", "알림을 찾을 수 없습니다"),
 
     // 405 METHOD NOT ALLOWED - 누락된 에러 코드 추가
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "지원하지 않는 HTTP 메소드입니다"),
