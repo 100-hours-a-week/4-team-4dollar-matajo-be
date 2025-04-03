@@ -4,8 +4,9 @@ import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.chat.ChatMessageResponseDto;
-import org.ktb.matajo.dto.notification.FcmNotificationRequestDto;
 import org.ktb.matajo.entity.MessageType;
+import org.ktb.matajo.global.error.code.ErrorCode;
+import org.ktb.matajo.global.error.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -41,11 +42,8 @@ public class FirebaseNotificationServiceImpl implements FirebaseNotificationServ
      */
     @Override
     public void sendMessageNotification(String senderNickname, ChatMessageResponseDto messageDto, String fcmToken) {
-        // FCM 토큰 유효성 검사
-        if (fcmToken == null || fcmToken.isBlank()) {
-            log.debug("FCM 토큰이 없어 푸시 알림을 보내지 않습니다");
-            return;
-        }
+        // 입력 유효성 검사
+        validateNotificationInput(senderNickname, messageDto, fcmToken);
 
         try {
             // 메시지 유형에 따른 알림 내용 포맷팅
@@ -68,24 +66,56 @@ public class FirebaseNotificationServiceImpl implements FirebaseNotificationServ
                     .build();
 
             // 알림 비동기 전송
-            String response = firebaseMessaging.sendAsync(fcmMessage).get();
+            String response = sendFcmMessage(fcmMessage);
             log.info("FCM 알림 전송 성공: {}", response);
 
+        } catch (BusinessException e) {
+            log.error("알림 전송 중 비즈니스 예외 발생: {}", e.getMessage(), e);
+            throw e;
+        } catch (Exception e) {
+            log.error("FCM 알림 전송 중 예상치 못한 오류 발생: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.FAILED_TO_SEND_NOTIFICATION);
+        }
+    }
+
+    /**
+     * 입력 유효성 검사
+     */
+    private void validateNotificationInput(String senderNickname, ChatMessageResponseDto messageDto, String fcmToken) {
+        if (senderNickname == null || senderNickname.isBlank()) {
+            log.warn("알림 전송 실패: 발신자 닉네임이 유효하지 않습니다.");
+            throw new BusinessException(ErrorCode.NOTIFICATION_MESSAGE_INVALID);
+        }
+
+        if (messageDto == null) {
+            log.warn("알림 전송 실패: 메시지 DTO가 null입니다.");
+            throw new BusinessException(ErrorCode.NOTIFICATION_MESSAGE_INVALID);
+        }
+
+        if (fcmToken == null || fcmToken.isBlank()) {
+            log.warn("알림 전송 실패: FCM 토큰이 유효하지 않습니다.");
+            throw new BusinessException(ErrorCode.NOTIFICATION_MESSAGE_INVALID);
+        }
+    }
+
+    /**
+     * Firebase 메시지 전송
+     */
+    private String sendFcmMessage(Message fcmMessage) throws BusinessException {
+        try {
+            return firebaseMessaging.sendAsync(fcmMessage).get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("FCM 알림 전송이 중단되었습니다: {}", e.getMessage());
+            throw new BusinessException(ErrorCode.FAILED_TO_SEND_NOTIFICATION);
         } catch (ExecutionException e) {
             log.error("FCM 알림 전송 중 오류 발생: {}", e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("FCM 알림 전송 중 예상치 못한 오류 발생: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.FAILED_TO_SEND_NOTIFICATION);
         }
     }
 
     /**
      * 메시지 유형에 따른 알림 내용 포맷팅
-     *
-     * @param messageDto 채팅 메시지 DTO
-     * @return 포맷팅된 알림 내용
      */
     private String formatNotificationContent(ChatMessageResponseDto messageDto) {
         if (messageDto.getMessageType() == MessageType.IMAGE) {
@@ -102,10 +132,6 @@ public class FirebaseNotificationServiceImpl implements FirebaseNotificationServ
 
     /**
      * 알림 데이터 페이로드 생성
-     *
-     * @param messageDto 채팅 메시지 DTO
-     * @param senderNickname 발신자 닉네임
-     * @return 데이터 페이로드 맵
      */
     private Map<String, String> createDataPayload(ChatMessageResponseDto messageDto, String senderNickname) {
         Map<String, String> dataPayload = new HashMap<>();
