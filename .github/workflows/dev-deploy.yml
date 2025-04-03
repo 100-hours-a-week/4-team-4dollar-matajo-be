@@ -54,7 +54,6 @@ jobs:
           mkdir -p config
           # 설정 파일을 동적으로 생성
           echo "${{ secrets.APPLICATION_DEV_YML }}" > config/application-dev.yml
-          echo "${{ secrets.APPLICATION_AWS_YML }}" > config/application-aws.yml
           echo "설정 파일 준비 완료:"
           ls -la config/
 
@@ -130,7 +129,7 @@ jobs:
               --log-driver=awslogs \
               --log-opt awslogs-region=ap-northeast-2 \
               --log-opt awslogs-group=matajo-be-ec2 \
-              --log-opt awslogs-stream=be-log \
+              --log-opt awslogs-stream=be-dev-log \
               matajo:latest
             # 컨테이너 상태 확인
             sleep 10

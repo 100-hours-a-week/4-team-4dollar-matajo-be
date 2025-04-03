@@ -129,7 +129,7 @@ jobs:
               --log-driver=awslogs \
               --log-opt awslogs-region=ap-northeast-2 \
               --log-opt awslogs-group=matajo-be-ec2 \
-              --log-opt awslogs-stream=be-log \
+              --log-opt awslogs-stream=be-prod-log \
               matajo:latest
             # 컨테이너 상태 확인
             sleep 10
