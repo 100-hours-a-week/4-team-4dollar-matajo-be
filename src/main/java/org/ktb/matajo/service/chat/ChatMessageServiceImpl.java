@@ -10,7 +10,6 @@ import org.ktb.matajo.global.error.exception.BusinessException;
 import org.ktb.matajo.repository.ChatMessageRepository;
 import org.ktb.matajo.repository.ChatRoomRepository;
 import org.ktb.matajo.repository.UserRepository;
-import org.ktb.matajo.service.notification.NotificationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,6 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
     private final RedisChatMessageService redisChatMessageService;
-    private final NotificationService notificationService;
 
     /**
      * 채팅 메시지 저장
@@ -89,13 +87,6 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         } catch (Exception e) {
             log.warn("메시지 캐싱 실패 (무시됨): {}", e.getMessage());
         }
-
-        try {
-            notificationService.sendChatNotification(savedMessage, messageDto.getSenderId());
-        } catch (Exception e) {
-            log.warn("알림 발송 중 오류 발생 (무시됨): {}", e.getMessage());
-        }
-
 
         return responseDto;
     }
