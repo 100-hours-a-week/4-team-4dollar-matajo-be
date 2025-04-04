@@ -42,4 +42,7 @@ public class PostDetailResponseDto {
 
     @Schema(description = "숨김 상태 여부", example = "false")
     private boolean hiddenStatus;
+
+    @Schema(description = "수정 가능 여부", example = "false")
+    private boolean editable;
 }

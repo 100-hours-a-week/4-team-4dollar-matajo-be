@@ -2,7 +2,14 @@ spring:
   application:
     name: matajo
   profiles:
-    active: dev,aws
+    active: dev
   servlet:
     multipart:
       max-file-size: 10MB
+      max-request-size: 50MB
+      enabled: true
+
+server:
+  tomcat:
+    max-swallow-size: -1
+    max-http-form-post-size: 50MB

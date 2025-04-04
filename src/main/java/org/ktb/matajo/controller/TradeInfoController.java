@@ -70,7 +70,7 @@ public class TradeInfoController {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "500", description = "서버 오류 또는 거래 내역 없음")
     })
-    @GetMapping("/my-trade")
+    @GetMapping("/my-trades")
     public ResponseEntity<CommonResponse<List<TradeInfoListResponseDto>>> getMyTrades() {
 
         Long userId = SecurityUtil.getCurrentUserId();
@@ -78,10 +78,6 @@ public class TradeInfoController {
         log.info("내 거래 내역 조회 요청: userId={}", userId);
 
         List<TradeInfoListResponseDto> tradeInfoList = tradeInfoService.getMyTrades(userId);
-
-        if (tradeInfoList.isEmpty()) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
 
         return ResponseEntity
                 .status(HttpStatus.OK)
