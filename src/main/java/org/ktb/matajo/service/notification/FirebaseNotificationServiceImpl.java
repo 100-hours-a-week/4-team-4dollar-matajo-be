@@ -28,14 +28,6 @@ public class FirebaseNotificationServiceImpl implements FirebaseNotificationServ
     // FCM 토큰 관리 서비스 추가
     private final FcmTokenService fcmTokenService;
 
-    // 알림 아이콘 경로 설정값
-    @Value("${firebase.notification.icon}")
-    private String notificationIcon;
-
-    // 알림 색상 설정값
-    @Value("${firebase.notification.color}")
-    private String notificationColor;
-
     /**
      * 채팅 메시지에 대한 푸시 알림 전송
      *
