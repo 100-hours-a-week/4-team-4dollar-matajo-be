@@ -1,5 +1,6 @@
 package org.ktb.matajo.config;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -49,6 +50,8 @@ public class JacksonConfig {
 
         // HTML 이스케이프 처리를 위한 설정 추가
         objectMapper.getFactory().setCharacterEscapes(new HTMLCharacterEscapes());
+
+        objectMapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, false);
 
         return objectMapper;
     }
