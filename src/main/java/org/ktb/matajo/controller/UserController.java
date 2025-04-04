@@ -22,9 +22,10 @@ public class UserController {
     // 닉네임 수정 요청
     @PatchMapping("/nickname")
     public ResponseEntity<CommonResponse<AccessTokenResponseDto>> updateNickname(
-            @RequestParam Long userId,
             @Valid @RequestBody UserRequestDto request
     ) {
+        Long userId = SecurityUtil.getCurrentUserId(); // 인증된 사용자 ID 추출
+
         AccessTokenResponseDto newAccessToken = userService.updateNickname(userId, request.getNickname());
 
         return ResponseEntity.ok(
