@@ -7,8 +7,11 @@ WORKDIR /app
 # 빌드된 JAR 파일 복사
 COPY app.jar app.jar
 
+# Firebase 설정 파일 복사 (이 부분 추가)
+COPY config/firebase-service-account.json /app/firebase-service-account.json
+
 # 애플리케이션 실행 시 사용할 프로파일 설정을 위한 환경변수
-ENV SPRING_PROFILES_ACTIVE=dev,aws
+ENV SPRING_PROFILES_ACTIVE=dev
 
 # 메모리 설정 최적화
 ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC"

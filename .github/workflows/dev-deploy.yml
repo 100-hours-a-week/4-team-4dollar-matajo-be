@@ -56,7 +56,7 @@ jobs:
           # 설정 파일을 동적으로 생성
           echo "${{ secrets.APPLICATION_DEV_YML }}" > config/application-dev.yml
           # Firebase 서비스 계정 JSON 파일 생성
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}' > firebase-service-account.json
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}' > config/firebase-service-account.json
           echo "설정 파일 준비 완료:"
           ls -la config/
 
@@ -126,8 +126,8 @@ jobs:
               --name matajo-app \
               -p 8080:8080 \
               -v /home/ubuntu/app/config:/app/config \
-              -v /home/ubuntu/app/firebase-service-account.json:/app/firebase-service-account.json \ 
               -e SPRING_CONFIG_LOCATION=file:/app/config/ \
+              -e FIREBASE_CONFIG_PATH=/app/firebase-service-account.json \
               --restart always \
               -v /home/ubuntu/app/logs:/app/logs \
               --log-driver=awslogs \
