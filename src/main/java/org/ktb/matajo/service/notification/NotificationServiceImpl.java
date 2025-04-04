@@ -13,7 +13,6 @@ import org.ktb.matajo.service.chat.ChatSessionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -114,11 +113,14 @@ public class NotificationServiceImpl implements NotificationService {
 
     // Firebase 알림 전송
     private void sendFirebaseNotification(ChatMessageResponseDto messageDto, User receiverUser) {
+        log.info("🔔 FCM 알림 전송 시도: receiverId={}, senderNickname={}, fcmToken={}",
+                receiverUser.getId(), messageDto.getSenderNickname(), receiverUser.getFcmToken());
         try {
             firebaseNotificationService.sendMessageNotification(
                     messageDto.getSenderNickname(),
                     messageDto,
-                    receiverUser.getFcmToken()
+                    receiverUser.getFcmToken(),
+                    receiverUser.getId()
             );
             log.info("FCM 알림 전송 성공: receiverId={}, senderNickname={}",
                     receiverUser.getId(), messageDto.getSenderNickname());
