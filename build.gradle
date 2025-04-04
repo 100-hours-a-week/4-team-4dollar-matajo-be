@@ -36,6 +36,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     runtimeOnly 'com.mysql:mysql-connector-j'
 
+    // FCM
+    implementation 'com.google.firebase:firebase-admin:9.4.3'
+
     // 실시간 통신
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
 

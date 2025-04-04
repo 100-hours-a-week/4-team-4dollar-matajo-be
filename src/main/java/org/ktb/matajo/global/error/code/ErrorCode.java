@@ -29,9 +29,10 @@ public enum ErrorCode {
     FILE_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "file_count_exceeded", "최대 업로드 가능한 파일 개수(4개)를 초과했습니다"),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "invalid_refresh_token", "리프레시 토큰이 유효하지 않습니다"),
     REQUIRED_AGREEMENT_MISSING(HttpStatus.BAD_REQUEST, "required_agreement_missing", "필수 약관에 동의하지 않았습니다"),
+    NOTIFICATION_MESSAGE_INVALID(HttpStatus.BAD_REQUEST, "notification_message_invalid", "알림 메시지가 유효하지 않습니다"),
+
     // 일반적인 입력값 검증 오류
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "invalid_input_value", "입력값이 유효하지 않습니다"),
-
 
     // 401 UNAUTHORIZED
     REQUIRED_AUTHORIZATION(HttpStatus.UNAUTHORIZED, "required_authorization", "인증이 필요합니다"),
@@ -52,6 +53,7 @@ public enum ErrorCode {
     CHAT_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "not_found_chat_user", "채팅방 사용자를 찾을 수 없습니다"),
     POST_ALREADY_DELETED(HttpStatus.NOT_FOUND, "post_already_deleted", "이미 삭제된 게시글입니다"),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "refresh_token_not_found", "리프레시 토큰이 존재하지 않습니다"),
+    NOTIFICATION_RECEIVER_NOT_FOUND(HttpStatus.NOT_FOUND, "notification_receiver_not_found", "알림 수신자를 찾을 수 없습니다"),
 
     // 405 METHOD NOT ALLOWED - 누락된 에러 코드 추가
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "지원하지 않는 HTTP 메소드입니다"),
@@ -69,6 +71,7 @@ public enum ErrorCode {
     FAILED_TO_DELETE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_delete_post", "게시글 삭제에 실패했습니다"),
     FAILED_TO_GET_POST_DETAIL(HttpStatus.INTERNAL_SERVER_ERROR,  "failed_to_get_post_detail", "게시글 상세 조회에 실패했습니다"),
     FAILED_TO_UPDATE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_update_post", "게시글 수정에 실패했습니다"),
+    FAILED_TO_SEND_NOTIFICATION(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_send_notification", "알림 전송에 실패했습니다"),
 
     // 502 BAD GATEWAY - 외부 API 통신 실패
     KAKAO_AUTH_FAILED(HttpStatus.BAD_GATEWAY, "kakao_auth_failed", "카카오 인증에 실패했습니다"),

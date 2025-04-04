@@ -1,17 +1,17 @@
+
 package org.ktb.matajo.service.notification;
 
-import org.ktb.matajo.dto.notification.NotificationResponseDto;
-import org.ktb.matajo.entity.ChatMessage;
+import org.ktb.matajo.dto.chat.ChatMessageResponseDto;
 
-import java.util.List;
-
+/**
+ * 알림 관련 서비스 인터페이스
+ */
 public interface NotificationService {
-    // 채팅 알림 전송
-    void sendChatNotification(ChatMessage message, Long currentUserId);
-
-    // 사용자의 읽지 않은 알림 조회
-    List<NotificationResponseDto> getNotificationsForUser(Long userId);
-
-    // 사용자의 모든 알림을 읽음 상태로 변경
-    void markNotificationsAsRead(Long userId);
+    /**
+     * 채팅 알림 전송
+     * 
+     * @param message 채팅 메시지 응답 DTO
+     * @param currentUserId 현재 사용자 ID
+     */
+    void sendChatNotification(ChatMessageResponseDto message, Long currentUserId);
 }
