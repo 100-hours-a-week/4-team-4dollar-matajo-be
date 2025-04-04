@@ -40,6 +40,10 @@ public class User extends BaseEntity {
 
     private LocalDateTime deletedAt;
 
+    // FCM 토큰을 위한 새 필드
+    @Column(length = 512)
+    private String fcmToken;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @Builder.Default
     private List<ChatRoom> chatRoomList = new ArrayList<>();
@@ -64,5 +68,10 @@ public class User extends BaseEntity {
     public void promoteToKeeper() {
         this.role = UserType.KEEPER;
         this.keeperAgreement = true;
+    }
+
+    // FCM 토큰을 업데이트하는 새 메서드
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 }

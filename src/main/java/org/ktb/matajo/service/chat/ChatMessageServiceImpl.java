@@ -39,35 +39,71 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     @Override
     @Transactional
     public ChatMessageResponseDto saveMessage(Long roomId, ChatMessageRequestDto messageDto) {
+        // 입력 유효성 검사
+        validateMessageInput(roomId, messageDto);
 
+        // 채팅방 조회
+        ChatRoom chatRoom = findChatRoom(roomId);
+
+        // 발신자 조회
+        User sender = findSender(messageDto.getSenderId());
+
+        // 채팅 메시지 생성 및 저장
+        ChatMessage chatMessage = createAndSaveChatMessage(chatRoom, sender, messageDto);
+
+        // 응답 DTO 생성
+        ChatMessageResponseDto responseDto = convertToChatMessageResponseDto(chatMessage);
+
+        // 캐시 및 알림 처리 (비동기적이고 독립적인 처리)
+        handleCacheAndNotification(roomId, responseDto, sender);
+
+        return responseDto;
+    }
+
+    /**
+     * 입력 유효성 검사
+     */
+    private void validateMessageInput(Long roomId, ChatMessageRequestDto messageDto) {
         validateRoomId(roomId);
 
-        // DTO 추가 메서드를 활용한 검증
-        if(messageDto.isImageTypeWithEmptyContent()) {
+        // 이미지 타입 메시지 검증
+        if (messageDto.isImageTypeWithEmptyContent()) {
             log.error("이미지 타입 메시지의 내용이 비어있습니다");
             throw new BusinessException(ErrorCode.INVALID_IMAGE_CONTENT);
         }
 
-        if(!messageDto.isValidImageUrl()) {
+        if (!messageDto.isValidImageUrl()) {
             log.error("유효하지 않은 이미지 URL 형식: {}", messageDto.getContent());
             throw new BusinessException(ErrorCode.INVALID_IMAGE_URL);
         }
+    }
 
-        // 채팅방 조회
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+    /**
+     * 채팅방 조회
+     */
+    private ChatRoom findChatRoom(Long roomId) {
+        return chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> {
                     log.error("채팅방을 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND);
                 });
+    }
 
-        // 사용자 조회
-        User sender = userRepository.findById(messageDto.getSenderId())
+    /**
+     * 발신자 조회
+     */
+    private User findSender(Long senderId) {
+        return userRepository.findById(senderId)
                 .orElseThrow(() -> {
                     log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
+    }
 
-        // 채팅 메시지 생성
+    /**
+     * 채팅 메시지 생성 및 저장
+     */
+    private ChatMessage createAndSaveChatMessage(ChatRoom chatRoom, User sender, ChatMessageRequestDto messageDto) {
         ChatMessage chatMessage = ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .user(sender)
@@ -77,27 +113,26 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .createdAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")))
                 .build();
 
-        // DB에 저장
-        ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
+        return chatMessageRepository.save(chatMessage);
+    }
 
-        // 응답 DTO 생성
-        ChatMessageResponseDto responseDto = convertToChatMessageResponseDto(savedMessage);
-
-        // 안전한 캐싱 (예외가 발생해도 메인 로직에 영향 없게)
+    /**
+     * 캐시 및 알림 처리
+     */
+    private void handleCacheAndNotification(Long roomId, ChatMessageResponseDto responseDto, User sender) {
+        // 캐시 처리
         try {
             redisChatMessageService.cacheMessage(roomId, responseDto);
         } catch (Exception e) {
-            log.warn("메시지 캐싱 실패 (무시됨): {}", e.getMessage());
+            log.warn("메시지 캐싱 실패: {}", e.getMessage());
         }
 
+        // 알림 처리
         try {
-            notificationService.sendChatNotification(savedMessage, messageDto.getSenderId());
+            notificationService.sendChatNotification(responseDto, sender.getId());
         } catch (Exception e) {
-            log.warn("알림 발송 중 오류 발생 (무시됨): {}", e.getMessage());
+            log.warn("채팅 알림 전송 실패: {}", e.getMessage());
         }
-
-
-        return responseDto;
     }
 
     /**
