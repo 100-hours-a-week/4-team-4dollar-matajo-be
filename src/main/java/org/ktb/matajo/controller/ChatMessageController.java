@@ -18,6 +18,7 @@ import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.chat.ChatMessageService;
 import org.ktb.matajo.service.chat.ChatSessionService;
+import org.ktb.matajo.service.notification.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -42,6 +43,7 @@ public class ChatMessageController {
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatSessionService chatSessionService;
     private final WebSocketEventListener webSocketEventListener;
+    private final NotificationService notificationService;
 
     /**
      * 클라이언트 Heartbeat 처리 (연결 상태 확인)
@@ -109,6 +111,7 @@ public class ChatMessageController {
 
         // 메시지를 특정 채팅방 구독자들에게 브로드캐스트
         messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+
     }
 
     /**

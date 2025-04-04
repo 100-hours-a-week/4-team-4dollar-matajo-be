@@ -47,9 +47,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final ObjectMapper objectMapper;
     private final JwtUtil jwtUtil;
 
-    @Value("${cloud.aws.s3.url}")
-    private String s3Url;
-
     public WebSocketConfig(ObjectMapper objectMapper, JwtUtil jwtUtil) {
         this.objectMapper = objectMapper;
         this.jwtUtil = jwtUtil;
@@ -273,7 +270,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         private boolean isValidImageUrl(String url) {
             // S3 URL 등 허용된 이미지 호스트 확인
             // 프로젝트에 맞게 URL 패턴 수정 필요
-            return url != null && (url.startsWith(s3Url));
+            return url != null && (url.startsWith("https://matajo-image.s3.ap-northeast-2.amazonaws.com"));
         }
     }
 }
