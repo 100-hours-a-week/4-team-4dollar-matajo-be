@@ -9,10 +9,11 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@Schema(description = "채팅방 생성 요청 DTO")
+@Schema(description = "채팅방 생성 요청 DTO") // Swagger 설명은 한글 OK
 public class ChatRoomCreateRequestDto {
+
     @Schema(description = "게시글 ID", example = "1", required = true)
-    @NotNull(message = "게시글 ID는 필수 항목입니다")
-    @Positive(message = "게시글 ID는 양수여야 합니다")
-    private Long postId; // 게시글 ID
+    @NotNull(message = "required_post_id")
+    @Positive(message = "positive_post_id")
+    private Long postId;
 }
