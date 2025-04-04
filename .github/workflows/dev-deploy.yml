@@ -127,7 +127,7 @@ jobs:
               -p 8080:8080 \
               -v /home/ubuntu/app/config:/app/config \
               -e SPRING_CONFIG_LOCATION=file:/app/config/ \
-              -e FIREBASE_CONFIG_PATH=/app/firebase-service-account.json \
+              -e FIREBASE_CONFIG_PATH=/app/config/firebase-service-account.json \
               --restart always \
               -v /home/ubuntu/app/logs:/app/logs \
               --log-driver=awslogs \
