@@ -1,0 +1,64 @@
+package org.ktb.matajo.security;
+
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.ktb.matajo.entity.CustomUserDetails;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.Collections;
+
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    
+    private final JwtUtil jwtUtil;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.equals("/auth/refresh"); // refresh는 필터 제외
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+        
+        // 요청에서 Authorization 헤더 가져오기
+        String authorizationHeader = request.getHeader("Authorization");
+        
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        // JWT 토큰에서 사용자 ID 추출
+        String token = authorizationHeader.substring(7);
+        Claims claims = jwtUtil.parseToken(token);
+
+        // claims가 null이면 인증 없이 통과만 시킴
+        if (claims == null || claims.get("userId") == null) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        Long userId = ((Number) claims.get("userId")).longValue();
+        String nickname = (String) claims.get("nickname");
+        String role = (String) claims.get("role");
+
+        CustomUserDetails userDetails = new CustomUserDetails(userId, nickname, role);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        chain.doFilter(request, response);
+    }
+}
