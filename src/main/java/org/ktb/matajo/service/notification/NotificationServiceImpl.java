@@ -95,14 +95,23 @@ public class NotificationServiceImpl implements NotificationService {
 
     // 알림 전송 조건 확인
     private boolean shouldSendNotification(ChatMessageResponseDto messageDto, User receiverUser) {
-        // 조건 1: 수신자가 채팅방에 없음
-        boolean isReceiverNotActive = !isReceiverActiveInRoom(messageDto, receiverUser.getId());
+//        // 조건 1: 수신자가 채팅방에 없음
+//        boolean isReceiverNotActive = !isReceiverActiveInRoom(messageDto, receiverUser.getId());
+//
+//        // 조건 2: FCM 토큰이 유효함
+//        boolean hasValidFcmToken = receiverUser.getFcmToken() != null
+//                && !receiverUser.getFcmToken().isBlank();
+//
+//        return isReceiverNotActive && hasValidFcmToken;
 
-        // 조건 2: FCM 토큰이 유효함
+        // FCM 토큰이 유효한지만 확인
         boolean hasValidFcmToken = receiverUser.getFcmToken() != null
                 && !receiverUser.getFcmToken().isBlank();
 
-        return isReceiverNotActive && hasValidFcmToken;
+        // 자신이 보낸 메시지에는 알림 안 보내기
+        boolean isOwnMessage = messageDto.getSenderId().equals(receiverUser.getId());
+
+        return hasValidFcmToken && !isOwnMessage;
     }
 
     // 수신자가 채팅방에 활성화되어 있는지 확인
