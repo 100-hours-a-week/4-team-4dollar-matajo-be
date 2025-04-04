@@ -1,9 +1,10 @@
 package org.ktb.matajo.config;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +23,9 @@ public class JacksonConfig {
     @Bean
     @Primary
     public ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = JsonMapper.builder()
+                .configure(JsonWriteFeature.ESCAPE_NON_ASCII, false) // ✅ 이모지 깨짐 방지
+                .build();
 
         // 시간대 설정
         objectMapper.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
@@ -50,8 +53,6 @@ public class JacksonConfig {
 
         // HTML 이스케이프 처리를 위한 설정 추가
         objectMapper.getFactory().setCharacterEscapes(new HTMLCharacterEscapes());
-
-        objectMapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, false);
 
         return objectMapper;
     }
