@@ -179,21 +179,32 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public boolean updateNickname(Long userId, String newNickname) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isEmpty()) return false;
-        User user = optionalUser.get();
+    public AccessTokenResponseDto updateNickname(Long userId, String newNickname) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        if (userRepository.existsByNickname(newNickname)) return false;
+        if (userRepository.existsByNickname(newNickname)) {
+            throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXISTS);
+        }
 
         user.changeNickname(newNickname);
         userRepository.save(user);
-        return true;
+
+        // 수정된 닉네임과 role을 반영한 새 AccessToken 생성
+        String newAccessToken = jwtUtil.createAccessToken(
+                user.getId(),
+                user.getRole().toString(),
+                user.getNickname(),
+                user.getDeletedAt()
+        );
+
+        // AccessTokenResponseDto에 담아서 반환
+        return new AccessTokenResponseDto(newAccessToken);
     }
 
     @Override
     @Transactional
-    public KeeperRegisterResponseDto registerKeeper(KeeperRegisterRequestDto request ,Long userId) {
+    public AccessTokenResponseDto registerKeeper(KeeperRegisterRequestDto request ,Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() ->
                 new BusinessException(ErrorCode.USER_NOT_FOUND));
 
@@ -210,6 +221,6 @@ public class UserServiceImpl implements UserService {
         // KEEPER 역할로 변경된 accessToken 발급
         String accessToken = jwtUtil.createAccessToken(user.getId(), user.getRole().toString(), user.getNickname(), user.getDeletedAt());
 
-        return new KeeperRegisterResponseDto(accessToken);
+        return new AccessTokenResponseDto(accessToken);
     }
 }
