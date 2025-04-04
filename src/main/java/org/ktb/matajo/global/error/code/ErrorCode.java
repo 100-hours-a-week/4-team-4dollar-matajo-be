@@ -29,6 +29,9 @@ public enum ErrorCode {
     FILE_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "file_count_exceeded", "최대 업로드 가능한 파일 개수(4개)를 초과했습니다"),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "invalid_refresh_token", "리프레시 토큰이 유효하지 않습니다"),
     REQUIRED_AGREEMENT_MISSING(HttpStatus.BAD_REQUEST, "required_agreement_missing", "필수 약관에 동의하지 않았습니다"),
+    NOTIFICATION_MESSAGE_INVALID(HttpStatus.BAD_REQUEST, "notification_message_invalid", "알림 메시지가 유효하지 않습니다"),
+    NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "nickname_already_exists", "이미 사용 중인 닉네임입니다"),
+
     // 일반적인 입력값 검증 오류
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "invalid_input_value", "입력값이 유효하지 않습니다"),
 

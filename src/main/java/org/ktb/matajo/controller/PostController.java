@@ -134,9 +134,9 @@ public class PostController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PatchMapping("/{postId}")
-    public ResponseEntity<CommonResponse<PostCreateResponseDto>> updatePost(
+    public ResponseEntity<CommonResponse<PostEditResponseDto>> updatePost(
             @PathVariable Long postId,
-            @Valid @RequestBody PostCreateRequestDto postData){
+            @Valid @RequestBody PostEditRequestDto postData){
 
         log.info("게시글 수정 요청: ID={}, 제목={}, 주소={}",                                                              
                 postId,
@@ -144,8 +144,8 @@ public class PostController {
                 postData.getPostAddressData());
 
         Long userId = SecurityUtil.getCurrentUserId();
-                              
-        PostCreateResponseDto responseDto = postService.updatePost(postId, postData, userId);
+
+        PostEditResponseDto responseDto = postService.updatePost(postId, postData, userId);
 
         return ResponseEntity.ok(CommonResponse.success("update_post_success",responseDto));
     }

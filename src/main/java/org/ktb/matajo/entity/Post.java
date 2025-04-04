@@ -77,14 +77,39 @@ public class Post extends BaseEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatRoom> chatRoomList = new ArrayList<>();
 
-    // 게시글 정보 업데이트
-    public void update(String title, String content, int preferPrice,
-                       float discountRate, boolean hiddenStatus) {
-        this.title = title;
-        this.content = content;
-        this.preferPrice = preferPrice;
-        this.discountRate = discountRate;
-        this.hiddenStatus = hiddenStatus;
+    // 게시글 정보 선택적 업데이트 - title이 null이 아닐 경우에만 업데이트
+    public void updateTitle(String title) {
+        if (title != null && !title.isBlank()) {
+            this.title = title;
+        }
+    }
+
+    // 게시글 내용 선택적 업데이트
+    public void updateContent(String content) {
+        if (content != null && !content.isBlank()) {
+            this.content = content;
+        }
+    }
+
+    // 선호 가격 선택적 업데이트
+    public void updatePreferPrice(Integer preferPrice) {
+        if (preferPrice != null && preferPrice > 0) {
+            this.preferPrice = preferPrice;
+        }
+    }
+
+    // 할인율 선택적 업데이트
+    public void updateDiscountRate(Float discountRate) {
+        if (discountRate != null) {
+            this.discountRate = discountRate;
+        }
+    }
+
+    // 숨김 상태 선택적 업데이트
+    public void updateHiddenStatus(Boolean hiddenStatus) {
+        if (hiddenStatus != null) {
+            this.hiddenStatus = hiddenStatus;
+        }
     }
 
     public void updateAddress(Address address){
@@ -109,4 +134,5 @@ public class Post extends BaseEntity {
     public void toggleHiddenStatus() {
         this.hiddenStatus = !this.hiddenStatus;
     }
+
 }
