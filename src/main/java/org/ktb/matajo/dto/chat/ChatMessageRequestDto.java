@@ -39,7 +39,7 @@ public class ChatMessageRequestDto {
 
     public boolean isValidImageUrl() {
         if (MessageType.IMAGE.equals(this.messageType)) {
-            return StringUtils.hasText(content) && content.startsWith("https://matajo-image.s3.ap-northeast-2.amazonaws.com");
+            return StringUtils.hasText(content) && content.startsWith("https://matajo-image.s3.amazonaws.com/");
         }
         return true; // 이미지 타입이 아니면 검증 통과
     }
