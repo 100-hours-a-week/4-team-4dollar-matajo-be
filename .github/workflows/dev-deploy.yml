@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: ["develop"]
     types: [closed] # PR이 닫힐 때 (merge 포함)
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
