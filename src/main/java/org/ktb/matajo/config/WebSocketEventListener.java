@@ -130,9 +130,6 @@ public class WebSocketEventListener {
                     // 해당 사용자로 온 메시지 읽음 처리
                     chatMessageService.markMessagesAsRead(roomId, userId);
 
-                    // 시스템 메시지 전송 (선택사항)
-                    sendSystemMessage(roomId, userId, "사용자가 채팅방에 입장했습니다.");
-
                     log.info("채팅방 구독 완료: roomId={}, userId={}, sessionId={}",
                             roomId, userId, sessionId);
                 } catch (BusinessException e) {
