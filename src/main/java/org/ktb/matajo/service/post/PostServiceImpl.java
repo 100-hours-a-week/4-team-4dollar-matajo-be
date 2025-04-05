@@ -266,10 +266,19 @@ public class PostServiceImpl implements PostService {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
                     return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
+        // 게시글 작성자 정보 가져오기        
+        // 현재 사용자 정보
+        Long userId = SecurityUtil.getCurrentUserId();
 
         // 삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
+        }
+
+        // 숨김 처리된 게시글인지 확인
+        if (post.isHiddenStatus() && !post.getUser().getId().equals(userId)) {
+            log.error("숨김 처리된 게시글이며 작성자가 아닙니다: postId={}, userId={}", postId, userId);
             throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
@@ -294,8 +303,7 @@ public class PostServiceImpl implements PostService {
                 .map(Tag::getTagName)
                 .collect(Collectors.toList());
 
-        // 현재 사용자 정보
-        Long userId = SecurityUtil.getCurrentUserId();
+
 
         // DTO 생성 및 반환
         try {
