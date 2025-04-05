@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.ktb.matajo.entity.MessageType;
+import org.springframework.util.StringUtils;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -38,7 +39,7 @@ public class ChatMessageRequestDto {
 
     public boolean isValidImageUrl() {
         if (MessageType.IMAGE.equals(this.messageType)) {
-            return content != null && content.startsWith("https://");
+            return StringUtils.hasText(content) && content.startsWith("https://matajo-image.s3.amazonaws.com");
         }
         return true; // 이미지 타입이 아니면 검증 통과
     }

@@ -13,12 +13,15 @@ import org.ktb.matajo.repository.UserRepository;
 import org.ktb.matajo.service.notification.NotificationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +35,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final UserRepository userRepository;
     private final RedisChatMessageService redisChatMessageService;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     /**
      * 채팅 메시지 저장
@@ -39,35 +43,71 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     @Override
     @Transactional
     public ChatMessageResponseDto saveMessage(Long roomId, ChatMessageRequestDto messageDto) {
+        // 입력 유효성 검사
+        validateMessageInput(roomId, messageDto);
 
+        // 채팅방 조회
+        ChatRoom chatRoom = findChatRoom(roomId);
+
+        // 발신자 조회
+        User sender = findSender(messageDto.getSenderId());
+
+        // 채팅 메시지 생성 및 저장
+        ChatMessage chatMessage = createAndSaveChatMessage(chatRoom, sender, messageDto);
+
+        // 응답 DTO 생성
+        ChatMessageResponseDto responseDto = convertToChatMessageResponseDto(chatMessage);
+
+        // 캐시 및 알림 처리 (비동기적이고 독립적인 처리)
+        handleCacheAndNotification(roomId, responseDto, sender);
+
+        return responseDto;
+    }
+
+    /**
+     * 입력 유효성 검사
+     */
+    private void validateMessageInput(Long roomId, ChatMessageRequestDto messageDto) {
         validateRoomId(roomId);
 
-        // DTO 추가 메서드를 활용한 검증
-        if(messageDto.isImageTypeWithEmptyContent()) {
+        // 이미지 타입 메시지 검증
+        if (messageDto.isImageTypeWithEmptyContent()) {
             log.error("이미지 타입 메시지의 내용이 비어있습니다");
             throw new BusinessException(ErrorCode.INVALID_IMAGE_CONTENT);
         }
 
-        if(!messageDto.isValidImageUrl()) {
+        if (!messageDto.isValidImageUrl()) {
             log.error("유효하지 않은 이미지 URL 형식: {}", messageDto.getContent());
             throw new BusinessException(ErrorCode.INVALID_IMAGE_URL);
         }
+    }
 
-        // 채팅방 조회
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+    /**
+     * 채팅방 조회
+     */
+    private ChatRoom findChatRoom(Long roomId) {
+        return chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> {
                     log.error("채팅방을 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND);
                 });
+    }
 
-        // 사용자 조회
-        User sender = userRepository.findById(messageDto.getSenderId())
+    /**
+     * 발신자 조회
+     */
+    private User findSender(Long senderId) {
+        return userRepository.findById(senderId)
                 .orElseThrow(() -> {
                     log.error("사용자를 찾을 수 없습니다");
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
+    }
 
-        // 채팅 메시지 생성
+    /**
+     * 채팅 메시지 생성 및 저장
+     */
+    private ChatMessage createAndSaveChatMessage(ChatRoom chatRoom, User sender, ChatMessageRequestDto messageDto) {
         ChatMessage chatMessage = ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .user(sender)
@@ -77,27 +117,26 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .createdAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")))
                 .build();
 
-        // DB에 저장
-        ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
+        return chatMessageRepository.save(chatMessage);
+    }
 
-        // 응답 DTO 생성
-        ChatMessageResponseDto responseDto = convertToChatMessageResponseDto(savedMessage);
-
-        // 안전한 캐싱 (예외가 발생해도 메인 로직에 영향 없게)
+    /**
+     * 캐시 및 알림 처리
+     */
+    private void handleCacheAndNotification(Long roomId, ChatMessageResponseDto responseDto, User sender) {
+        // 캐시 처리
         try {
             redisChatMessageService.cacheMessage(roomId, responseDto);
         } catch (Exception e) {
-            log.warn("메시지 캐싱 실패 (무시됨): {}", e.getMessage());
+            log.warn("메시지 캐싱 실패: {}", e.getMessage());
         }
 
+        // 알림 처리
         try {
-            notificationService.sendChatNotification(savedMessage, messageDto.getSenderId());
+            notificationService.sendChatNotification(responseDto, sender.getId());
         } catch (Exception e) {
-            log.warn("알림 발송 중 오류 발생 (무시됨): {}", e.getMessage());
+            log.warn("채팅 알림 전송 실패: {}", e.getMessage());
         }
-
-
-        return responseDto;
     }
 
     /**
@@ -174,6 +213,32 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             redisChatMessageService.invalidateCache(roomId);
         } catch (Exception e) {
             log.warn("캐시 무효화 실패 (무시됨): {}", e.getMessage());
+        }
+
+        // 읽음 처리된 메시지 ID 목록 수집
+        List<Long> readMessageIds = unreadMessages.stream()
+                .map(ChatMessage::getId)
+                .collect(Collectors.toList());
+
+        // 메시지 상태 업데이트 후 WebSocket으로 브로드캐스트
+        if (!readMessageIds.isEmpty()) {
+            Map<String, Object> readStatusUpdate = new HashMap<>();
+            readStatusUpdate.put("type", "READ_STATUS_UPDATE");
+            readStatusUpdate.put("roomId", roomId);
+            readStatusUpdate.put("readBy", userId);
+            readStatusUpdate.put("messageIds", readMessageIds);
+
+            messagingTemplate.convertAndSend("/topic/chat/" + roomId + "/status", readStatusUpdate);
+
+            // 안 읽은 메시지 개수 업데이트 정보도 브로드캐스트
+            Long unreadCount = chatMessageRepository.countUnreadMessages(roomId, userId);
+            Map<String, Object> unreadCountUpdate = new HashMap<>();
+            unreadCountUpdate.put("type", "UNREAD_COUNT_UPDATE");
+            unreadCountUpdate.put("roomId", roomId);
+            unreadCountUpdate.put("userId", userId);
+            unreadCountUpdate.put("unreadCount", unreadCount);
+
+            messagingTemplate.convertAndSend("/topic/chat/unread", unreadCountUpdate);
         }
     }
 
