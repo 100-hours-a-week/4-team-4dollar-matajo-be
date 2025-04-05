@@ -51,8 +51,8 @@ public class JacksonConfig {
         // 타임스탬프로 쓰지 않도록 설정
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        // HTML 이스케이프 처리를 위한 설정 추가
-        objectMapper.getFactory().setCharacterEscapes(new HTMLCharacterEscapes());
+//        // HTML 이스케이프 처리를 위한 설정 추가
+//        objectMapper.getFactory().setCharacterEscapes(new HTMLCharacterEscapes());
 
         return objectMapper;
     }
