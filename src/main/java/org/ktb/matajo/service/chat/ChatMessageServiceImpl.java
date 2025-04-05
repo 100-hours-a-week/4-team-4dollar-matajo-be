@@ -13,12 +13,15 @@ import org.ktb.matajo.repository.UserRepository;
 import org.ktb.matajo.service.notification.NotificationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +35,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final UserRepository userRepository;
     private final RedisChatMessageService redisChatMessageService;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     /**
      * 채팅 메시지 저장
@@ -209,6 +213,32 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             redisChatMessageService.invalidateCache(roomId);
         } catch (Exception e) {
             log.warn("캐시 무효화 실패 (무시됨): {}", e.getMessage());
+        }
+
+        // 읽음 처리된 메시지 ID 목록 수집
+        List<Long> readMessageIds = unreadMessages.stream()
+                .map(ChatMessage::getId)
+                .collect(Collectors.toList());
+
+        // 메시지 상태 업데이트 후 WebSocket으로 브로드캐스트
+        if (!readMessageIds.isEmpty()) {
+            Map<String, Object> readStatusUpdate = new HashMap<>();
+            readStatusUpdate.put("type", "READ_STATUS_UPDATE");
+            readStatusUpdate.put("roomId", roomId);
+            readStatusUpdate.put("readBy", userId);
+            readStatusUpdate.put("messageIds", readMessageIds);
+
+            messagingTemplate.convertAndSend("/topic/chat/" + roomId + "/status", readStatusUpdate);
+
+            // 안 읽은 메시지 개수 업데이트 정보도 브로드캐스트
+            Long unreadCount = chatMessageRepository.countUnreadMessages(roomId, userId);
+            Map<String, Object> unreadCountUpdate = new HashMap<>();
+            unreadCountUpdate.put("type", "UNREAD_COUNT_UPDATE");
+            unreadCountUpdate.put("roomId", roomId);
+            unreadCountUpdate.put("userId", userId);
+            unreadCountUpdate.put("unreadCount", unreadCount);
+
+            messagingTemplate.convertAndSend("/topic/chat/unread", unreadCountUpdate);
         }
     }
 
