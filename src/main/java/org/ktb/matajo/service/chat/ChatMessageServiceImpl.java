@@ -33,7 +33,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
-    private final RedisChatMessageService redisChatMessageService;
+//    private final RedisChatMessageService redisChatMessageService;
     private final NotificationService notificationService;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -125,11 +125,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
      */
     private void handleCacheAndNotification(Long roomId, ChatMessageResponseDto responseDto, User sender) {
         // 캐시 처리
-        try {
-            redisChatMessageService.cacheMessage(roomId, responseDto);
-        } catch (Exception e) {
-            log.warn("메시지 캐싱 실패: {}", e.getMessage());
-        }
+//        try {
+//            redisChatMessageService.cacheMessage(roomId, responseDto);
+//        } catch (Exception e) {
+//            log.warn("메시지 캐싱 실패: {}", e.getMessage());
+//        }
 
         // 알림 처리
         try {
@@ -152,14 +152,14 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             throw new BusinessException(ErrorCode.INVALID_OFFSET_OR_LIMIT);
         }
         // 첫 페이지이면 캐시에서 먼저 조회 시도
-        if (page == 0) {
-            List<ChatMessageResponseDto> cachedMessages = redisChatMessageService.getCachedMessages(roomId, size);
-
-            if (!cachedMessages.isEmpty()) {
-                log.info("Redis 캐시에서 메시지 조회: roomId={}, cachedCount={}", roomId, cachedMessages.size());
-                return cachedMessages;
-            }
-        }
+//        if (page == 0) {
+//            List<ChatMessageResponseDto> cachedMessages = redisChatMessageService.getCachedMessages(roomId, size);
+//
+//            if (!cachedMessages.isEmpty()) {
+//                log.info("Redis 캐시에서 메시지 조회: roomId={}, cachedCount={}", roomId, cachedMessages.size());
+//                return cachedMessages;
+//            }
+//        }
 
         // 캐시에 없거나 첫 페이지가 아니면 DB에서 조회
         log.info("DB에서 메시지 조회: roomId={}, page={}, size={}", roomId, page, size);
@@ -173,13 +173,13 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .collect(Collectors.toList());
 
         // 첫 페이지 결과를 Redis에 캐싱 - 예외 처리 추가
-        if (page == 0 && !messageDtos.isEmpty()) {
-            try {
-                redisChatMessageService.cacheMessages(roomId, messageDtos);
-            } catch (Exception e) {
-                log.warn("메시지 목록 캐싱 실패 (무시됨): {}", e.getMessage());
-            }
-        }
+//        if (page == 0 && !messageDtos.isEmpty()) {
+//            try {
+//                redisChatMessageService.cacheMessages(roomId, messageDtos);
+//            } catch (Exception e) {
+//                log.warn("메시지 목록 캐싱 실패 (무시됨): {}", e.getMessage());
+//            }
+//        }
 
         return messageDtos;
     }
@@ -209,11 +209,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         chatMessageRepository.saveAll(unreadMessages);
 
         // Redis 캐시 업데이트 (캐시 무효화) - 예외 처리 추가
-        try {
-            redisChatMessageService.invalidateCache(roomId);
-        } catch (Exception e) {
-            log.warn("캐시 무효화 실패 (무시됨): {}", e.getMessage());
-        }
+//        try {
+//            redisChatMessageService.invalidateCache(roomId);
+//        } catch (Exception e) {
+//            log.warn("캐시 무효화 실패 (무시됨): {}", e.getMessage());
+//        }
 
         // 읽음 처리된 메시지 ID 목록 수집
         List<Long> readMessageIds = unreadMessages.stream()
