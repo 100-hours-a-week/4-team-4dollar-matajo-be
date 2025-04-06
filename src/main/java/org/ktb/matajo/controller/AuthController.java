@@ -1,6 +1,7 @@
 package org.ktb.matajo.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.user.LoginRequestDto;
 import org.ktb.matajo.dto.user.LoginResponseDto;
 import org.ktb.matajo.dto.user.TokenResponseDto;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -34,6 +36,7 @@ public class AuthController {
     public ResponseEntity<CommonResponse<TokenResponseDto>> refreshAccessToken(
             @CookieValue(value = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response) {
+        log.info("refreshToken: {}", refreshToken);
 
         TokenResponseDto tokens = userService.reissueAccessToken(refreshToken);
 
