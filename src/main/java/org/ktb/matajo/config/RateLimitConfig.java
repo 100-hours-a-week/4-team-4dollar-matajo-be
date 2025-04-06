@@ -50,7 +50,7 @@ public class RateLimitConfig {
                 break;
             case CHAT:
                 // 채팅 요청: 1분에 60회
-                limit = Bandwidth.classic(60, Refill.intervally(60, Duration.ofMinutes(1)));
+                limit = Bandwidth.classic(120, Refill.intervally(120, Duration.ofMinutes(1)));
                 break;
             case POST:
                 // 게시글 요청: 1분에 50회
