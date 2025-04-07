@@ -1,5 +1,6 @@
 package org.ktb.matajo.service.post;
 
+import java.util.HashSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.location.LocationDealResponseDto;
@@ -20,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -266,10 +269,19 @@ public class PostServiceImpl implements PostService {
                     log.error("게시글을 찾을 수 없습니다: postId={}", postId);
                     return new BusinessException(ErrorCode.POST_NOT_FOUND);
                 });
+        // 게시글 작성자 정보 가져오기        
+        // 현재 사용자 정보
+        Long userId = SecurityUtil.getCurrentUserId();
 
         // 삭제된 게시글인지 확인
         if (post.isDeleted()) {
             log.error("이미 삭제된 게시글입니다: postId={}", postId);
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
+        }
+
+        // 숨김 처리된 게시글인지 확인
+        if (post.isHiddenStatus() && !post.getUser().getId().equals(userId)) {
+            log.error("숨김 처리된 게시글이며 작성자가 아닙니다: postId={}, userId={}", postId, userId);
             throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
@@ -294,8 +306,7 @@ public class PostServiceImpl implements PostService {
                 .map(Tag::getTagName)
                 .collect(Collectors.toList());
 
-        // 현재 사용자 정보
-        Long userId = SecurityUtil.getCurrentUserId();
+
 
         // DTO 생성 및 반환
         try {
@@ -767,6 +778,102 @@ public class PostServiceImpl implements PostService {
                         .createdAt(post.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 카테고리별 태그 필터링 기반 게시글 목록 조회
+     * 각 카테고리 내 태그는 OR 조건, 카테고리 간 태그는 AND 조건으로 필터링
+     */
+    @Override
+    public List<PostListResponseDto> getPostsByTagsWithCategoryLogic(List<String> tagNames, int offset, int limit) {
+        // 요청 파라미터 검증
+        if (offset < 0 || limit <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_OFFSET_OR_LIMIT);
+        }
+        
+        if (tagNames == null || tagNames.isEmpty()) {
+            log.info("태그 필터가 없어 일반 게시글 목록을 반환합니다.");
+            return getPostList(offset, limit);
+        }
+        
+        log.info("카테고리 기반 태그 필터링 시작: tags={}, offset={}, limit={}", tagNames, offset, limit);
+        
+        try {
+            // 1. 태그 이름 목록으로 태그 정보 조회
+            List<Tag> tags = tagRepository.findByTagNameIn(tagNames);
+            if (tags.isEmpty()) {
+                log.info("유효한 태그가 없습니다: tagNames={}", tagNames);
+                return Collections.emptyList();
+            }
+            
+            // 2. 태그를 카테고리별로 그룹화
+            Map<Long, List<Tag>> tagsByCategory = tags.stream()
+                    .collect(Collectors.groupingBy(Tag::getTagCategoryId));
+            
+            log.info("카테고리별 태그 그룹화: {}", tagsByCategory.keySet());
+            
+            // 3. 초기 결과 집합으로 사용할 게시글 ID 집합 (아직 미설정)
+            Set<Long> resultPostIds = null;
+            
+            // 4. 각 카테고리별로 OR 조건으로 게시글 찾고, 카테고리 간에는 AND 조건 적용
+            for (Map.Entry<Long, List<Tag>> entry : tagsByCategory.entrySet()) {
+                Long categoryId = entry.getKey();
+                List<Tag> categoryTags = entry.getValue();
+                
+                // 카테고리 내 태그 ID 목록
+                List<Long> categoryTagIds = categoryTags.stream()
+                        .map(Tag::getId)
+                        .collect(Collectors.toList());
+                
+                log.debug("카테고리 {} 태그 ID: {}", categoryId, categoryTagIds);
+                
+                // 카테고리 내 태그가 포함된 게시글 ID 조회 (OR 조건)
+                List<Long> categoryPostIds = postRepository.findPostIdsByTagIds(categoryTagIds);
+                
+                if (categoryPostIds.isEmpty()) {
+                    // 해당 카테고리의 태그를 가진 게시글이 없으면 최종 결과도 없음 (AND 조건)
+                    log.info("카테고리 {}의 태그를 가진 게시글이 없습니다", categoryId);
+                    return Collections.emptyList();
+                }
+                
+                // 결과 집합 초기화 또는 교집합 처리 (AND 조건)
+                if (resultPostIds == null) {
+                    resultPostIds = new HashSet<>(categoryPostIds);
+                } else {
+                    resultPostIds.retainAll(categoryPostIds); // 교집합 구하기
+                    
+                    // 교집합 이후 결과가 없으면 즉시 반환
+                    if (resultPostIds.isEmpty()) {
+                        log.info("모든 카테고리 조건을 만족하는 게시글이 없습니다");
+                        return Collections.emptyList();
+                    }
+                }
+            }
+            
+            // 결과가 없으면 빈 목록 반환
+            if (resultPostIds == null || resultPostIds.isEmpty()) {
+                log.info("필터링 조건을 만족하는 게시글이 없습니다");
+                return Collections.emptyList();
+            }
+            
+            log.info("카테고리 필터링 후 게시글 수: {}", resultPostIds.size());
+            
+            // 5. 최종 결과 게시글 ID로 게시글 조회 (페이징 적용)
+            Pageable pageable = PageRequest.of(offset, limit);
+            List<Post> posts = postRepository.findByPostIds(new ArrayList<>(resultPostIds), pageable);
+            
+            // 6. 엔티티를 DTO로 변환
+            List<PostListResponseDto> result = posts.stream()
+                    .map(this::convertToPostResponseDto)
+                    .collect(Collectors.toList());
+            
+            log.info("카테고리 기반 태그 필터링 완료: 결과 게시글 수={}", result.size());
+            
+            return result;
+        } catch (Exception e) {
+            log.error("카테고리별 태그 필터링 중 오류 발생: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
     }
 
 }

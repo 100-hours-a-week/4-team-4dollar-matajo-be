@@ -19,10 +19,6 @@ import java.util.List;
 @Schema(description = "게시글 수정 요청 DTO")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostEditRequestDto {
-
-  @Schema(description = "게시글 ID", example = "1")
-  private Long postId;
-  
   @Schema(description = "게시글 주소 데이터 (다음 주소 API 응답)")
   private AddressDto postAddressData;
 

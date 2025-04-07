@@ -17,6 +17,7 @@ public enum ErrorCode {
     INVALID_PREFER_PRICE(HttpStatus.BAD_REQUEST, "invalid_prefer_price", "선호 가격이 유효하지 않습니다"),
     INVALID_LOCATION_ID(HttpStatus.BAD_REQUEST, "invalid_location_id", "올바르지 않은 위치 정보입니다"),
     INVALID_USER_ID(HttpStatus.BAD_REQUEST, "invalid_user_id", "사용자 ID가 유효하지 않습니다"),
+    INVALID_TAG_ID(HttpStatus.BAD_REQUEST, "invalid_tag_id", "태그 ID가 유효하지 않습니다"),
     INVALID_CHAT_ROOM_ID(HttpStatus.BAD_REQUEST, "invalid_chat_room_id", "채팅방 ID가 유효하지 않습니다"),
     INVALID_IMAGE_CONTENT(HttpStatus.BAD_REQUEST, "invalid_image_content", "이미지 타입 메시지의 내용이 비어있습니다"),
     INVALID_IMAGE_URL(HttpStatus.BAD_REQUEST, "invalid_image_url", "이미지 URL이 유효하지 않습니다"),
@@ -30,6 +31,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "invalid_refresh_token", "리프레시 토큰이 유효하지 않습니다"),
     REQUIRED_AGREEMENT_MISSING(HttpStatus.BAD_REQUEST, "required_agreement_missing", "필수 약관에 동의하지 않았습니다"),
     NOTIFICATION_MESSAGE_INVALID(HttpStatus.BAD_REQUEST, "notification_message_invalid", "알림 메시지가 유효하지 않습니다"),
+    NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "nickname_already_exists", "이미 사용 중인 닉네임입니다"),
 
     // 일반적인 입력값 검증 오류
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "invalid_input_value", "입력값이 유효하지 않습니다"),

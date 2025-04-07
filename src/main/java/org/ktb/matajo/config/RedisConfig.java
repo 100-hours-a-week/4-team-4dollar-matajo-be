@@ -1,5 +1,9 @@
 package org.ktb.matajo.config;
 
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -15,6 +19,7 @@ public class RedisConfig {
     private final ObjectMapper objectMapper;
 
     public RedisConfig(ObjectMapper objectMapper) {
+        // 🔥 기존 ObjectMapper 복사 후 ESCAPE_NON_ASCII 비활성화
         this.objectMapper = objectMapper;
     }
 

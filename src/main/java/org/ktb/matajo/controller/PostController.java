@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +36,7 @@ public class PostController {
 
     @Operation(
         summary = "게시글 목록 조회",
-        description = "페이지네이션을 적용하여 게시글 목록을 조회합니다."
+        description = "페이지네이션을 적용하여 게시글 목록을 조회합니다. 태그 이름으로 필터링할 수 있으며, 태그는 카테고리별로 AND 조건, 카테고리 내에서는 OR 조건으로 처리됩니다."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
@@ -46,14 +47,26 @@ public class PostController {
     })
     @GetMapping
     public ResponseEntity<CommonResponse<List<PostListResponseDto>>> getPostList(
+        @Parameter(description = "필터링할 태그 목록 (콤마로 구분)", example = "실내,전자기기,실외")
+        @RequestParam(required = false) String tags,
         @Parameter(description = "조회 시작 위치", example = "0")
         @RequestParam(defaultValue = "0") int offset,
         @Parameter(description = "조회할 게시글 수", example = "10") 
         @RequestParam(defaultValue = "10") int limit) {
 
-       log.info("게시글 목록 조회 요청: offset={}, limit={}", offset, limit);
+       log.info("게시글 목록 조회 요청: tags={}, offset={}, limit={}", tags, offset, limit);
 
-        List<PostListResponseDto> postList = postService.getPostList(offset, limit);
+       List<PostListResponseDto> postList;
+       
+       // 태그 필터링이 있는 경우
+       if (tags != null && !tags.isBlank()) {
+           List<String> tagNames = Arrays.asList(tags.split(","));
+           // 카테고리 기반 필터링 메서드 사용
+           postList = postService.getPostsByTagsWithCategoryLogic(tagNames, offset, limit);
+       } else {
+           // 태그 필터링이 없는 경우 기존 메서드 사용
+           postList = postService.getPostList(offset, limit);
+       }
 
         return ResponseEntity.ok(CommonResponse.success("get_posts_success", postList));
     }

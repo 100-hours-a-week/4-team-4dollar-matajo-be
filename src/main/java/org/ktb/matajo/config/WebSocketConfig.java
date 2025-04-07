@@ -1,6 +1,5 @@
 package org.ktb.matajo.config;
 
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -8,7 +7,6 @@ import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.ktb.matajo.security.JwtUtil;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
@@ -47,8 +45,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final ObjectMapper objectMapper;
     private final JwtUtil jwtUtil;
 
-    @Value("${cloud.aws.s3.url}")
-    private String s3Url;
 
     public WebSocketConfig(ObjectMapper objectMapper, JwtUtil jwtUtil) {
         this.objectMapper = objectMapper;
@@ -247,10 +243,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 } else if ("IMAGE".equals(messageType)) {
                     // 이미지 메시지는 URL 검증
                     String imageUrl = rootNode.path("content").asText();
-                    if (!isValidImageUrl(imageUrl)) {
-                        // 유효하지 않은 URL은 빈 문자열로 대체
-                        modifiedNode.put("content", "");
-                    }
                 }
 
                 // 필터링된 메시지로 교체
@@ -267,13 +259,5 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             }
         }
 
-        /**
-         * 이미지 URL 유효성 검증
-         */
-        private boolean isValidImageUrl(String url) {
-            // S3 URL 등 허용된 이미지 호스트 확인
-            // 프로젝트에 맞게 URL 패턴 수정 필요
-            return url != null && (url.startsWith(s3Url));
-        }
     }
 }

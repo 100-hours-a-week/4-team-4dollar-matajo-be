@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: ["develop"]
     types: [closed] # PR이 닫힐 때 (merge 포함)
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -54,7 +55,8 @@ jobs:
           mkdir -p config
           # 설정 파일을 동적으로 생성
           echo "${{ secrets.APPLICATION_DEV_YML }}" > config/application-dev.yml
-          echo "${{ secrets.APPLICATION_AWS_YML }}" > config/application-aws.yml
+          # Firebase 서비스 계정 JSON 파일 생성
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}' > config/firebase-service-account.json
           echo "설정 파일 준비 완료:"
           ls -la config/
 
@@ -125,12 +127,13 @@ jobs:
               -p 8080:8080 \
               -v /home/ubuntu/app/config:/app/config \
               -e SPRING_CONFIG_LOCATION=file:/app/config/ \
+              -e FIREBASE_CONFIG_PATH=/app/config/firebase-service-account.json \
               --restart always \
               -v /home/ubuntu/app/logs:/app/logs \
               --log-driver=awslogs \
               --log-opt awslogs-region=ap-northeast-2 \
               --log-opt awslogs-group=matajo-be-ec2 \
-              --log-opt awslogs-stream=be-log \
+              --log-opt awslogs-stream=be-dev-log \
               matajo:latest
             # 컨테이너 상태 확인
             sleep 10

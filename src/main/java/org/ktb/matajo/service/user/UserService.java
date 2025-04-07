@@ -10,10 +10,10 @@ public interface UserService {
     boolean isNicknameAvailable(String nickname);
 
     // 사용자의 닉네임을 새로운 값으로 업데이트합니다.
-    boolean updateNickname(Long userId, String newNickname);
+    AccessTokenResponseDto updateNickname(Long userId, String newNickname);
 
     // 사용자를 보관인으로 등록하고 응답 DTO를 반환합니다.
-    KeeperRegisterResponseDto registerKeeper(KeeperRegisterRequestDto request, Long userId);
+    AccessTokenResponseDto registerKeeper(KeeperRegisterRequestDto request, Long userId);
 
     // 카카오 사용자 정보를 처리하고 JWT 토큰(access, refresh)을 반환합니다.
     TokenResponseDto processKakaoUser(KakaoUserInfo userInfo);

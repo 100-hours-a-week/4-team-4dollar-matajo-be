@@ -20,6 +20,10 @@ public class Tag {
     //태그 이름
     @Column(nullable = false, length = 20, unique = true)
     private String tagName;
+    
+    //태그 카테고리
+    @Column(nullable = false)
+    private Long tagCategoryId;
 
     @Builder.Default
     @OneToMany(mappedBy = "tag", cascade = CascadeType.ALL)

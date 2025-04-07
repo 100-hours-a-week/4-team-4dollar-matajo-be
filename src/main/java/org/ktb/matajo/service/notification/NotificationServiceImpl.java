@@ -13,7 +13,6 @@ import org.ktb.matajo.service.chat.ChatSessionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -96,14 +95,23 @@ public class NotificationServiceImpl implements NotificationService {
 
     // 알림 전송 조건 확인
     private boolean shouldSendNotification(ChatMessageResponseDto messageDto, User receiverUser) {
-        // 조건 1: 수신자가 채팅방에 없음
-        boolean isReceiverNotActive = !isReceiverActiveInRoom(messageDto, receiverUser.getId());
+//        // 조건 1: 수신자가 채팅방에 없음
+//        boolean isReceiverNotActive = !isReceiverActiveInRoom(messageDto, receiverUser.getId());
+//
+//        // 조건 2: FCM 토큰이 유효함
+//        boolean hasValidFcmToken = receiverUser.getFcmToken() != null
+//                && !receiverUser.getFcmToken().isBlank();
+//
+//        return isReceiverNotActive && hasValidFcmToken;
 
-        // 조건 2: FCM 토큰이 유효함
+        // FCM 토큰이 유효한지만 확인
         boolean hasValidFcmToken = receiverUser.getFcmToken() != null
                 && !receiverUser.getFcmToken().isBlank();
 
-        return isReceiverNotActive && hasValidFcmToken;
+        // 자신이 보낸 메시지에는 알림 안 보내기
+        boolean isOwnMessage = messageDto.getSenderId().equals(receiverUser.getId());
+
+        return hasValidFcmToken && !isOwnMessage;
     }
 
     // 수신자가 채팅방에 활성화되어 있는지 확인
@@ -114,11 +122,14 @@ public class NotificationServiceImpl implements NotificationService {
 
     // Firebase 알림 전송
     private void sendFirebaseNotification(ChatMessageResponseDto messageDto, User receiverUser) {
+        log.info("🔔 FCM 알림 전송 시도: receiverId={}, senderNickname={}, fcmToken={}",
+                receiverUser.getId(), messageDto.getSenderNickname(), receiverUser.getFcmToken());
         try {
             firebaseNotificationService.sendMessageNotification(
                     messageDto.getSenderNickname(),
                     messageDto,
-                    receiverUser.getFcmToken()
+                    receiverUser.getFcmToken(),
+                    receiverUser.getId()
             );
             log.info("FCM 알림 전송 성공: receiverId={}, senderNickname={}",
                     receiverUser.getId(), messageDto.getSenderNickname());
