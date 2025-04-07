@@ -70,4 +70,15 @@ public interface PostService {
   
   // 내 보관소 조회
   List<PostResponseDto> getMyPosts(Long userId, int offset, int limit);
+
+  
+  /**
+   * 카테고리별 태그 필터링 기반 게시글 목록 조회
+   * 각 카테고리 내 태그는 OR 조건, 카테고리 간 태그는 AND 조건으로 필터링
+   * @param tagNames 필터링할 태그 이름 목록
+   * @param offset 시작 오프셋
+   * @param limit 조회할 게시글 수
+   * @return 카테고리 기반 태그 필터링된 게시글 목록
+   */
+  List<PostListResponseDto> getPostsByTagsWithCategoryLogic(List<String> tagNames, int offset, int limit);
 }
