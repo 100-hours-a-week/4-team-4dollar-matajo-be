@@ -50,20 +50,20 @@ public class RateLimitConfig {
                 break;
             case CHAT:
                 // 채팅 요청: 1분에 60회
-                limit = Bandwidth.classic(1500, Refill.intervally(1500, Duration.ofMinutes(1)));
+                limit = Bandwidth.classic(120, Refill.intervally(120, Duration.ofMinutes(1)));
                 break;
             case POST:
                 // 게시글 요청: 1분에 50회
-                limit = Bandwidth.classic(1500, Refill.intervally(1500, Duration.ofMinutes(1)));
+                limit = Bandwidth.classic(50, Refill.intervally(50, Duration.ofMinutes(1)));
             break;
             case LOCATION:
                 // 주소 요청: 1분에 100회
-                limit = Bandwidth.classic(1500, Refill.intervally(1500, Duration.ofMinutes(1)));
+                limit = Bandwidth.classic(100, Refill.intervally(100, Duration.ofMinutes(1)));
                 break;
             case GENERAL:
             default:
                 // 일반 API 요청: 1분에 20회
-                limit = Bandwidth.classic(1500, Refill.intervally(1500, Duration.ofMinutes(1)));
+                limit = Bandwidth.classic(20, Refill.intervally(20, Duration.ofMinutes(1)));
                 break;
         }
 
