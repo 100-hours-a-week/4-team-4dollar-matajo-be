@@ -90,12 +90,12 @@
       */
      private int getLimitForApiType(ApiType apiType) {
          switch (apiType) {
-             case AUTH: return 15;
-             case CHAT: return 120;
-             case POST: return 50;
+             case AUTH: return 100;
+             case CHAT: return 100;
+             case POST: return 100;
              case LOCATION: return 100;
              case GENERAL:
-             default: return 20;
+             default: return 100;
          }
      }
  }
