@@ -43,7 +43,6 @@ public class ChatMessageController {
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatSessionService chatSessionService;
     private final WebSocketEventListener webSocketEventListener;
-    private final NotificationService notificationService;
 
     /**
      * 클라이언트 Heartbeat 처리 (연결 상태 확인)
@@ -97,17 +96,6 @@ public class ChatMessageController {
 
         // 메시지 저장 및 처리
         ChatMessageResponseDto response = chatMessageService.saveMessage(roomId, messageDto);
-
-        // 채팅방 현재 접속 중인 사용자 목록 확인
-        Set<Long> activeUsersInRoom = chatSessionService.getActiveUsersInRoom(roomId);
-
-        // 접속 중인 사용자들에게는 자동으로 읽음 처리
-        if (!activeUsersInRoom.isEmpty()) {
-            // 발신자를 제외한 채팅방 접속자들에 대해 읽음 처리
-            activeUsersInRoom.stream()
-                    .filter(userId -> !userId.equals(messageDto.getSenderId()))
-                    .forEach(userId -> chatMessageService.markMessagesAsRead(roomId, userId));
-        }
 
         // 메시지를 특정 채팅방 구독자들에게 브로드캐스트
         messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
