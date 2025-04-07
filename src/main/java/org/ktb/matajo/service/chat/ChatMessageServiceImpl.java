@@ -80,11 +80,6 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             log.error("이미지 타입 메시지의 내용이 비어있습니다");
             throw new BusinessException(ErrorCode.INVALID_IMAGE_CONTENT);
         }
-
-        if (!messageDto.isValidImageUrl()) {
-            log.error("유효하지 않은 이미지 URL 형식: {}", messageDto.getContent());
-            throw new BusinessException(ErrorCode.INVALID_IMAGE_URL);
-        }
     }
 
     /**
