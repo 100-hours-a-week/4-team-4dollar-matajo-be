@@ -72,13 +72,13 @@
       * API 경로에 따른 API 유형 결정
       */
      private ApiType resolveApiType(String uri) {
-         if (uri.startsWith("/auth")) {
+         if (uri.startsWith("/api/auth")) {
              return ApiType.AUTH;
-         } else if (uri.startsWith("/chats")) {
+         } else if (uri.startsWith("/api/chats")) {
              return ApiType.CHAT;
-         } else if (uri.contains("/locations")) {
+         } else if (uri.contains("/api/locations")) {
              return ApiType.LOCATION;
-         } else if (uri.contains("/posts")) {
+         } else if (uri.contains("/api/posts")) {
              return ApiType.POST;
          } else {
              return ApiType.GENERAL;
