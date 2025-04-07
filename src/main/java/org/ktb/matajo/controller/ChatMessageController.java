@@ -133,29 +133,62 @@ public class ChatMessageController {
                 .body(CommonResponse.success("get_messages_success", messages));
     }
 
+//    /**
+//     * 메시지 읽음 상태 업데이트
+//     */
+//    @Operation(summary = "메시지 읽음 상태 업데이트", description = "특정 채팅방의 메시지를 모두 읽음 상태로 변경합니다")
+//    @ApiResponses(value = {
+//            @ApiResponse(responseCode = "200", description = "읽음 처리 성공"),
+//            @ApiResponse(responseCode = "401", description = "인증 실패"),
+//            @ApiResponse(responseCode = "404", description = "채팅방 없음")
+//    })
+//    @PutMapping("/{roomId}/read")
+//    public ResponseEntity<CommonResponse<Void>> markMessagesAsRead(
+//            @Parameter(description = "채팅방 ID", required = true)
+//            @PathVariable Long roomId) {
+//
+//        // 토큰에서 userId 추출
+//        Long userId = SecurityUtil.getCurrentUserId();
+//
+//        log.info("메시지 읽음 처리: roomId={}, userId={}", roomId, userId);
+//
+//        chatMessageService.markMessagesAsRead(roomId, userId);
+//
+//        return ResponseEntity
+//                .status(HttpStatus.OK)
+//                .body(CommonResponse.success("messages_marked_as_read", null));
+//    }
+
     /**
-     * 메시지 읽음 상태 업데이트
+     * WebSocket을 통한 메시지 읽음 상태 업데이트
      */
-    @Operation(summary = "메시지 읽음 상태 업데이트", description = "특정 채팅방의 메시지를 모두 읽음 상태로 변경합니다")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "읽음 처리 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
-            @ApiResponse(responseCode = "404", description = "채팅방 없음")
-    })
-    @PutMapping("/{roomId}/read")
-    public ResponseEntity<CommonResponse<Void>> markMessagesAsRead(
-            @Parameter(description = "채팅방 ID", required = true)
-            @PathVariable Long roomId) {
+    @MessageMapping("/{roomId}/read")
+    public void markMessagesAsRead(
+            @DestinationVariable Long roomId,
+            @Payload Map<String, Object> payload) {
 
-        // 토큰에서 userId 추출
-        Long userId = SecurityUtil.getCurrentUserId();
+        try {
+            // 페이로드에서 userId 추출
+            Long userId = Long.valueOf(payload.get("userId").toString());
 
-        log.info("메시지 읽음 처리: roomId={}, userId={}", roomId, userId);
+            log.info("WebSocket 읽음 상태 처리: roomId={}, userId={}", roomId, userId);
 
-        chatMessageService.markMessagesAsRead(roomId, userId);
+            // 메시지 읽음 상태 업데이트
+            chatMessageService.markMessagesAsRead(roomId, userId);
 
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(CommonResponse.success("messages_marked_as_read", null));
+            // 읽음 상태 변경을 모든 구독자에게 브로드캐스트하는 로직은
+            // ChatMessageServiceImpl에서 이미 처리하고 있습니다.
+        } catch (Exception e) {
+            log.error("WebSocket 읽음 상태 처리 중 오류: {}", e.getMessage(), e);
+            // 오류 메시지를 특정 사용자에게 전송
+            if (payload.containsKey("userId")) {
+                Long userId = Long.valueOf(payload.get("userId").toString());
+                messagingTemplate.convertAndSendToUser(
+                        userId.toString(),
+                        "/queue/errors",
+                        "읽음 상태 처리 중 오류가 발생했습니다."
+                );
+            }
+        }
     }
 }
