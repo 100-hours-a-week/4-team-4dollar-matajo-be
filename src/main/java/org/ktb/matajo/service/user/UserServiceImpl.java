@@ -183,6 +183,10 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        if (newNickname == null || newNickname.trim().length() < 1 || newNickname.trim().length() > 10) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
         if (userRepository.existsByNickname(newNickname)) {
             throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXISTS);
         }

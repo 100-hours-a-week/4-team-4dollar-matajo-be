@@ -36,4 +36,5 @@ public class ChatMessageRequestDto {
         return MessageType.IMAGE.equals(this.messageType) &&
                 (this.content == null || this.content.trim().isEmpty());
     }
+
 }
