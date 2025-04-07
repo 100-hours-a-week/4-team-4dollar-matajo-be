@@ -127,9 +127,6 @@ public class WebSocketEventListener {
                     // 채팅방 입장 처리
                     chatSessionService.userJoinedRoom(roomId, userId);
 
-                    // 해당 사용자로 온 메시지 읽음 처리
-                    chatMessageService.markMessagesAsRead(roomId, userId);
-
                     log.info("채팅방 구독 완료: roomId={}, userId={}, sessionId={}",
                             roomId, userId, sessionId);
                 } catch (BusinessException e) {
