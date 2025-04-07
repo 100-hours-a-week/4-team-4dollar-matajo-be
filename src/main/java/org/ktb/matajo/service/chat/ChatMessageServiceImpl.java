@@ -52,8 +52,13 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         // 발신자 조회
         User sender = findSender(messageDto.getSenderId());
 
-        // 채팅 메시지 생성 및 저장
+        log.info("메시지 생성 전 readStatus 설정: false");
+
+        // 메시지 생성 및 저장
         ChatMessage chatMessage = createAndSaveChatMessage(chatRoom, sender, messageDto);
+
+        // 저장 후 상태 확인
+        log.info("메시지 ID: {}, 저장 후 readStatus: {}", chatMessage.getId(), chatMessage.isReadStatus());
 
         // 응답 DTO 생성
         ChatMessageResponseDto responseDto = convertToChatMessageResponseDto(chatMessage);
