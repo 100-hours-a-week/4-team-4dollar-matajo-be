@@ -141,17 +141,14 @@ public class TradeInfoServiceImpl implements TradeInfoService {
                     boolean keeperStatus = post.getUser().getId().equals(userId);
 
                     // 상대방 ID 설정
-                    Long otherUserId = keeperStatus ?
-                            chatRoom.getUser().getId() : post.getUser().getId();
-
-                    User otherUser = userRepository.findById(otherUserId)
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                    User otherUser = keeperStatus ?
+                            chatRoom.getUser() : post.getUser();
 
                     return TradeInfoListResponseDto.builder()
                             .tradeId(tradeInfo.getId())
                             .keeperStatus(keeperStatus)
                             .productName(tradeInfo.getProductName())
-                            .userId(otherUserId)
+                            .userId(otherUser.getId())
                             .nickname(otherUser.getNickname())
                             .postAddress(post.getAddress().getBname())
                             .tradeDate(tradeInfo.getTradeDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
