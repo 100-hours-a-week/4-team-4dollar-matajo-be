@@ -37,10 +37,4 @@ public class ChatMessageRequestDto {
                 (this.content == null || this.content.trim().isEmpty());
     }
 
-    public boolean isValidImageUrl() {
-        if (MessageType.IMAGE.equals(this.messageType)) {
-            return StringUtils.hasText(content) && content.startsWith("https://matajo-image.s3.amazonaws.com");
-        }
-        return true; // 이미지 타입이 아니면 검증 통과
-    }
 }
