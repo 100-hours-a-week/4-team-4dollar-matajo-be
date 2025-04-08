@@ -715,6 +715,7 @@ public class PostServiceImpl implements PostService {
         return posts.stream()
                 .map(post -> LocationPostResponseDto.builder()
                         .postId(post.getId())
+                        .title(post.getTitle())
                         .address(post.getAddress().getAddress())
                         .build())
                 .collect(Collectors.toList());
