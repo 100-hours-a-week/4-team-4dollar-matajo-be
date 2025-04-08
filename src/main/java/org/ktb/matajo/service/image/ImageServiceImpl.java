@@ -60,6 +60,8 @@ public class ImageServiceImpl implements ImageService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Referer", "https://api.matajo.store");
+            log.info("요청 헤더: {}", headers); // 헤더 로깅 추가
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
 
@@ -119,6 +121,8 @@ public class ImageServiceImpl implements ImageService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Referer", "https://api.matajo.store");
+            log.info("요청 헤더: {}", headers); // 헤더 로깅 추가
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
 
