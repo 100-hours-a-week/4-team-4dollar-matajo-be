@@ -183,7 +183,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
                     tradeInfo.getProductName(),
                     tradeInfo.getCategory(),
                     tradeInfo.getTradeDate(),
-                    tradeInfo.getTradePrice(),
+                    tradeInfo.getTradePrice() / tradeInfo.getStoragePeriod(),
                     tradeInfo.getStoragePeriod()
             );
         }).collect(Collectors.toList());
