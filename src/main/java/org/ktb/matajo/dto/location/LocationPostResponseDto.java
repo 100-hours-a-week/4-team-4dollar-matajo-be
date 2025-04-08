@@ -17,6 +17,9 @@ public class LocationPostResponseDto {
   @Schema(description = "게시글 ID", example = "1")
   private Long postId;
 
+  @Schema(description = "게시글 제목", example = "구름 스퀘어")
+  private String title;
+
   @Schema(description = "주소", example = "서울시 강남구 삼성동")
   private String address;
 }
