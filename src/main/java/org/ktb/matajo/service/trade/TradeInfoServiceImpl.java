@@ -141,19 +141,21 @@ public class TradeInfoServiceImpl implements TradeInfoService {
                     boolean keeperStatus = post.getUser().getId().equals(userId);
 
                     // 상대방 ID 설정
-                    Long otherUserId = keeperStatus ?
-                            chatRoom.getUser().getId() : post.getUser().getId();
+                    User otherUser = keeperStatus ?
+                            chatRoom.getUser() : post.getUser();
 
                     return TradeInfoListResponseDto.builder()
                             .tradeId(tradeInfo.getId())
                             .keeperStatus(keeperStatus)
                             .productName(tradeInfo.getProductName())
-                            .userId(otherUserId)
+                            .userId(otherUser.getId())
+                            .nickname(otherUser.getNickname())
                             .postAddress(post.getAddress().getBname())
                             .tradeDate(tradeInfo.getTradeDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                             .startDate(tradeInfo.getStartDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                             .storagePeriod(tradeInfo.getStoragePeriod())
                             .tradePrice(tradeInfo.getTradePrice())
+                            .dailyPrice(tradeInfo.getTradePrice() / tradeInfo.getStoragePeriod())
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -181,7 +183,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
                     tradeInfo.getProductName(),
                     tradeInfo.getCategory(),
                     tradeInfo.getTradeDate(),
-                    tradeInfo.getTradePrice(),
+                    tradeInfo.getTradePrice() / tradeInfo.getStoragePeriod(),
                     tradeInfo.getStoragePeriod()
             );
         }).collect(Collectors.toList());

@@ -29,20 +29,20 @@
      public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
          // API 경로에 따라 API 유형 결정
          ApiType apiType = resolveApiType(request.getRequestURI());
-        
+
          // 클라이언트 식별자 가져오기
          String clientId = rateLimitConfig.getClientIdentifier(request);
-        
+
          // 클라이언트 ID와 API 유형에 따른 버킷 가져오기
          Bucket bucket = rateLimitConfig.resolveBucket(clientId, apiType);
-        
+
          // 토큰 소비 시도
          ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
-        
+
          // Rate Limit 관련 헤더 추가
          response.addHeader("X-RateLimit-Limit", String.valueOf(getLimitForApiType(apiType)));
          response.addHeader("X-RateLimit-Remaining", String.valueOf(probe.getRemainingTokens()));
-        
+
          if (probe.isConsumed()) {
              //요청 허용
              long waitTimeSeconds = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
@@ -56,18 +56,18 @@
              response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
              response.setContentType(MediaType.APPLICATION_JSON_VALUE);
              response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            
-            
+
+
              log.warn("Rate limit exceeded for client: {}, API type: {}, wait time: {}s",
                      clientId, apiType, waitTimeSeconds);
-            
+
              // 비즈니스 예외 던지기
              throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
 
          }
 
      }
-    
+
      /**
       * API 경로에 따른 API 유형 결정
       */
@@ -84,18 +84,18 @@
              return ApiType.GENERAL;
          }
      }
-    
+
      /**
       * API 유형별 제한 횟수 반환
       */
      private int getLimitForApiType(ApiType apiType) {
          switch (apiType) {
-             case AUTH: return 100;
-             case CHAT: return 100;
-             case POST: return 100;
-             case LOCATION: return 100;
+             case AUTH: return 2000;
+             case CHAT: return 2000;
+             case POST: return 2000;
+             case LOCATION: return 2000;
              case GENERAL:
-             default: return 100;
+             default: return 2000;
          }
      }
  }

@@ -133,6 +133,7 @@ jobs:
               --log-opt awslogs-region=ap-northeast-2 \
               --log-opt awslogs-group=matajo-be-ec2 \
               --log-opt awslogs-stream=be-prod-log \
+              --network monitoring \
               matajo:latest
             # 컨테이너 상태 확인
             sleep 10

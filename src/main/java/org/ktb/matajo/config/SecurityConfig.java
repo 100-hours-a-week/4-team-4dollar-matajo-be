@@ -62,7 +62,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-resources/**").permitAll()
                         .requestMatchers("/webjars/**").permitAll()
                         .requestMatchers("/ws-chat/**").permitAll()
-                        .requestMatchers("/health").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handler -> handler

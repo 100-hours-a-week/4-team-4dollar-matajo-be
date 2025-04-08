@@ -15,7 +15,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     /**
      * 채팅방의 메시지 목록 조회 (페이지네이션 적용)
      */
-    List<ChatMessage> findByChatRoomId(Long roomId, Pageable pageable);
+    List<ChatMessage> findByChatRoomId(Long roomId);
 
     /**
      * 읽지 않은 메시지 중 특정 사용자가 보내지 않은 메시지만 조회
