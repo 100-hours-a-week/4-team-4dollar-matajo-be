@@ -144,16 +144,21 @@ public class TradeInfoServiceImpl implements TradeInfoService {
                     Long otherUserId = keeperStatus ?
                             chatRoom.getUser().getId() : post.getUser().getId();
 
+                    User otherUser = userRepository.findById(otherUserId)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
                     return TradeInfoListResponseDto.builder()
                             .tradeId(tradeInfo.getId())
                             .keeperStatus(keeperStatus)
                             .productName(tradeInfo.getProductName())
                             .userId(otherUserId)
+                            .nickname(otherUser.getNickname())
                             .postAddress(post.getAddress().getBname())
                             .tradeDate(tradeInfo.getTradeDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                             .startDate(tradeInfo.getStartDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                             .storagePeriod(tradeInfo.getStoragePeriod())
                             .tradePrice(tradeInfo.getTradePrice())
+                            .dailyPrice(tradeInfo.getTradePrice() / tradeInfo.getStoragePeriod())
                             .build();
                 })
                 .collect(Collectors.toList());

@@ -25,6 +25,9 @@ public class TradeInfoListResponseDto {
     @Schema(description = "상대방 사용자 ID", example = "5678")
     private Long userId;
 
+    @Schema(description = "상대방 사용자 닉네임", example = "타조5678")
+    private String nickname;
+
     @Schema(description = "게시글 주소", example = "서울시 강남구")
     private String postAddress;
 
@@ -39,4 +42,7 @@ public class TradeInfoListResponseDto {
 
     @Schema(description = "거래 가격(원)", example = "5000")
     private int tradePrice;
+
+    @Schema(description = "일당 가격(원)", example = "1000")
+    private int dailyPrice;
 }
