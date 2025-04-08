@@ -143,14 +143,10 @@ public class ChatMessageServiceImpl implements ChatMessageService {
      * 채팅방의 메시지 목록 조회
      */
     @Override
-    public List<ChatMessageResponseDto> getChatMessages(Long roomId, int page, int size) {
+    public List<ChatMessageResponseDto> getChatMessages(Long roomId) {
 
         validateRoomId(roomId);
 
-        if (page < 0 || size <= 0 || size > 100) {
-            log.error("페이지네이션 파라미터가 유효하지 않습니다: page={}, size={}", page, size);
-            throw new BusinessException(ErrorCode.INVALID_OFFSET_OR_LIMIT);
-        }
         // 첫 페이지이면 캐시에서 먼저 조회 시도
 //        if (page == 0) {
 //            List<ChatMessageResponseDto> cachedMessages = redisChatMessageService.getCachedMessages(roomId, size);
@@ -161,12 +157,8 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 //            }
 //        }
 
-        // 캐시에 없거나 첫 페이지가 아니면 DB에서 조회
-        log.info("DB에서 메시지 조회: roomId={}, page={}, size={}", roomId, page, size);
-
         // 메시지 조회
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        List<ChatMessage> messages = chatMessageRepository.findByChatRoomId(roomId, pageRequest);
+        List<ChatMessage> messages = chatMessageRepository.findByChatRoomId(roomId);
 
         List<ChatMessageResponseDto> messageDtos = messages.stream()
                 .map(this::convertToChatMessageResponseDto)

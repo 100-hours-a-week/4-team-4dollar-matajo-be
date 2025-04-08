@@ -19,11 +19,9 @@ public interface ChatMessageService {
      * 채팅방의 메시지 목록 조회
      *
      * @param roomId 채팅방 ID
-     * @param page 페이지 번호
-     * @param size 페이지 사이즈
      * @return 메시지 목록
      */
-    List<ChatMessageResponseDto> getChatMessages(Long roomId, int page, int size);
+    List<ChatMessageResponseDto> getChatMessages(Long roomId);
 
     /**
      * 메시지 읽음 상태 업데이트

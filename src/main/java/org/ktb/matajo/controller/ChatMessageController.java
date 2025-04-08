@@ -116,17 +116,11 @@ public class ChatMessageController {
     @GetMapping("/{roomId}/message")
     public ResponseEntity<CommonResponse<List<ChatMessageResponseDto>>> getChatMessages(
             @Parameter(description = "채팅방 ID", required = true)
-            @PathVariable Long roomId,
+            @PathVariable Long roomId ) {
 
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @RequestParam(defaultValue = "0") int page,
+        log.info("채팅 메시지 조회: roomId={}", roomId);
 
-            @Parameter(description = "페이지 크기", example = "50")
-            @RequestParam(defaultValue = "50") int size) {
-
-        log.info("채팅 메시지 조회: roomId={}, page={}, size={}", roomId, page, size);
-
-        List<ChatMessageResponseDto> messages = chatMessageService.getChatMessages(roomId, page, size);
+        List<ChatMessageResponseDto> messages = chatMessageService.getChatMessages(roomId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
