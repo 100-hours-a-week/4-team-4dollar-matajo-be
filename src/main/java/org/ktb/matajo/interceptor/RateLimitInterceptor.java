@@ -44,10 +44,6 @@
          response.addHeader("X-RateLimit-Remaining", String.valueOf(probe.getRemainingTokens()));
 
          if (probe.isConsumed()) {
-             //요청 허용
-             long waitTimeSeconds = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
-             log.warn("Rate limit exceeded for client: {}, API type: {}, wait time: {}s",
-                 clientId, apiType, waitTimeSeconds);
              return true;
          } else {
              // 요청 차단 (429 Too Many Requests)
