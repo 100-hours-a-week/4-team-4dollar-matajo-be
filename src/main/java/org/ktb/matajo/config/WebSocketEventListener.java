@@ -91,7 +91,8 @@ public class WebSocketEventListener {
                 }
 
                 // "/topic/chat/{roomId}" 형식에서 roomId 추출
-                String roomIdStr = destination.substring(destination.lastIndexOf('/') + 1);
+                String path = destination.substring("/topic/chat/".length());
+                String roomIdStr = path.contains("/") ? path.substring(0, path.indexOf('/')) : path;
                 Long roomId = Long.parseLong(roomIdStr);
 
                 // 세션 속성에서 userId 확인 (핸드셰이크에서 저장한 정보)
