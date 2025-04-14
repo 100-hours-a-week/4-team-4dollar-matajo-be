@@ -45,25 +45,25 @@ public class RateLimitConfig {
 
         switch (apiType) {
             case AUTH:
-                // 인증 요청: 1분에 2000회
-                limit = Bandwidth.classic(2000, Refill.intervally(2000, Duration.ofMinutes(1)));
+                // 인증 요청: 1분에 5000회
+                limit = Bandwidth.classic(5000, Refill.intervally(5000, Duration.ofMinutes(1)));
                 break;
             case CHAT:
-                // 채팅 요청: 1분에 2000회
-                limit = Bandwidth.classic(2000, Refill.intervally(2000, Duration.ofMinutes(1)));
+                // 채팅 요청: 1분에 5000회
+                limit = Bandwidth.classic(5000, Refill.intervally(5000, Duration.ofMinutes(1)));
                 break;
             case POST:
-                // 게시글 요청: 1분에 2000회
-                limit = Bandwidth.classic(2000, Refill.intervally(2000, Duration.ofMinutes(1)));
+                // 게시글 요청: 1분에 5000회
+                limit = Bandwidth.classic(5000, Refill.intervally(5000, Duration.ofMinutes(1)));
             break;
             case LOCATION:
-                // 주소 요청: 1분에 2000회
-                limit = Bandwidth.classic(2000, Refill.intervally(2000, Duration.ofMinutes(1)));
+                // 주소 요청: 1분에 5000회
+                limit = Bandwidth.classic(5000, Refill.intervally(5000, Duration.ofMinutes(1)));
                 break;
             case GENERAL:
             default:
-                // 일반 API 요청: 1분에 2000회
-                limit = Bandwidth.classic(2000, Refill.intervally(2000, Duration.ofMinutes(1)));
+                // 일반 API 요청: 1분에 5000회
+                limit = Bandwidth.classic(5000, Refill.intervally(5000, Duration.ofMinutes(1)));
                 break;
         }
 
