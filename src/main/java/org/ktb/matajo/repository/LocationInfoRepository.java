@@ -17,8 +17,13 @@ public interface LocationInfoRepository extends JpaRepository<LocationInfo, Long
     // 구 이름으로 검색 (가장 첫번째에 있는 구)
     Optional<LocationInfo> findFirstByCityDistrictContaining(String cityDistrict);
 
+    //동일한 city_district를 가진 id 가져오기
+    @Query("SELECT DISTINCT l2.id FROM LocationInfo l1 " +
+        "JOIN LocationInfo l2 ON l1.cityDistrict = l2.cityDistrict " +
+        "WHERE l1.id = :locationInfoId")
+    List<Long> findIdsInSameDistrict(@Param("locationInfoId") Long locationInfoId);
+
     //검색어로 동 검색
-    //limit을 여기에?
     @Query(value = """
             SELECT l FROM LocationInfo l
             WHERE l.displayName LIKE CONCAT('%', :searchTerm, '%')
