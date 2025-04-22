@@ -9,6 +9,7 @@ import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.entity.*;
 import org.ktb.matajo.global.error.code.ErrorCode;
 import org.ktb.matajo.global.error.exception.BusinessException;
+import org.ktb.matajo.repository.LocationInfoRepository;
 import org.ktb.matajo.repository.PostRepository;
 import org.ktb.matajo.repository.TagRepository;
 import org.ktb.matajo.repository.UserRepository;
@@ -33,9 +34,10 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
-    private final AddressService addressService;
-
     private final UserRepository userRepository;
+    private final LocationInfoRepository locationInfoRepository;
+
+    private final AddressService addressService;
 
     /**
      * 게시글 목록 조회 메소드
@@ -699,9 +701,16 @@ public class PostServiceImpl implements PostService {
         }
 
         log.info("위치 ID 기반 게시글 ID 조회 시작: locationInfoId={}", locationInfoId);
+        //locationInfoId로 동일한 cityDistrict를 가진 id 가져오기
+        List<Long> locationInfoIds = locationInfoRepository.findIdsInSameDistrict(locationInfoId);
+
+        if(locationInfoIds.isEmpty()){
+            log.info("해당 dirstrict에 위치 정보가 없습니다: locationInfoId={}",locationInfoId);
+            return Collections.emptyList();
+        }
 
         // 위치 ID로 게시글 직접 조회 (단일 쿼리 최적화)
-        List<Post> posts = postRepository.findActivePostsByLocationInfoId(locationInfoId);
+        List<Post> posts = postRepository.findActivePostsByLocationInfoIds(locationInfoIds);
 
         if (posts.isEmpty()) {
             log.info("해당 위치에 게시글이 없습니다: locationInfoId={}", locationInfoId);
@@ -709,17 +718,18 @@ public class PostServiceImpl implements PostService {
         }
 
         log.info("위치 ID 기반 게시글 조회 완료: locationInfoId={}, 조회된 게시글 수={}",
-                locationInfoId, posts.size());
+            locationInfoId, posts.size());
 
-        // 게시글 ID와 주소 ID만 추출하여 DTO로 변환
-        return posts.stream()
+        // 3. 게시글 정보를 DTO로 변환
+            return posts.stream()
                 .map(post -> LocationPostResponseDto.builder()
-                        .postId(post.getId())
-                        .title(post.getTitle())
-                        .address(post.getAddress().getAddress())
-                        .build())
+                    .postId(post.getId())
+                    .title(post.getTitle())
+                    .address(post.getAddress().getAddress())
+                    .build())
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public List<LocationDealResponseDto> getTopDiscountedPosts(Long locationInfoId) {
