@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.location.LocationDealResponseDto;
 import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.dto.post.*;
+import org.ktb.matajo.dto.storage.StorageResponseDto;
 import org.ktb.matajo.entity.Storage;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.global.common.ErrorResponse;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Tag(name = "게시글 API", description = "게시글 CRUD 및 관련 기능을 제공하는 API")
 @Slf4j
@@ -286,13 +288,22 @@ public class PostController {
 
     @Operation(summary = "위치 기반 보관소 조회", description = "특정 동네의 보관소 목록을 조회합니다.")
     @GetMapping("/location/storages")
-    public ResponseEntity<CommonResponse<List<Storage>>> getStoragesByLocation(
+    public ResponseEntity<CommonResponse<List<StorageResponseDto>>> getStoragesByLocation(
             @RequestParam("locationInfoId") Long locationInfoId) {
 
         log.info("위치 기반 보관소 조회 요청: locationInfoId={}", locationInfoId);
 
-        List<Storage> storages = storageRepository.findByLocationInfoId(locationInfoId);
-        return ResponseEntity.ok(CommonResponse.success("get_storages_success", storages));
+        List<StorageResponseDto> dtoList = storageRepository.findByLocationInfoId(locationInfoId)
+                .stream()
+                .map(storage -> new StorageResponseDto(
+                        storage.getId(),
+                        storage.getKakaoMapLink(),
+                        storage.getName(),
+                        storage.getLocationInfoId()
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(CommonResponse.success("get_storages_success", dtoList));
     }
 
 }
