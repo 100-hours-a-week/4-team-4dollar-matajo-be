@@ -14,12 +14,11 @@ import org.ktb.matajo.dto.location.LocationDealResponseDto;
 import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.dto.post.*;
 import org.ktb.matajo.dto.storage.StorageResponseDto;
-import org.ktb.matajo.entity.Storage;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.global.common.ErrorResponse;
-import org.ktb.matajo.repository.StorageRepository;
 import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.post.PostService;
+import org.ktb.matajo.service.storage.StorageService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Tag(name = "게시글 API", description = "게시글 CRUD 및 관련 기능을 제공하는 API")
 @Slf4j
@@ -37,6 +35,7 @@ import java.util.stream.Collectors;
 public class PostController {
 
     private final PostService postService;
+    private final StorageService storageService;
 
     @Operation(
         summary = "게시글 목록 조회",
@@ -283,27 +282,21 @@ public class PostController {
         return ResponseEntity.ok(CommonResponse.success("get_my_posts_success", myPosts));
     }
 
+    
 
-    private final StorageRepository storageRepository;
 
+    // ✅ 변경된 엔드포인트: /api/posts/storages/location
     @Operation(summary = "위치 기반 보관소 조회", description = "특정 동네의 보관소 목록을 조회합니다.")
-    @GetMapping("/location/storages")
+    @GetMapping("/storages/location")
     public ResponseEntity<CommonResponse<List<StorageResponseDto>>> getStoragesByLocation(
             @RequestParam("locationInfoId") Long locationInfoId) {
 
         log.info("위치 기반 보관소 조회 요청: locationInfoId={}", locationInfoId);
 
-        List<StorageResponseDto> dtoList = storageRepository.findByLocationInfoId(locationInfoId)
-                .stream()
-                .map(storage -> new StorageResponseDto(
-                        storage.getId(),
-                        storage.getKakaoMapLink(),
-                        storage.getName(),
-                        storage.getLocationInfoId()
-                ))
-                .collect(Collectors.toList());
+        List<StorageResponseDto> dtoList = storageService.getStoragesByLocation(locationInfoId);
 
-        return ResponseEntity.ok(CommonResponse.success("get_storages_success", dtoList));
+        return ResponseEntity.ok(CommonResponse.success("get_storages_by_location_success", dtoList));
     }
+
 
 }
