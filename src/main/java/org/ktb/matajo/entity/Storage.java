@@ -1,11 +1,6 @@
 package org.ktb.matajo.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 
 @Entity
@@ -17,10 +12,43 @@ public class Storage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "kakao_map_link")
+    @Column(length = 255)
+    private String name;
+
+    @Column(columnDefinition = "text")
+    private String address;
+
+    private Double x;
+    private Double y;
+
+    @Column(length = 255)
+    private String category;
+
+    @Column(length = 255)
+    private String keyword;
+
+    @Column(length = 100)
+    private String region;
+
+    @Column(length = 50)
+    private String phone;
+
+    @Column(name = "place_id")
+    private Long placeId;
+
+    @Column(name = "kakao_map_link", columnDefinition = "text")
     private String kakaoMapLink;
 
-    private String name;
+    private Integer zonecode; // int 타입
+
+    @Column(length = 100)
+    private String bname2;
+
+    @Column(length = 100)
+    private String sigungu;
+
+    @Column(length = 100)
+    private String sido;
 
     @Column(name = "location_info_id")
     private Long locationInfoId;
