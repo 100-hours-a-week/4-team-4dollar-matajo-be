@@ -13,8 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.ktb.matajo.dto.location.LocationDealResponseDto;
 import org.ktb.matajo.dto.location.LocationPostResponseDto;
 import org.ktb.matajo.dto.post.*;
+import org.ktb.matajo.entity.Storage;
 import org.ktb.matajo.global.common.CommonResponse;
 import org.ktb.matajo.global.common.ErrorResponse;
+import org.ktb.matajo.repository.StorageRepository;
 import org.ktb.matajo.security.SecurityUtil;
 import org.ktb.matajo.service.post.PostService;
 import org.springframework.http.HttpStatus;
@@ -277,6 +279,20 @@ public class PostController {
         log.info("내 게시글 조회 요청: userId={}, offset={}, limit={}", userId, offset, limit);
         List<PostResponseDto> myPosts = postService.getMyPosts(userId, offset, limit);
         return ResponseEntity.ok(CommonResponse.success("get_my_posts_success", myPosts));
+    }
+
+
+    private final StorageRepository storageRepository;
+
+    @Operation(summary = "위치 기반 보관소 조회", description = "특정 동네의 보관소 목록을 조회합니다.")
+    @GetMapping("/location/storages")
+    public ResponseEntity<CommonResponse<List<Storage>>> getStoragesByLocation(
+            @RequestParam("locationInfoId") Long locationInfoId) {
+
+        log.info("위치 기반 보관소 조회 요청: locationInfoId={}", locationInfoId);
+
+        List<Storage> storages = storageRepository.findByLocationInfoId(locationInfoId);
+        return ResponseEntity.ok(CommonResponse.success("get_storages_success", storages));
     }
 
 }
