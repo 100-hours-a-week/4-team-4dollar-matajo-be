@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode {
     // 400 BAD REQUEST
-    // 구체적인 비즈니스 규칙 위반
     INVALID_OFFSET_OR_LIMIT(HttpStatus.BAD_REQUEST, "invalid_offset_or_limit", "페이지네이션 파라미터가 유효하지 않습니다"),
     INVALID_POST_ID(HttpStatus.BAD_REQUEST, "invalid_post_id", "게시글 ID가 유효하지 않습니다"),
     INVALID_POST_TITLE(HttpStatus.BAD_REQUEST, "invalid_post_title", "게시글 제목이 유효하지 않습니다"),
@@ -32,8 +31,6 @@ public enum ErrorCode {
     REQUIRED_AGREEMENT_MISSING(HttpStatus.BAD_REQUEST, "required_agreement_missing", "필수 약관에 동의하지 않았습니다"),
     NOTIFICATION_MESSAGE_INVALID(HttpStatus.BAD_REQUEST, "notification_message_invalid", "알림 메시지가 유효하지 않습니다"),
     NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "nickname_already_exists", "이미 사용 중인 닉네임입니다"),
-
-    // 일반적인 입력값 검증 오류
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "invalid_input_value", "입력값이 유효하지 않습니다"),
 
     // 401 UNAUTHORIZED
@@ -57,13 +54,13 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "refresh_token_not_found", "리프레시 토큰이 존재하지 않습니다"),
     NOTIFICATION_RECEIVER_NOT_FOUND(HttpStatus.NOT_FOUND, "notification_receiver_not_found", "알림 수신자를 찾을 수 없습니다"),
 
-    // 405 METHOD NOT ALLOWED - 누락된 에러 코드 추가
+    // 405 METHOD NOT ALLOWED
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "지원하지 않는 HTTP 메소드입니다"),
 
     // 409 CONFLICT
     CHAT_USER_ALREADY_LEFT(HttpStatus.CONFLICT, "chat_user_already_left", "이미 채팅방을 나간 사용자입니다"),
 
-    //429 TOO_MANY_REQUESTS
+    // 429 TOO MANY REQUESTS
     TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS,"too_many_requests", "요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요."),
 
     // 500 INTERNAL SERVER ERROR
@@ -75,7 +72,7 @@ public enum ErrorCode {
     FAILED_TO_UPDATE_POST(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_update_post", "게시글 수정에 실패했습니다"),
     FAILED_TO_SEND_NOTIFICATION(HttpStatus.INTERNAL_SERVER_ERROR, "failed_to_send_notification", "알림 전송에 실패했습니다"),
 
-    // 502 BAD GATEWAY - 외부 API 통신 실패
+    // 502 BAD GATEWAY
     KAKAO_AUTH_FAILED(HttpStatus.BAD_GATEWAY, "kakao_auth_failed", "카카오 인증에 실패했습니다"),
     KAKAO_USERINFO_FETCH_FAILED(HttpStatus.BAD_GATEWAY, "kakao_userinfo_failed", "카카오 사용자 정보 조회에 실패했습니다");
 
@@ -88,5 +85,4 @@ public enum ErrorCode {
         this.errorMessage = errorMessage;
         this.description = description;
     }
-
 }
