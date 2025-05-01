@@ -34,7 +34,7 @@ public class StorageServiceImpl implements StorageService {
                         s.getId(),
                         s.getKakaoMapLink(),
                         s.getName(),
-                        s.getLocationInfoId()
+                        s.getAddress()
                 ))
                 .collect(Collectors.toList());
     }

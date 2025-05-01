@@ -15,6 +15,5 @@ public class StorageResponseDto {
 
     private String name;
 
-    @JsonProperty("location_info_id")
-    private Long locationInfoId;
+    private String address;
 }
