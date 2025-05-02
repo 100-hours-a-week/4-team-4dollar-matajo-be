@@ -44,10 +44,6 @@
          response.addHeader("X-RateLimit-Remaining", String.valueOf(probe.getRemainingTokens()));
 
          if (probe.isConsumed()) {
-             //요청 허용
-             long waitTimeSeconds = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
-             log.warn("Rate limit exceeded for client: {}, API type: {}, wait time: {}s",
-                 clientId, apiType, waitTimeSeconds);
              return true;
          } else {
              // 요청 차단 (429 Too Many Requests)
@@ -90,12 +86,12 @@
       */
      private int getLimitForApiType(ApiType apiType) {
          switch (apiType) {
-             case AUTH: return 2000;
-             case CHAT: return 2000;
-             case POST: return 2000;
-             case LOCATION: return 2000;
+             case AUTH: return 5000;
+             case CHAT: return 5000;
+             case POST: return 5000;
+             case LOCATION: return 5000;
              case GENERAL:
-             default: return 2000;
+             default: return 5000;
          }
      }
  }

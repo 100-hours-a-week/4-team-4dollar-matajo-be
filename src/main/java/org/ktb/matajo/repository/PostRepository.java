@@ -22,12 +22,21 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // location_info_id로 게시글 직접 조회 (단일 쿼리로 처리)
     @Query("SELECT p FROM Post p " +
            "JOIN p.address a " +
-           "WHERE a.locationInfo.id = :locationInfoId " + 
+           "WHERE a.locationInfo.id = :locationInfoId " +
            "AND p.deletedAt IS NULL " +
            "AND p.hiddenStatus = false " +
            "ORDER BY p.createdAt DESC")
     List<Post> findActivePostsByLocationInfoId(@Param("locationInfoId") Long locationInfoId);
 
+
+    //location_info id로 게시글 찾기
+    @Query("SELECT p FROM Post p " +
+        "JOIN FETCH p.address a " +
+        "WHERE a.locationInfo.id IN :locationInfoIds " +
+        "AND p.deletedAt IS NULL " +
+        "AND p.hiddenStatus = false " +
+        "ORDER BY p.createdAt DESC")
+    List<Post> findActivePostsByLocationInfoIds(@Param("locationInfoIds") List<Long> locationInfoIds);
 
     //할인율 상위 2개 조회
     @Query("SELECT p FROM Post p " +
